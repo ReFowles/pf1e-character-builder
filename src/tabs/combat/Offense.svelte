@@ -15,6 +15,7 @@
   import { iterativeText } from '../../lib/rules/tables';
   import Chevron from '../../lib/ui/Chevron.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
   function addWeapon(it: DbItem) {
@@ -63,6 +64,7 @@
     <Stat label="CMB" value={d.cmb} size="md" />
   </div>
 
+  <EditMode>{#snippet children(editing)}
   <DynamicList bind:items={c.weapons} onadd={() => c.weapons.push(make.weapon())} addLabel="Weapon" empty="No weapons yet.">
     {#snippet item(w)}
       {@const wd = d.weapons[w.id]}
@@ -82,7 +84,7 @@
         <Field label="Range"><input bind:value={w.range} /></Field>
         <Field label="Type"><input bind:value={w.type} placeholder="S/P/B" /></Field>
       </div>
-      <div class={['mt-1 flex flex-wrap items-end gap-2', { 'print:hidden': !w.ammo && !w.notes }]}>
+      <div class={['mt-1 flex flex-wrap items-end gap-2', { 'print:hidden': !w.ammo && !w.notes && !editing }]}>
         <Field label="Ammo / notes" class="min-w-40 flex-1">
           <input value={[w.ammo, w.notes].filter(Boolean).join(' · ')} readonly class="hidden print:block" aria-hidden="true" tabindex="-1" />
           <div class="flex gap-1 print:hidden">
@@ -90,12 +92,15 @@
             <input class="flex-1" bind:value={w.notes} placeholder="Notes" aria-label="Notes" />
           </div>
         </Field>
+        {#if editing}
+          <Field label="Value (gp)" class="w-20 print:hidden"><NumInput bind:value={w.price} aria-label="Value in gp" /></Field>
+        {/if}
         <button type="button" class="inline-flex w-12 items-center justify-end gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
           Details <Chevron open={!!open[w.id]} />
         </button>
       </div>
       {#if open[w.id]}
-        <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-9 print:hidden">
+        <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-8 print:hidden">
           <Field label="Kind">
             <Select bind:value={w.kind} options={opts(['melee', 'ranged'] as const)} />
           </Field>
@@ -119,7 +124,6 @@
           </Field>
           <Field label="Dmg misc"><NumInput bind:value={w.damageMisc} signed /></Field>
           <Field label="Weight"><NumInput bind:value={w.weight} /></Field>
-          <Field label="Value (gp)"><NumInput bind:value={w.price} /></Field>
         </div>
       {/if}
     {/snippet}
@@ -136,5 +140,6 @@
       </DbPicker>
     {/snippet}
   </DynamicList>
+  {/snippet}</EditMode>
   <div class="print:hidden"><BonusList keys={KEYS} label="Attack / damage bonuses" /></div>
 </Section>
