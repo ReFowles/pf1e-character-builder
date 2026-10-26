@@ -74,6 +74,27 @@ const STEPS: Record<number, (d: Plain) => Plain> = {
   },
 };
 
+STEPS[2] = (d) => {
+  // Magic items become equipped gear.
+  const fromMagic = arr(d.magicItems).map((m) => ({
+    id: m.id ?? uid(),
+    name: m.name ?? '',
+    quantity: 1,
+    weight: Number(m.weight) || 0,
+    price: Number(m.price) || 0,
+    equipped: true,
+    slot: m.slot ?? 'slotless',
+    notes: m.notes ?? '',
+  }));
+  const { magicItems: _m, ...rest } = d;
+  return {
+    ...rest,
+    items: [...arr(d.items), ...fromMagic],
+    favoriteOrder: arr(d.skills).filter((s) => s.favorite).map((s) => s.id),
+    spellcasting: arr(d.spellcasting).map((b) => ({ ...b, domainSlot: b.domainSlot ?? b.table === 'cleric' })),
+  };
+};
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

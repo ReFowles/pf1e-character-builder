@@ -22,7 +22,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(2);
+    expect(c.schemaVersion).toBe(3);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -38,5 +38,28 @@ describe('migrate v1 -> v2', () => {
     expect(parseGp('')).toBe(0);
     expect(parseFcbNote('+1 rage power')).toEqual({ amount: '1', label: 'rage power' });
     expect(parseFcbNote('extra spell known')).toEqual({ amount: '1', label: 'extra spell known' });
+  });
+});
+
+describe('migrate v2 -> v3', () => {
+  it('moves magic items into equipped gear, seeds favorite order, flags cleric domains', () => {
+    const c = normalize({
+      schemaVersion: 2,
+      items: [{ id: 'i1', name: 'Rope' }],
+      magicItems: [{ id: 'm1', name: 'Cloak of Resistance +1', slot: 'shoulders', weight: 1, price: 1000 }],
+      skills: [
+        { id: 'a', skill: 'climb', favorite: false },
+        { id: 'b', skill: 'stealth', favorite: true },
+      ],
+      spellcasting: [{ id: 'b1', table: 'cleric' }, { id: 'b2', table: 'wizard' }],
+    });
+    expect(c.items.map((i) => [i.name, i.equipped, i.slot])).toEqual([
+      ['Rope', false, ''],
+      ['Cloak of Resistance +1', true, 'shoulders'],
+    ]);
+    expect(c.items[1].price).toBe(1000);
+    expect((c as unknown as Record<string, unknown>).magicItems).toBeUndefined();
+    expect(c.favoriteOrder).toEqual(['b']);
+    expect(c.spellcasting.map((b) => b.domainSlot)).toEqual([true, false]);
   });
 });

@@ -239,6 +239,10 @@ export interface Item extends Identified {
   notCarried: boolean;
   /** Value of one unit, in gp. */
   price: number;
+  /** Worn/wielded; with a slot, it shows in Magic Items. */
+  equipped: boolean;
+  /** Magic item body slot ('' = not a slotted item). */
+  slot: MagicSlot | '';
   notes: string;
 }
 
@@ -258,14 +262,6 @@ export const MAGIC_SLOTS = [
   'slotless',
 ] as const;
 export type MagicSlot = (typeof MAGIC_SLOTS)[number];
-
-export interface MagicItem extends Identified {
-  name: string;
-  slot: MagicSlot;
-  weight: number;
-  price: number;
-  notes: string;
-}
 
 export interface Coins {
   pp: number;
@@ -289,6 +285,8 @@ export interface SpellEntry extends Identified {
   range: string;
   save: string;
   sr: string;
+  /** Prepared in (or known for) the domain slot. */
+  domain: boolean;
   /** Times prepared (prepared casters). */
   prepared: number;
   used: number;
@@ -303,7 +301,10 @@ export interface Spellcasting extends Identified {
   ability: Ability;
   /** Spell table id (rules/spellTables.ts); '' = enter slots manually. */
   table: string;
+  /** One extra domain spell slot per castable spell level 1+ (clerics). */
+  domainSlot: boolean;
   casterLevelMisc: number;
+  spellPenMisc: number;
   /** Base slots per spell level 0..9 from the class table (null = cannot cast). */
   slots: (number | null)[];
   slotsMisc: number[];
@@ -329,6 +330,10 @@ export interface Mythic {
   enabled: boolean;
   tier: number;
   path: MythicPath | '';
+  /** Second path from the Dual Path feat. */
+  secondPath: MythicPath | '';
+  /** Bonus to effective tier (e.g. Mythic Paragon). */
+  tierMisc: number;
   powerUsed: number;
   /** Ability raised by +2 at tiers 2, 4, 6, 8, 10. */
   abilityIncreases: (Ability | null)[];
@@ -385,6 +390,8 @@ export interface Character {
   speeds: Speeds;
   heroPoints: number;
   skills: SkillEntry[];
+  /** Favorite skill ids in display order. */
+  favoriteOrder: string[];
   bonuses: ManualBonus[];
   weapons: Weapon[];
   armor: ArmorPiece[];
@@ -399,7 +406,6 @@ export interface Character {
   feats: Feat[];
   classAbilities: ClassAbility[];
   items: Item[];
-  magicItems: MagicItem[];
   currency: { carried: Coins; locations: CoinLocation[] };
   spellcasting: Spellcasting[];
   mythic: Mythic;

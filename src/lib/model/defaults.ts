@@ -13,7 +13,6 @@ import type {
   LevelEntry,
   Macro,
   MacroEffect,
-  MagicItem,
   ManualBonus,
   MythicEntry,
   OtherSpeed,
@@ -28,7 +27,7 @@ import type {
   Weapon,
 } from './types';
 
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 3;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -145,9 +144,10 @@ export const make = {
     weightless: false,
     notCarried: false,
     price: 0,
+    equipped: false,
+    slot: '',
     notes: '',
   }),
-  magicItem: (): MagicItem => ({ id: uid(), name: '', slot: 'slotless', weight: 0, price: 0, notes: '' }),
   otherSpeed: (mode = 'fly'): OtherSpeed => ({ id: uid(), mode, value: 0, maneuverability: '' }),
   mythicEntry: (tier = 1): MythicEntry => ({ id: uid(), name: '', tier, notes: '' }),
   coinLocation: (): CoinLocation => ({ id: uid(), name: '', weightless: true, coins: coins() }),
@@ -160,6 +160,7 @@ export const make = {
     range: '',
     save: '',
     sr: '',
+    domain: false,
     prepared: 0,
     used: 0,
     notes: '',
@@ -171,7 +172,9 @@ export const make = {
     kind: 'prepared',
     ability: 'int',
     table: '',
+    domainSlot: false,
     casterLevelMisc: 0,
+    spellPenMisc: 0,
     slots: Array(10).fill(null),
     slotsMisc: Array(10).fill(0),
     known: Array(10).fill(null),
@@ -240,6 +243,7 @@ export function newCharacter(): Character {
     speeds: { base: 30, armored: 0, other: [] },
     heroPoints: 1,
     skills: defaultSkills(),
+    favoriteOrder: [],
     bonuses: [],
     weapons: [],
     armor: [],
@@ -254,13 +258,14 @@ export function newCharacter(): Character {
     feats: [],
     classAbilities: [],
     items: [],
-    magicItems: [],
     currency: { carried: coins(), locations: [] },
     spellcasting: [],
     mythic: {
       enabled: false,
       tier: 1,
       path: '',
+      secondPath: '',
+      tierMisc: 0,
       powerUsed: 0,
       abilityIncreases: [null, null, null, null, null],
       feats: [],

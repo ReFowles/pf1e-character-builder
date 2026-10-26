@@ -26,7 +26,6 @@ const ITEM_FACTORIES: Record<string, () => unknown> = {
   feats: () => make.feat(),
   classAbilities: () => make.classAbility(),
   items: make.item,
-  magicItems: make.magicItem,
   'currency.locations': make.coinLocation,
   spellcasting: make.spellcasting,
   'speeds.other': () => make.otherSpeed(),
