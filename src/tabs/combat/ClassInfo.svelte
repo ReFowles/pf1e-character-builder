@@ -146,7 +146,7 @@
   </datalist>
 
   <div class="overflow-x-auto">
-    <table class="dyn-table">
+    <table class="dyn-table keep-table">
       <thead>
         <tr>
           <th title="Favored class">FC</th>
