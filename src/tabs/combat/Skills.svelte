@@ -75,19 +75,15 @@
       <td class="w-9"><NumInput bind:value={e.ranks} aria-label="{sd.label} ranks" /></td>
       <td class="w-9"><NumInput bind:value={e.misc} signed aria-label="{sd.label} misc" /></td>
       <td class="w-6 print:hidden">
-        {#if sd.def.multi && !inFavorites}
-          {#if siblings(e) > 1}
-            <button type="button" class="icon-btn text-accent" aria-label="Remove {sd.label}" onclick={() => removeRow(e)}>✕</button>
-          {:else}
-            <button type="button" class="icon-btn" aria-label="Add another {sd.def.name}" onclick={() => addSubtype(e)}>＋</button>
-          {/if}
+        {#if sd.def.multi && !inFavorites && siblings(e) > 1}
+          <button type="button" class="icon-btn text-accent" aria-label="Remove {sd.label}" onclick={() => removeRow(e)}>✕</button>
         {/if}
       </td>
     </tr>
-    {#if sd.def.multi && !inFavorites && siblings(e) > 1 && c.skills.findLast((s) => s.skill === e.skill) === e}
+    {#if sd.def.multi && !inFavorites && c.skills.findLast((s) => s.skill === e.skill) === e}
       <tr class="print:hidden">
-        <td colspan="8" class="py-0">
-          <button type="button" class="text-xs underline opacity-70" onclick={() => addSubtype(e)}>+ another {sd.def.name}</button>
+        <td colspan="8" class="py-0 pl-12">
+          <button type="button" class="text-xs underline opacity-70 hover:opacity-100" onclick={() => addSubtype(e)}>+ another {sd.def.name}</button>
         </td>
       </tr>
     {/if}
