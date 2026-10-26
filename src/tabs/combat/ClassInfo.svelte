@@ -211,7 +211,7 @@
               <td><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
             {:else}
               <!-- Separate cells so the bullets line up across classes. -->
-              <td class="progression">d{k.hd}</td>
+              <td class="progression pl-3">d{k.hd}</td>
               <td class="progression">{BAB_LABEL[k.bab]}</td>
               <td class="progression">{k.goodSaves.map((s) => s[0].toUpperCase()).join('') || '—'}</td>
               <td class="progression">{k.skillRanks}+Int</td>
