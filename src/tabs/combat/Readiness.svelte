@@ -10,6 +10,7 @@
   import BonusList from '../../lib/ui/BonusList.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -25,14 +26,9 @@
           <NumInput class="w-12" bind:value={s.value} aria-label="{s.mode} speed" />
           <button type="button" class="icon-btn text-accent" aria-label="Remove {s.mode} speed" onclick={() => c.speeds.other.splice(i, 1)}>✕</button>
         </div>
-        <select class="w-full text-xs capitalize" bind:value={s.mode} aria-label="Movement mode">
-          {#each SPEED_MODES as m (m)}<option value={m}>{m}</option>{/each}
-        </select>
+        <Select class="w-full text-xs" bind:value={s.mode} options={opts(SPEED_MODES)} aria-label="Movement mode" />
         {#if s.mode === 'fly'}
-          <select class="w-full text-xs" bind:value={s.maneuverability} aria-label="Fly maneuverability">
-            <option value="">—</option>
-            {#each MANEUVERABILITY as m (m)}<option value={m}>{m}</option>{/each}
-          </select>
+          <Select class="w-full text-xs" bind:value={s.maneuverability} options={[{ value: '' as const, label: '—' }, ...opts(MANEUVERABILITY)]} aria-label="Fly maneuverability" />
         {/if}
       {:else}
         <div class="stat-value text-3xl">{s.value}<span class="text-xs">ft</span></div>

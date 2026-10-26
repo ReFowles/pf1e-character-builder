@@ -10,6 +10,7 @@
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -71,7 +72,7 @@
       <td data-label="Eq" class="text-center align-middle"><input type="checkbox" bind:checked={a.equipped} aria-label="Equipped" /></td>
       <td data-label="Armor / shield" class="min-w-32"><input class="w-full" bind:value={a.name} aria-label="Name" /></td>
       <td data-label="Kind">
-        <select bind:value={a.kind} aria-label="Kind"><option value="armor">Armor</option><option value="shield">Shield</option></select>
+        <Select bind:value={a.kind} options={opts(['armor', 'shield'] as const)} aria-label="Kind" />
       </td>
       <td data-label="AC" class="w-11"><NumInput bind:value={a.acBonus} signed aria-label="AC bonus" /></td>
       <td data-label="Enh" class="w-11"><NumInput bind:value={a.enhancement} signed aria-label="Enhancement" /></td>

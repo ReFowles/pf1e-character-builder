@@ -15,6 +15,7 @@
   import { iterativeText } from '../../lib/rules/tables';
   import Chevron from '../../lib/ui/Chevron.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   function addWeapon(it: DbItem) {
     const w = it.weapon!;
@@ -96,25 +97,25 @@
       {#if open[w.id]}
         <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-9 print:hidden">
           <Field label="Kind">
-            <select bind:value={w.kind}><option value="melee">Melee</option><option value="ranged">Ranged</option></select>
+            <Select bind:value={w.kind} options={opts(['melee', 'ranged'] as const)} />
           </Field>
           <Field label="Atk abil">
-            <select bind:value={w.attackAbility}>{#each ABILITIES as a (a)}<option value={a}>{a.toUpperCase()}</option>{/each}</select>
+            <Select bind:value={w.attackAbility} options={opts(ABILITIES, (a) => a.toUpperCase())} />
           </Field>
           <Field label="Enh."><NumInput bind:value={w.enhancement} signed /></Field>
           <Field label="Atk misc"><NumInput bind:value={w.attackMisc} signed /></Field>
           <Field label="Dmg abil">
-            <select bind:value={w.damageAbility}>
-              <option value="none">None</option>
-              {#each ABILITIES as a (a)}<option value={a}>{a.toUpperCase()}</option>{/each}
-            </select>
+            <Select bind:value={w.damageAbility} options={[{ value: 'none' as const, label: 'None' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} />
           </Field>
           <Field label="× abil">
-            <select bind:value={w.damageMultiplier}>
-              <option value={0.5}>½ (off-hand)</option>
-              <option value={1}>1</option>
-              <option value={1.5}>1½ (two-handed)</option>
-            </select>
+            <Select
+              bind:value={w.damageMultiplier}
+              options={[
+                { value: 0.5, label: '½ (off-hand)' },
+                { value: 1, label: '1' },
+                { value: 1.5, label: '1½ (two-handed)' },
+              ]}
+            />
           </Field>
           <Field label="Dmg misc"><NumInput bind:value={w.damageMisc} signed /></Field>
           <Field label="Weight"><NumInput bind:value={w.weight} /></Field>

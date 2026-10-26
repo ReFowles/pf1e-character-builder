@@ -3,6 +3,15 @@
     value: T;
     label: string;
     title?: string;
+    /** Options sharing a group get a small heading above the first one. */
+    group?: string;
+  }
+
+  const cap = (s: string) => (s ? s[0].toUpperCase() + s.slice(1) : s);
+
+  /** Options from plain values; labels default to the capitalized value. */
+  export function opts<T extends string | number>(values: readonly T[], label: (v: T) => string = (v) => cap(String(v))): SelectOption<T>[] {
+    return values.map((value) => ({ value, label: label(value) }));
   }
 </script>
 
@@ -53,10 +62,15 @@
     button.focus();
   }
 
-  function onToggle(e: ToggleEvent) {
+  // beforetoggle is synchronous, so keys pressed right after opening see the right state.
+  function onBeforeToggle(e: ToggleEvent) {
     open = e.newState === 'open';
-    if (!open) return;
-    active = selected;
+    if (open) active = selected;
+  }
+
+  // toggle fires once the list is showing and measurable.
+  function onToggle(e: ToggleEvent) {
+    if (e.newState !== 'open') return;
     place();
     list.querySelector<HTMLElement>(`[data-index="${Math.max(0, selected)}"]`)?.scrollIntoView({ block: 'nearest' });
   }
@@ -121,8 +135,11 @@
     ><path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" /></svg
   >
 </button>
-<div bind:this={list} {id} popover="auto" role="listbox" class="select-list" aria-label={ariaLabel} ontoggle={onToggle}>
+<!-- Clicks are cancelled so a wrapping <label> doesn't re-click the trigger and reopen the list. -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div bind:this={list} {id} popover="auto" role="listbox" tabindex="-1" class="select-list" onbeforetoggle={onBeforeToggle} ontoggle={onToggle} onclick={(e) => e.preventDefault()}>
   {#each options as o, i (i)}
+    {#if o.group && o.group !== options[i - 1]?.group}<div class="select-group" role="presentation">{o.group}</div>{/if}
     <div
       id="{id}-{i}"
       data-index={i}

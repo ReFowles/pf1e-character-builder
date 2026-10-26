@@ -14,6 +14,7 @@
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import { useSection } from '../../lib/ui/sectionContext';
   import { fmt } from '../../lib/ui/format';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   interface Props {
     block: Spellcasting;
@@ -142,23 +143,17 @@
 <div class="flex flex-col gap-2 rounded-sm border border-ink/30 p-2">
   <div class="flex flex-wrap items-end gap-2">
     <Field label="Class" class="w-36">
-      <select class="font-semibold" bind:value={b.classId}>
-        <option value={null}>Other</option>
-        {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed'}</option>{/each}
-      </select>
+      <Select class="font-semibold" bind:value={b.classId} options={[{ value: null, label: 'Other' }, ...c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed' }))]} aria-label="Class" />
     </Field>
     {#if !b.classId}<Field label="Label" class="w-32"><input bind:value={b.label} placeholder="e.g. Racial SLAs" /></Field>{/if}
     <Field label="Casting" class="w-32">
-      <select bind:value={b.kind}><option value="prepared">Prepared</option><option value="spontaneous">Spontaneous</option></select>
+      <Select bind:value={b.kind} options={opts(['prepared', 'spontaneous'] as const)} aria-label="Casting" />
     </Field>
     <Field label="Ability" class="w-20">
-      <select bind:value={b.ability}>{#each ABILITIES as a (a)}<option value={a}>{a.toUpperCase()}</option>{/each}</select>
+      <Select bind:value={b.ability} options={opts(ABILITIES, (a) => a.toUpperCase())} aria-label="Ability" />
     </Field>
     <Field label="Spell table" class="w-48 print:hidden">
-      <select bind:value={b.table}>
-        <option value="">Manual</option>
-        {#each SPELL_TABLES as t (t.id)}<option value={t.id}>{t.name}</option>{/each}
-      </select>
+      <Select bind:value={b.table} options={[{ value: '', label: 'Manual' }, ...SPELL_TABLES.map((t) => ({ value: t.id, label: t.name }))]} aria-label="Spell table" />
     </Field>
     <label class="inline-flex h-7 items-center gap-1 self-end text-xs print:hidden" title="One extra domain spell slot per spell level (clerics)">
       <input type="checkbox" bind:checked={b.domainSlot} /> Domain slot

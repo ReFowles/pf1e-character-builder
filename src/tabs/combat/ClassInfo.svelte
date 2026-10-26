@@ -8,6 +8,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Chevron from '../../lib/ui/Chevron.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -181,16 +182,19 @@
             <td class="text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
             {#if editing}
               <td>
-                <select class="w-16" bind:value={k.hd} aria-label="Hit die">
-                  {#each [6, 8, 10, 12] as hd (hd)}<option value={hd}>d{hd}</option>{/each}
-                </select>
+                <Select class="w-16" bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />
               </td>
               <td>
-                <select class="w-16" bind:value={k.bab} aria-label="BAB progression">
-                  <option value="full">Full</option>
-                  <option value="3/4">¾</option>
-                  <option value="1/2">½</option>
-                </select>
+                <Select
+                  class="w-16"
+                  bind:value={k.bab}
+                  options={[
+                    { value: 'full' as const, label: 'Full' },
+                    { value: '3/4' as const, label: '¾' },
+                    { value: '1/2' as const, label: '½' },
+                  ]}
+                  aria-label="BAB progression"
+                />
               </td>
               <td class="text-center whitespace-nowrap">
                 {#each ['fort', 'ref', 'will'] as const as s (s)}
@@ -219,13 +223,12 @@
   <div class="flex flex-wrap items-center gap-2 print:hidden">
     {#if editing || !c.classes.length}<button type="button" class="add-btn" onclick={addClass}>+ Class</button>{/if}
     {#if c.classes.length}
-      <select
+      <Select
         bind:value={() => newLevelClass || c.favoredClassId || c.classes[0]?.id, (v) => (newLevelClass = v ?? '')}
+        options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))}
         aria-label="Class for new level"
         class="text-sm"
-      >
-        {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed class'}</option>{/each}
-      </select>
+      />
       <button type="button" class="btn-primary" onclick={addLevel}>+ Level</button>
       <button type="button" class="btn inline-flex items-center gap-1" aria-expanded={showLog} onclick={() => (showLog = !showLog)}>
         Level history <Chevron open={showLog} />
@@ -253,9 +256,7 @@
             <tr>
               <td data-label="#" class="align-middle tabular-nums">{i + 1}</td>
               <td data-label="Class" class="w-28">
-                <select class="w-full" bind:value={l.classId} aria-label="Class for level {i + 1}">
-                  {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed class'}</option>{/each}
-                </select>
+                <Select class="w-full" bind:value={l.classId} options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))} aria-label="Class for level {i + 1}" />
               </td>
               <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
@@ -269,12 +270,18 @@
               <td data-label="Favored class bonus">
                 {#if l.classId === c.favoredClassId}
                   <div class="flex flex-wrap gap-1">
-                    <select class="max-w-48" value={fcbValue(l)} onchange={(e) => setFcb(l, e.currentTarget.value)} aria-label="Favored class bonus at level {i + 1}">
-                      <option value="hp">+1 HP</option>
-                      <option value="skill">+1 skill rank</option>
-                      {#each knownOther as o (o.label)}<option value="other:{o.label}">+{o.amount} {o.label}</option>{/each}
-                      <option value="new">Other…</option>
-                    </select>
+                    <Select
+                      class="max-w-48"
+                      value={fcbValue(l)}
+                      onchange={(v) => setFcb(l, v)}
+                      options={[
+                        { value: 'hp', label: '+1 HP' },
+                        { value: 'skill', label: '+1 skill rank' },
+                        ...knownOther.map((o) => ({ value: `other:${o.label}`, label: `+${o.amount} ${o.label}` })),
+                        { value: 'new', label: 'Other…' },
+                      ]}
+                      aria-label="Favored class bonus at level {i + 1}"
+                    />
                     {#if drafts[l.id]}
                       <input class="w-14 text-center" bind:value={drafts[l.id].amount} placeholder="1/3" aria-label="Amount per level" title="Amount gained this level, e.g. 1/3" />
                       <input

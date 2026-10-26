@@ -2,7 +2,7 @@
 // Usage: node scripts/checks.ts [--url http://localhost:5173]
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
-import { chromium, type Page } from 'playwright';
+import { chromium, type Locator, type Page } from 'playwright';
 
 const { values: args } = parseArgs({ options: { url: { type: 'string', default: 'http://localhost:5173' } } });
 const fixture = JSON.parse(readFileSync('scripts/fixtures/valeros.json', 'utf8'));
@@ -41,6 +41,11 @@ async function expectText(desc: string, loc: ReturnType<Page['locator']>, want: 
 const hpMax = () => page.locator('[data-section=hp] span.text-5xl');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
+/** Choose an option from a custom Select (combobox button + popover listbox). */
+const pick = async (combo: Locator, option: string) => {
+  await combo.click();
+  await page.locator('.select-list:popover-open').getByRole('option', { name: option, exact: true }).click();
+};
 const skillTotal = (name: string) =>
   page.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
 
@@ -51,7 +56,7 @@ await expectStat('Melee', '+3');
 await expectText('Max HP', hpMax(), /^54$/);
 
 console.log('— size: small');
-await page.getByLabel('Size', { exact: true }).selectOption('small');
+await pick(page.getByLabel('Size', { exact: true }), 'Small');
 await expectStat('AC', '21');
 await expectStat('CMB', '+6');
 await expectText('Stealth', skillTotal('Stealth'), /^\+2$/);
@@ -102,7 +107,7 @@ const chooser = page.waitForEvent('filechooser');
 await page.getByRole('button', { name: 'Import JSON' }).click();
 await (await chooser).setFiles(path!);
 await page.waitForTimeout(300);
-const options = await page.locator('#app > header select').first().locator('option').allInnerTexts();
+const options = await page.locator('#app > header .select-list').first().locator('[role=option]').allTextContents().then((t) => t.map((x) => x.trim()));
 const twoValeros = options.filter((o) => o === 'Valeros').length === 2;
 if (!twoValeros) failed++;
 console.log(`${twoValeros ? 'ok  ' : 'FAIL'} roster after import: ${options.join(', ')}`);
@@ -122,7 +127,7 @@ await page.goto(`${args.url}/#character`);
 await toggleEdit('feats');
 await page.getByRole('button', { name: '⌕ Find feat' }).click();
 await page.getByLabel('Find feat').fill('cleave');
-await page.locator('[role=listbox] [role=option]').first().waitFor();
+await page.locator('[role=listbox]:not(.select-list) [role=option]').first().waitFor();
 await page.keyboard.press('Enter');
 const feats = await page.locator('[data-section=feats] input[aria-label="Feat name"]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
 const hasCleave = feats.filter((f) => f === 'Cleave').length === 2;
@@ -132,7 +137,7 @@ await page.goto(`${args.url}/#combat`);
 await toggleEdit('defense');
 await page.getByRole('button', { name: '⌕ Find armor or shield' }).click();
 await page.getByLabel('Find armor or shield').fill('breastplate');
-await page.locator('[role=listbox] [role=option]').first().waitFor();
+await page.locator('[role=listbox]:not(.select-list) [role=option]').first().waitFor();
 await page.keyboard.press('Enter');
 const armorCount = await page.locator('[data-section=defense] tbody tr').filter({ has: page.locator('input[aria-label="Name"]') }).count();
 if (armorCount !== 3) failed++;
@@ -151,8 +156,8 @@ await page.getByRole('button', { name: 'Config' }).click();
 await page.getByLabel('Mythic tab').check();
 await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 await page.getByRole('button', { name: 'Mythic' }).click();
-await page.locator('[data-section=mythicOverview] select').first().selectOption('3');
-await page.locator('[data-section=mythicOverview] select').nth(1).selectOption('champion');
+await pick(page.getByLabel('Tier', { exact: true }), '3');
+await pick(page.getByLabel('Path', { exact: true }), 'Champion (5 hp/tier)');
 await page.getByRole('button', { name: 'Core' }).click();
 await expectText('Max HP (+15 mythic)', hpMax(), /^74$/);
 await expectStat('Initiative', '+5');
@@ -167,7 +172,7 @@ console.log(`${collapsedOk ? 'ok  ' : 'FAIL'} collapsed macros height: ${box?.he
 
 console.log('— other favored class bonus');
 await page.getByRole('button', { name: /Level history/ }).click();
-await page.getByLabel('Favored class bonus at level 1').selectOption('new');
+await pick(page.getByLabel('Favored class bonus at level 1'), 'Other…');
 await page.getByLabel('Amount per level').fill('1/3');
 await page.getByLabel('Alternate favored class bonus').pressSequentially('channel damage');
 await page.getByLabel('Alternate favored class bonus').press('Enter');

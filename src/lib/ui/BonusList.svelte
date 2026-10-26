@@ -6,6 +6,7 @@
   import { KEY_LABELS } from '../rules/keys';
   import NumInput from './NumInput.svelte';
   import { useSection } from './sectionContext';
+  import Select, { opts } from './Select.svelte';
 
   interface Props {
     /** Keys this list shows; the first is used for new entries. */
@@ -37,13 +38,9 @@
       <div class="flex flex-wrap items-center gap-1">
         <NumInput class="w-12" bind:value={b.value} signed aria-label="Bonus value" />
         {#if keys.length > 1}
-          <select class="w-28" bind:value={b.key} aria-label="Applies to">
-            {#each keys as k (k)}<option value={k}>{KEY_LABELS[k] ?? k}</option>{/each}
-          </select>
+          <Select class="w-28" bind:value={b.key} options={keys.map((k) => ({ value: k, label: KEY_LABELS[k] ?? k }))} aria-label="Applies to" />
         {/if}
-        <select class="w-28" bind:value={b.type} aria-label="Bonus type">
-          {#each BONUS_TYPES as t (t)}<option value={t}>{t}</option>{/each}
-        </select>
+        <Select class="w-28" bind:value={b.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
         <input class="min-w-24 flex-1" bind:value={b.source} placeholder="Source (e.g. Toughness)" aria-label="Source" />
         {#if section.editing}
           <button type="button" class="icon-btn text-accent print:hidden" aria-label="Remove bonus" onclick={() => remove(b.id)}>✕</button>

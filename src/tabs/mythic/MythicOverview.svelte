@@ -6,6 +6,7 @@
   import Field from '../../lib/ui/Field.svelte';
   import UsesTracker from '../../lib/ui/UsesTracker.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const m = $derived(app.char.mythic);
   const dm = $derived(app.d.mythic);
@@ -23,22 +24,18 @@
   {/snippet}
   <div class="grid grid-cols-[4.5rem_4.5rem_1fr_1fr] gap-2">
     <Field label="Tier">
-      <select bind:value={m.tier}>
-        {#each { length: 10 }, i (i)}<option value={i + 1}>{i + 1}</option>{/each}
-      </select>
+      <Select bind:value={m.tier} options={opts([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])} aria-label="Tier" />
     </Field>
     <Field label="Surge upgr." class="text-center"><NumInput bind:value={m.surgeUpgrades} title="Steps the surge die is raised by feats or abilities" /></Field>
     <Field label="Path">
-      <select bind:value={m.path}>
-        <option value="">—</option>
-        {#each MYTHIC_PATHS as p (p)}<option value={p}>{p[0].toUpperCase() + p.slice(1)} ({PATH_HP[p]} hp/tier)</option>{/each}
-      </select>
+      <Select
+        bind:value={m.path}
+        options={[{ value: '' as const, label: '—' }, ...opts(MYTHIC_PATHS, (p) => `${p[0].toUpperCase() + p.slice(1)} (${PATH_HP[p]} hp/tier)`)]}
+        aria-label="Path"
+      />
     </Field>
     <Field label="Second path (Dual Path)">
-      <select bind:value={m.secondPath}>
-        <option value="">—</option>
-        {#each MYTHIC_PATHS.filter((p) => p !== m.path) as p (p)}<option value={p}>{p[0].toUpperCase() + p.slice(1)}</option>{/each}
-      </select>
+      <Select bind:value={m.secondPath} options={[{ value: '' as const, label: '—' }, ...opts(MYTHIC_PATHS.filter((p) => p !== m.path))]} aria-label="Second path" />
     </Field>
   </div>
   <div class="grid grid-cols-3 gap-1">

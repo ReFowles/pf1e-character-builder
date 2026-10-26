@@ -11,6 +11,7 @@
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import { fmt } from '../../lib/ui/format';
   import EditMode from '../../lib/ui/EditMode.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   let open = $state<Record<string, boolean>>({});
@@ -84,18 +85,14 @@
           <div class="grid grid-cols-[2fr_1fr] gap-2">
             <Field label="Name"><input bind:value={m.name} /></Field>
             <Field label="Category">
-              <select bind:value={m.category}>
-                {#each ['feat', 'class', 'spell', 'item', 'condition', 'custom'] as cat (cat)}<option value={cat}>{cat}</option>{/each}
-              </select>
+              <Select bind:value={m.category} options={opts(['feat', 'class', 'spell', 'item', 'condition', 'custom'] as const)} />
             </Field>
           </div>
           {#each m.effects as e, i (e.id)}
             <div class="flex gap-1">
               <input class="w-32" list="bonus-keys" bind:value={e.key} placeholder="key" aria-label="Applies to" title={KEY_LABELS[e.key] ?? 'Unknown key'} class:text-accent={!KEY_LABELS[e.key]} />
               <input class="flex-1 font-mono text-xs" bind:value={e.value} aria-label="Value or formula" class:text-accent={!!app.d.macroErrors[e.id]} title="Number or formula. Refs: {FORMULA_REFS.join(' ')}" />
-              <select class="w-24" bind:value={e.type} aria-label="Bonus type">
-                {#each BONUS_TYPES as t (t)}<option value={t}>{t}</option>{/each}
-              </select>
+              <Select class="w-24" bind:value={e.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
               <button type="button" class="icon-btn text-accent" aria-label="Remove effect" onclick={() => m.effects.splice(i, 1)}>✕</button>
             </div>
           {/each}
@@ -105,21 +102,16 @@
       {/if}
     {/snippet}
     {#snippet tools()}
-      <select
+      <Select
         class="w-44 text-sm"
         aria-label="Add macro from library"
-        onchange={(e) => {
-          addFromLibrary(e.currentTarget.value);
-          e.currentTarget.value = '';
-        }}
-      >
-        <option value="">+ From library…</option>
-        {#each ['feat', 'class', 'spell', 'condition'] as cat (cat)}
-          <optgroup label={cat}>
-            {#each MACRO_LIBRARY.filter((x) => x.category === cat) as x (x.id)}<option value={x.id}>{x.name}</option>{/each}
-          </optgroup>
-        {/each}
-      </select>
+        value=""
+        placeholder="+ From library…"
+        options={['feat', 'class', 'spell', 'condition'].flatMap((cat) =>
+          MACRO_LIBRARY.filter((x) => x.category === cat).map((x) => ({ value: x.id, label: x.name, group: cat })),
+        )}
+        onchange={(id) => addFromLibrary(id)}
+      />
       <button type="button" class="add-btn" onclick={addCustom}>+ Custom</button>
     {/snippet}
   </DynamicList>

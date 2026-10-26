@@ -9,6 +9,7 @@
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import { gp, lb } from '../../lib/ui/format';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -142,12 +143,15 @@
               <td data-label="Notes" class="align-middle"><input class="w-full" bind:value={it.notes} aria-label="Notes" /></td>
               {#if editing}
                 <td data-label="In" class="w-28 align-middle">
-                  <select class="w-full" bind:value={it.containerId} aria-label="Inside container">
-                    <option value={null}>—</option>
-                    {#each containers.filter((k) => !descendants(it.id).has(k.id)) as k (k.id)}
-                      <option value={k.id}>{k.name || 'Container'}</option>
-                    {/each}
-                  </select>
+                  <Select
+                    class="w-full"
+                    bind:value={it.containerId}
+                    options={[
+                      { value: null, label: '—' },
+                      ...containers.filter((k) => !descendants(it.id).has(k.id)).map((k) => ({ value: k.id, label: k.name || 'Container' })),
+                    ]}
+                    aria-label="Inside container"
+                  />
                 </td>
                 <td data-label="Flags" class="align-middle">
                   <div class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
@@ -157,10 +161,7 @@
                     {/if}
                     <label class="inline-flex items-center gap-1" title="Not on the character (mount, camp, home)"><input type="checkbox" bind:checked={it.notCarried} />Away</label>
                     <label class="inline-flex items-center gap-1" title="Worn or wielded"><input type="checkbox" bind:checked={it.equipped} />Equipped</label>
-                    <select class="h-6 w-24 text-xs capitalize" bind:value={it.slot} aria-label="Magic item slot">
-                      <option value="">No slot</option>
-                      {#each MAGIC_SLOTS as s (s)}<option value={s}>{s}</option>{/each}
-                    </select>
+                    <Select class="h-6 w-24 text-xs" bind:value={it.slot} options={[{ value: '' as const, label: 'No slot' }, ...opts(MAGIC_SLOTS)]} aria-label="Magic item slot" />
                   </div>
                 </td>
                 <td class="row-actions align-middle whitespace-nowrap">

@@ -8,6 +8,7 @@
   import UsesTracker from '../../lib/ui/UsesTracker.svelte';
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const PERIODS: UsePeriod[] = ['round', 'minute', 'hour', 'day', 'week', 'month', 'year', 'other'];
@@ -45,9 +46,7 @@
           <div class="flex flex-wrap items-center gap-1 text-sm">
             <FormulaInput class="w-12" bind:value={u.max} bind:expr={u.maxExpr} result={app.d.uses[u.id] ?? u.max} label="Max uses" />
             <span>/</span>
-            <select bind:value={u.per} aria-label="Per">
-              {#each PERIODS as p (p)}<option value={p}>{p}</option>{/each}
-            </select>
+            <Select bind:value={u.per} options={opts(PERIODS, (p) => p)} aria-label="Per" />
             <UsesTracker max={app.d.uses[u.id] ?? u.max} bind:used={u.used} label="{a.name} use" />
             {#if editing}<button type="button" class="icon-btn ml-auto text-accent print:hidden" aria-label="Remove uses" onclick={() => a.uses.splice(i, 1)}>✕</button>{/if}
           </div>

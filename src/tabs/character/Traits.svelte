@@ -3,6 +3,7 @@
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
 </script>
@@ -22,11 +23,7 @@
     {#snippet row(t)}
       <td data-label="Trait" class="w-1/4"><input class="font-semibold" bind:value={t.name} aria-label="Trait name" /></td>
       <td data-label="Kind" class="w-24">
-        <select bind:value={t.kind} aria-label="Kind">
-          <option value="character">Character</option>
-          <option value="racial">Racial</option>
-          <option value="drawback">Drawback</option>
-        </select>
+        <Select bind:value={t.kind} options={opts(['character', 'racial', 'drawback'] as const)} aria-label="Kind" />
       </td>
       <td data-label="Category" class="w-24"><input bind:value={t.category} placeholder="Combat, Faith…" aria-label="Category" /></td>
       <td data-label="Description"><textarea rows="1" class="w-full" bind:value={t.description} aria-label="Description"></textarea></td>

@@ -4,6 +4,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import Field from '../../lib/ui/Field.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const ALIGNMENTS: [string, string][] = [
     ['LG', 'Lawful good'], ['NG', 'Neutral good'], ['CG', 'Chaotic good'],
@@ -29,20 +30,18 @@
   </div>
   <div class="grid grid-cols-[4.25rem_minmax(0,1fr)_3.25rem_minmax(0,1fr)] gap-x-2 gap-y-1">
     <Field label="Align.">
-      <select bind:value={ci.alignment} aria-label="Alignment" title={ALIGNMENTS.find(([a]) => a === ci.alignment)?.[1]}>
-        <option value=""></option>
-        {#each ALIGNMENTS as [a, name] (a)}<option value={a} title={name}>{a}</option>{/each}
-      </select>
+      <Select
+        bind:value={ci.alignment}
+        aria-label="Alignment"
+        options={[{ value: '', label: '—' }, ...ALIGNMENTS.map(([a, name]) => ({ value: a, label: a, title: name }))]}
+      />
     </Field>
     <Field label="Race"><input bind:value={ci.race} /></Field>
     <Field label="Size">
       <!-- Closed, the select shows just the size letter; the open list keeps full names. -->
-      <div class="relative" title={ci.size}>
-        <select class="w-full text-transparent capitalize" bind:value={ci.size} aria-label="Size">
-          {#each SIZES as s (s)}<option value={s} class="text-ink">{s}</option>{/each}
-        </select>
-        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 font-semibold" aria-hidden="true">{ci.size[0].toUpperCase()}</span>
-      </div>
+      <Select bind:value={ci.size} options={opts(SIZES)} aria-label="Size" title={ci.size}>
+        {#snippet display()}<span class="font-semibold">{ci.size[0].toUpperCase()}</span>{/snippet}
+      </Select>
     </Field>
     <Field label="Deity"><input bind:value={ci.deity} /></Field>
   </div>

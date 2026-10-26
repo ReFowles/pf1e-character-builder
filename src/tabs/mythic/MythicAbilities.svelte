@@ -3,6 +3,7 @@
   import { ABILITY_INCREASE_TIERS, BASE_MYTHIC_ABILITIES } from '../../lib/rules/mythic';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
+  import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const m = $derived(app.char.mythic);
 </script>
@@ -25,10 +26,7 @@
     <div class="grid grid-cols-5 gap-1">
       {#each ABILITY_INCREASE_TIERS as t, i (t)}
         <label class="field" class:opacity-40={t > m.tier}>
-          <select bind:value={m.abilityIncreases[i]} aria-label="Ability increase at tier {t}">
-            <option value={null}>—</option>
-            {#each ABILITIES as a (a)}<option value={a}>{a.toUpperCase()}</option>{/each}
-          </select>
+          <Select bind:value={m.abilityIncreases[i]} options={[{ value: null, label: '—' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} aria-label="Ability increase at tier {t}" />
           <span class="field-label">Tier {t}</span>
         </label>
       {/each}

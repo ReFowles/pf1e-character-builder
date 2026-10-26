@@ -4,6 +4,7 @@
 
   const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
+  import Select, { opts } from './Select.svelte';
 </script>
 
 {#if app.configOpen}
@@ -20,11 +21,7 @@
     </label>
 
     <label class="field">
-      <select bind:value={app.char.xp.track}>
-        <option value="slow">Slow</option>
-        <option value="medium">Medium</option>
-        <option value="fast">Fast</option>
-      </select>
+      <Select bind:value={app.char.xp.track} options={opts(['slow', 'medium', 'fast'] as const)} aria-label="Experience track" />
       <span class="field-label">Experience track</span>
     </label>
     <label class="flex items-center gap-2 text-sm">

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from '../state.svelte';
   import AboutDialog from './AboutDialog.svelte';
+  import Select from './Select.svelte';
 
   let about: AboutDialog;
 
@@ -10,15 +11,13 @@
 <header class="flex flex-wrap items-center gap-2 border-b border-ink/30 bg-paper px-3 py-2 print:hidden">
   <label class="flex items-center gap-1 text-sm">
     <span class="sr-only">Character</span>
-    <select
-      class="max-w-56 border border-ink/30 py-1"
+    <Select
+      class="max-w-56 border-ink/30"
+      aria-label="Character"
       value={app.char.id}
-      onchange={(e) => app.switchTo(e.currentTarget.value)}
-    >
-      {#each sorted as r (r.id)}
-        <option value={r.id}>{r.name || 'Unnamed character'}</option>
-      {/each}
-    </select>
+      options={sorted.map((r) => ({ value: r.id, label: r.name || 'Unnamed character' }))}
+      onchange={(id) => app.switchTo(id)}
+    />
   </label>
   <button type="button" class="btn p-1.5" title="New character" aria-label="New character" onclick={() => app.create()}>
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M10 4v12M4 10h12"/></svg>
