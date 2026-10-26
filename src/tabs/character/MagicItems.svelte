@@ -1,92 +1,44 @@
 <script lang="ts">
-  import { make } from '../../lib/model/defaults';
-  import type { MagicItem, MagicSlot } from '../../lib/model/types';
+  import type { Item, MagicSlot } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
-  import NumInput from '../../lib/ui/NumInput.svelte';
-  import DynamicTable from '../../lib/ui/DynamicTable.svelte';
-  import DbPicker from '../../lib/ui/DbPicker.svelte';
-  import { parseGp } from '../../lib/model/migrate';
-  import { MAGIC_SLOTS } from '../../lib/model/types';
 
-  const toSlot = (s: string): MagicSlot => {
-    const slot = s === 'wrists' ? 'wrist' : s;
-    return (MAGIC_SLOTS as readonly string[]).includes(slot) ? (slot as MagicSlot) : 'slotless';
-  };
-
-  const c = $derived(app.char);
   // Body slots in sheet order; two ring slots.
-  const SLOTS: { slot: MagicSlot; index: number; label: string }[] = [
-    'head', 'headband', 'eyes', 'shoulders', 'neck', 'chest', 'body', 'belt', 'wrist', 'hands', 'ring', 'ring', 'feet',
-  ].map((slot, i, all) => ({
-    slot: slot as MagicSlot,
-    index: all.slice(0, i).filter((s) => s === slot).length,
-    label: slot,
-  }));
+  const SLOTS: { slot: MagicSlot; index: number }[] = (
+    ['head', 'headband', 'eyes', 'shoulders', 'neck', 'chest', 'body', 'belt', 'wrist', 'hands', 'ring', 'ring', 'feet'] as MagicSlot[]
+  ).map((slot, i, all) => ({ slot, index: all.slice(0, i).filter((s) => s === slot).length }));
 
-  const slotless = $derived(c.magicItems.filter((m) => m.slot === 'slotless'));
-
-  function inSlot(slot: MagicSlot, index: number): MagicItem | undefined {
-    return c.magicItems.filter((m) => m.slot === slot)[index];
-  }
-
-  function setName(slot: MagicSlot, index: number, name: string) {
-    const existing = inSlot(slot, index);
-    if (existing) {
-      if (name.trim() || existing.weight || existing.notes) existing.name = name;
-      else c.magicItems.splice(c.magicItems.indexOf(existing), 1);
-    } else if (name.trim()) {
-      c.magicItems.push({ ...make.magicItem(), slot, name });
+  /** Equipped gear, grouped by slot. */
+  const bySlot = $derived.by(() => {
+    const out = new Map<string, Item[]>();
+    for (const it of app.char.items) {
+      if (!it.equipped || !it.slot) continue;
+      out.set(it.slot, [...(out.get(it.slot) ?? []), it]);
     }
-  }
+    return out;
+  });
+  const slotless = $derived(bySlot.get('slotless') ?? []);
 </script>
 
 <Section id="magicItems">
+  {#snippet info()}
+    <p>Magic items come from your gear. In Equipment's edit mode, give an item a slot and mark it equipped to list it here.</p>
+  {/snippet}
   <table class="w-full text-sm">
-    <thead>
-      <tr><th class="text-right">Slot</th><th>Item</th><th class="text-center">Wt</th><th class="text-center">gp</th></tr>
-    </thead>
     <tbody>
       {#each SLOTS as s (s.slot + s.index)}
-        {@const item = inSlot(s.slot, s.index)}
+        {@const items = bySlot.get(s.slot) ?? []}
+        {@const shown = s.slot === 'ring' ? items.slice(s.index, s.index + 1) : s.index === 0 ? items : []}
         <tr class="border-b border-ink/10">
-          <th class="w-16 py-0.5 text-right">{s.label}</th>
-          <td>
-            <input class="w-full" value={item?.name ?? ''} onchange={(e) => setName(s.slot, s.index, e.currentTarget.value)} aria-label="{s.label} slot item" />
-          </td>
-          <td class="w-10">
-            {#if item}<NumInput bind:value={item.weight} aria-label="{s.label} item weight" />{/if}
-          </td>
-          <td class="w-14">
-            {#if item}<NumInput bind:value={item.price} aria-label="{s.label} item value in gp" />{/if}
-          </td>
+          <th class="w-20 py-1 text-right align-middle">{s.slot}</th>
+          <td class="py-1 pl-2 align-middle">{shown.map((it) => it.name).join(', ')}</td>
         </tr>
       {/each}
     </tbody>
   </table>
-
-
   <div class="subhead mt-1">Slotless</div>
-  <DynamicTable items={slotless} cols={3} reorder={false} onremove={(m) => c.magicItems.splice(c.magicItems.indexOf(m), 1)} onadd={() => c.magicItems.push(make.magicItem())} addLabel="Slotless item" empty="Ioun stones, wondrous items…">
-    {#snippet head()}
-      <th>Item</th>
-      <th class="text-center">Wt</th>
-      <th class="text-center">gp</th>
-    {/snippet}
-    {#snippet row(m)}
-      <td><input bind:value={m.name} aria-label="Item name" /></td>
-      <td class="w-10"><NumInput bind:value={m.weight} aria-label="Weight" /></td>
-      <td class="w-14"><NumInput bind:value={m.price} aria-label="Value in gp" /></td>
-    {/snippet}
-    {#snippet tools()}
-      <DbPicker
-        kind="items"
-        label="Find magic item"
-        filter={(it) => it.category === 'magic'}
-        onpick={(it) => c.magicItems.push({ ...make.magicItem(), name: it.name, slot: toSlot(it.slot), weight: it.weight, price: parseGp(it.price) })}
-      >
-        {#snippet detail(it)}{it.slot || 'slotless'} · {it.price}{it.summary ? ` — ${it.summary}` : ''}{/snippet}
-      </DbPicker>
-    {/snippet}
-  </DynamicTable>
+  <ul class="text-sm">
+    {#each slotless as it (it.id)}<li class="border-b border-ink/10 py-1">{it.name}</li>{/each}
+    <li class="hidden h-6 border-b border-ink/20 print:block"></li>
+  </ul>
 </Section>

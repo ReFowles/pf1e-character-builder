@@ -193,7 +193,7 @@
           <tr><th></th><th class="text-right" title="What you carry">Weight</th><th class="text-right" title="Everything you own">Value</th></tr>
         </thead>
         <tbody>
-          {#each [['Weapons', 'weapons'], ['Armor & shields', 'armor'], ['Magic items', 'magicItems'], ['Gear', 'items'], ['Coins', 'coins']] as const as [label, key] (key)}
+          {#each [['Weapons', 'weapons'], ['Armor & shields', 'armor'], ['Gear', 'items'], ['Coins', 'coins']] as const as [label, key] (key)}
             <tr class="border-b border-ink/10">
               <td>{label}</td>
               <td class="text-right">{lb(d.weight[key])}</td>
