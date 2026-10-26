@@ -15,15 +15,15 @@
     <BreakdownList items={ABILITIES.map((a) => ({ label: a.toUpperCase(), total: app.d.abilities[a].breakdown, signed: false }))} />
     <p>Temp columns show scores including temporary changes, active macros and conditions. Enter damage, drain or short-term changes in the ± column; use Edit to change base, racial, enhancement, inherent and misc values.</p>
   {/snippet}
-  <table class="w-full text-center">
+  <table class="ability-table w-full text-center">
     <thead>
       <tr>
         <th></th>
         <th class="text-center">Score</th>
         <th class="text-center">Mod</th>
         <th class="text-center">Temp</th>
-        <th class="text-center">Temp mod</th>
-        <th class="text-center print:hidden" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
+        <th class="w-14 text-center">Temp mod</th>
+        <th class="w-12 text-center" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
       </tr>
     </thead>
     <tbody>
@@ -33,9 +33,9 @@
           <th class="w-12 bg-head py-1 text-center text-sm text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
           <td class="text-xl font-bold tabular-nums">{s.score}</td>
           <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
-          <td class="px-1 py-0.5"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
-          <td class="px-1 py-0.5"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
-          <td class="w-12 py-0.5 pl-1 print:hidden"><NumInput bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
+          <td class="tabular-nums">{s.hasTemp ? s.tempScore : ''}</td>
+          <td class="tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</td>
+          <td class="p-0.5"><NumInput class="border-transparent bg-transparent" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
         </tr>
       {/each}
     </tbody>

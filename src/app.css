@@ -230,6 +230,14 @@
   .skills-table td {
     @apply align-middle;
   }
+  /* Ability scores: a ruled grid (the temp cells double as write-in boxes on paper). */
+  .ability-table {
+    @apply border-collapse;
+  }
+  .ability-table td,
+  .ability-table tbody th {
+    @apply border border-ink/25;
+  }
   /* Class progression cells, joined by bullets. */
   .dyn-table td.progression {
     @apply px-0 align-middle text-xs whitespace-nowrap opacity-70;
