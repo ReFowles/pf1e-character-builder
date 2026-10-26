@@ -1,0 +1,50 @@
+import { ABILITIES } from '../model/types';
+import { KNOWLEDGES, SKILLS } from './skills';
+
+export interface KeyDef {
+  key: string;
+  label: string;
+}
+
+const ABILITY_NAMES = {
+  str: 'Strength',
+  dex: 'Dexterity',
+  con: 'Constitution',
+  int: 'Intelligence',
+  wis: 'Wisdom',
+  cha: 'Charisma',
+};
+
+/** Every bonus key derive() reads, for pickers and validation. */
+export const BONUS_KEYS: KeyDef[] = [
+  ...ABILITIES.map((a) => ({ key: `ability.${a}`, label: `${ABILITY_NAMES[a]} score` })),
+  { key: 'attack', label: 'All attack rolls' },
+  { key: 'attack.melee', label: 'Melee attack rolls' },
+  { key: 'attack.ranged', label: 'Ranged attack rolls' },
+  { key: 'damage', label: 'All weapon damage' },
+  { key: 'damage.melee', label: 'Melee weapon damage' },
+  { key: 'damage.ranged', label: 'Ranged weapon damage' },
+  { key: 'cmb', label: 'Combat maneuver bonus' },
+  { key: 'cmd', label: 'Combat maneuver defense' },
+  { key: 'ac', label: 'Armor class (type decides touch/flat-footed)' },
+  { key: 'save', label: 'All saving throws' },
+  { key: 'save.fort', label: 'Fortitude save' },
+  { key: 'save.ref', label: 'Reflex save' },
+  { key: 'save.will', label: 'Will save' },
+  { key: 'init', label: 'Initiative' },
+  { key: 'speed', label: 'Base speed (ft)' },
+  { key: 'hp.max', label: 'Maximum hit points' },
+  { key: 'skills', label: 'All skill checks' },
+  ...SKILLS.map((s) => ({ key: `skill.${s.key}`, label: `${s.name}${s.multi ? ' (all)' : ''}` })),
+  ...KNOWLEDGES.map((k) => ({ key: `skill.knowledge.${k}`, label: `Knowledge (${k})` })),
+  { key: 'cl', label: 'Caster level' },
+  { key: 'concentration', label: 'Concentration checks' },
+  { key: 'spell.dc', label: 'Spell save DCs' },
+];
+
+export const KEY_LABELS: Record<string, string> = Object.fromEntries(
+  BONUS_KEYS.map((k) => [k.key, k.label]),
+);
+
+/** Formula references available to macros and resource formulas. */
+export const FORMULA_REFS = ['@level', '@bab', '@cl', ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]), '@class.<name>.level'];
