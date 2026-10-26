@@ -7,13 +7,13 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
 
-  const PARTS = ['base', 'racial', 'enhancement', 'inherent', 'misc', 'temp'] as const;
+  const PARTS = ['base', 'racial', 'enhancement', 'inherent', 'misc'] as const;
 </script>
 
 <Section id="abilities" editable>
   {#snippet info()}
     <BreakdownList items={ABILITIES.map((a) => ({ label: a.toUpperCase(), total: app.d.abilities[a].breakdown, signed: false }))} />
-    <p>Temp columns show scores including temporary changes, active macros and conditions. Use Edit to change base, racial, enhancement, inherent, misc and temp values.</p>
+    <p>Temp columns show scores including temporary changes, active macros and conditions. Enter damage, drain or short-term changes in the ± column; use Edit to change base, racial, enhancement, inherent and misc values.</p>
   {/snippet}
   <table class="w-full text-center">
     <thead>
@@ -23,6 +23,7 @@
         <th class="text-center">Mod</th>
         <th class="text-center">Temp</th>
         <th class="text-center">Temp mod</th>
+        <th class="text-center print:hidden" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
       </tr>
     </thead>
     <tbody>
@@ -34,6 +35,7 @@
           <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
           <td class="px-1 py-0.5"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
           <td class="px-1 py-0.5"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
+          <td class="w-12 py-0.5 pl-1 print:hidden"><NumInput bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
         </tr>
       {/each}
     </tbody>
@@ -59,7 +61,6 @@
           {/each}
         </tbody>
       </table>
-      <p class="mt-1 text-xs opacity-60">Temp holds damage/drain or short-term changes. Active macros and conditions also show in the temp columns.</p>
     </div>
   {/if}
   {/snippet}</EditMode>
