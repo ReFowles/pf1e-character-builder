@@ -14,6 +14,7 @@
   import { parseGp } from '../../lib/model/migrate';
   import { iterativeText } from '../../lib/rules/tables';
   import Chevron from '../../lib/ui/Chevron.svelte';
+  import BreakdownList from '../../lib/ui/BreakdownList.svelte';
 
   function addWeapon(it: DbItem) {
     const w = it.weapon!;
@@ -41,7 +42,19 @@
   const KEYS = ['attack', 'attack.melee', 'attack.ranged', 'damage', 'damage.melee', 'damage.ranged', 'cmb'];
 </script>
 
-<Section id="offense">
+<Section id="offense" editable>
+  {#snippet info()}
+    <BreakdownList
+      items={[
+        { label: 'BAB', total: { total: d.bab, parts: [] } },
+        { label: 'Melee', total: d.attack.melee },
+        { label: 'Ranged', total: d.attack.ranged },
+        { label: 'CMB', total: d.cmb },
+        ...c.weapons.filter((w) => d.weapons[w.id]).map((w) => ({ label: `${w.name || 'Weapon'} attack`, total: d.weapons[w.id].attackBreakdown })),
+      ]}
+    />
+    <p>Extra attacks come every 5 points of BAB above +5 (−5 each). Damage adds the damage ability modifier × its multiplier (½ off-hand, 1½ two-handed), enhancement and damage bonuses.</p>
+  {/snippet}
   <div class="grid grid-cols-4 gap-2">
     <Stat label="BAB" value={d.bab} display={iterativeText(d.bab, d.bab)} big />
     <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} big />
@@ -76,7 +89,7 @@
             <input class="flex-1" bind:value={w.notes} placeholder="Notes" aria-label="Notes" />
           </div>
         </Field>
-        <button type="button" class="inline-flex items-center gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
+        <button type="button" class="-mr-6 inline-flex w-12 items-center justify-end gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
           Details <Chevron open={!!open[w.id]} />
         </button>
       </div>
