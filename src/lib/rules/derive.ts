@@ -12,6 +12,7 @@ import { findCondition } from './conditions';
 import { tryEvaluate, type Vars } from './expr';
 import { abilityMod } from './math';
 import { SKILL_BY_KEY, isClassSkill, subtypeKey, type SkillDef } from './skills';
+import { SPELL_TABLE_BY_ID } from './spellTables';
 import {
   COINS_PER_LB,
   LOAD_PENALTIES,
@@ -70,6 +71,9 @@ export interface SpellcastingDerived {
   dcs: number[];
   /** Total slots per level (null = cannot cast that level). */
   slots: (number | null)[];
+  /** Base slots from the class table or manual entry. */
+  base: (number | null)[];
+  known: (number | null)[];
   bonus: number[];
   prepared: number[];
 }
@@ -442,20 +446,28 @@ export function derive(c: Character): Derived {
   const spellcasting: Record<string, SpellcastingDerived> = {};
   for (const b of c.spellcasting) {
     const mod = mods[b.ability];
-    const casterLevel =
-      (b.classId ? (classLevels[b.classId] ?? 0) : 0) +
-      b.casterLevelMisc +
-      set.total(['cl']).total;
+    const classLevel = b.classId ? (classLevels[b.classId] ?? 0) : 0;
+    const casterLevel = classLevel + b.casterLevelMisc + set.total(['cl']).total;
     const dcBonus = set.total(['spell.dc']).total;
-    const bonus = b.slots.map((s, lvl) => (s === null ? 0 : bonusSpells(mod, lvl)));
+    const table = SPELL_TABLE_BY_ID[b.table];
+    const tableRow = (rows: (number | null)[][] | undefined) =>
+      rows && classLevel > 0 ? rows[Math.min(classLevel, 20) - 1] : undefined;
+    const baseSlots = table
+      ? (tableRow(table.perDay) ?? Array(10).fill(null))
+      : b.slots;
+    const known = (table ? tableRow(table.known) : undefined) ?? b.known;
+    const misc = b.slotsMisc.map((m, lvl) => m + (table?.domainSlot && lvl > 0 ? 1 : 0));
+    const bonus = baseSlots.map((s, lvl) => (s === null ? 0 : bonusSpells(mod, lvl)));
     spellcasting[b.id] = {
       casterLevel,
       abilityMod: mod,
       concentration: casterLevel + mod + set.total(['concentration']).total,
-      dcs: b.slots.map((_, lvl) => 10 + lvl + mod + dcBonus),
-      slots: b.slots.map((s, lvl) => (s === null ? null : s + bonus[lvl] + (b.slotsMisc[lvl] ?? 0))),
+      dcs: baseSlots.map((_, lvl) => 10 + lvl + mod + dcBonus),
+      slots: baseSlots.map((s, lvl) => (s === null ? null : s + bonus[lvl] + (misc[lvl] ?? 0))),
+      base: baseSlots,
+      known,
       bonus,
-      prepared: b.slots.map((_, lvl) =>
+      prepared: baseSlots.map((_, lvl) =>
         b.spells.filter((sp) => sp.level === lvl).reduce((s, sp) => s + sp.prepared, 0),
       ),
     };

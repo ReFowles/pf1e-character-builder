@@ -164,6 +164,7 @@ export const make = {
     label: '',
     kind: 'prepared',
     ability: 'int',
+    table: '',
     casterLevelMisc: 0,
     slots: Array(10).fill(null),
     slotsMisc: Array(10).fill(0),

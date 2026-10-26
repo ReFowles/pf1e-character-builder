@@ -78,3 +78,19 @@ describe('derive', () => {
     expect(d.load).toBe('light');
   });
 });
+
+describe('derive spellcasting', () => {
+  it('uses class tables, bonus spells and domain slots', () => {
+    const c = newCharacter();
+    c.abilities.wis.base = 16;
+    const k = { ...make.classDef(), name: 'Cleric' };
+    c.classes = [k];
+    c.levels = [1, 2, 3].map(() => make.level(k.id));
+    c.spellcasting = [{ ...make.spellcasting(), classId: k.id, ability: 'wis', table: 'cleric' }];
+    const s = derive(c).spellcasting[c.spellcasting[0].id];
+    expect(s.casterLevel).toBe(3);
+    // Cleric 3: 4/2/1 + bonus (Wis +3: 1/1/1) + domain (0/1/1)
+    expect(s.slots.slice(0, 4)).toEqual([4, 4, 3, null]);
+    expect(s.dcs[2]).toBe(15);
+  });
+});

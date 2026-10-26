@@ -290,6 +290,8 @@ export interface Spellcasting extends Identified {
   label: string;
   kind: 'prepared' | 'spontaneous';
   ability: Ability;
+  /** Spell table id (rules/spellTables.ts); '' = enter slots manually. */
+  table: string;
   casterLevelMisc: number;
   /** Base slots per spell level 0..9 from the class table (null = cannot cast). */
   slots: (number | null)[];
