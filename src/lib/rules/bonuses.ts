@@ -5,6 +5,8 @@ export interface Bonus {
   value: number;
   type: BonusType;
   source: string;
+  /** From a macro or condition rather than a permanent source. */
+  temp?: boolean;
 }
 
 export interface Part extends Bonus {
