@@ -18,7 +18,6 @@ export const SECTIONS: SectionDef[] = [
   { id: 'macros', title: 'Macros', tab: 'combat' },
   { id: 'offense', title: 'Offense', tab: 'combat' },
   { id: 'defense', title: 'Defense', tab: 'combat' },
-  { id: 'resources', title: 'Resources', tab: 'combat' },
   { id: 'special', title: 'Special Abilities', tab: 'combat' },
   { id: 'bio', title: 'Character Bio', tab: 'character' },
   { id: 'portrait', title: 'Portrait', tab: 'character' },

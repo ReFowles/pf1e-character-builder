@@ -1,17 +1,16 @@
 <script lang="ts">
-  import { CONDITIONS } from '../../lib/rules/conditions';
+  import { make } from '../../lib/model/defaults';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
-  import Stat from '../../lib/ui/Stat.svelte';
-  import Chips from '../../lib/ui/Chips.svelte';
+  import FormulaInput from '../../lib/ui/FormulaInput.svelte';
+  import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
+  import { breakdown } from '../../lib/ui/format';
 
   const c = $derived(app.char);
   const hp = $derived(app.d.hp);
   let amount = $state(0);
-
-  const CONDITION_NAMES = Object.values(CONDITIONS).map((d) => d.name);
 
   function damage() {
     const absorbed = Math.min(c.hp.temp, amount);
@@ -40,20 +39,15 @@
 </script>
 
 <Section id="hp">
-  <div class="grid grid-cols-3 gap-1">
-    <Stat label="Max HP" value={hp.max} signed={false} />
-    <div class="stat">
-      <NumInput class="stat-value border-0" bind:value={c.hp.temp} aria-label="Temporary hit points" />
-      <div class="field-label">Temp</div>
-    </div>
-    <div class="stat">
-      <NumInput class="stat-value border-0" bind:value={c.hp.nonlethal} aria-label="Nonlethal damage" />
-      <div class="field-label">Nonlethal</div>
-    </div>
-  </div>
-  <div class="flex flex-col items-center justify-center rounded-sm border-2 border-ink p-1">
+  <label class="flex items-center gap-2">
+    <span class="field-label text-[0.65rem]">Temporary hit points</span>
+    <NumInput class="w-14" bind:value={c.hp.temp} />
+  </label>
+
+  <div class="relative grid grid-cols-[1fr_2.5rem_1fr] items-center rounded-sm border-2 border-ink px-1 py-2">
+    <div class="flex flex-col items-center">
       <input
-        class="w-full border-0 text-center text-5xl font-bold tabular-nums print:invisible"
+        class="w-full border-0 bg-transparent text-center text-5xl font-bold tabular-nums print:invisible"
         class:text-accent={hp.current <= hp.max.total / 4}
         inputmode="numeric"
         aria-label="Current hit points"
@@ -64,22 +58,55 @@
           e.currentTarget.value = String(app.d.hp.current);
         }}
       />
-    <div class="field-label">Current{status ? ` — ${status}` : ''}</div>
+      <span class="field-label">Current{status ? ` — ${status}` : ''}</span>
+    </div>
+    <svg class="h-14 w-full text-ink" viewBox="0 0 40 56" preserveAspectRatio="none" aria-hidden="true">
+      <line x1="34" y1="2" x2="6" y2="54" stroke="currentColor" stroke-width="1.5" />
+    </svg>
+    <div class="flex flex-col items-center" title={breakdown(hp.max)}>
+      <span class="text-5xl leading-[3rem] font-bold tabular-nums">{hp.max.total}</span>
+      <span class="field-label">Max HP</span>
+    </div>
   </div>
+
+  <label class="flex items-center gap-2">
+    <span class="field-label text-[0.65rem]">Nonlethal damage</span>
+    <NumInput class="w-14" bind:value={c.hp.nonlethal} />
+  </label>
 
   <div class="flex items-center gap-1 print:hidden">
     <NumInput class="w-14" bind:value={amount} aria-label="Damage or healing amount" />
     <button type="button" class="btn" onclick={damage}>Damage</button>
     <button type="button" class="btn" onclick={heal}>Heal</button>
-    <button type="button" class="ml-auto text-xs underline opacity-70" onclick={() => ((c.hp.damage = 0), (c.hp.nonlethal = 0))}>Full heal</button>
-  </div>
-
-  <div class="flex flex-col">
-    <span class="field-label">Conditions</span>
-    <Chips bind:items={c.conditions} suggestions={CONDITION_NAMES} placeholder="Add condition…" label="Add condition" />
-    {#each app.d.conditionNotes as note (note)}
-      <p class="text-xs opacity-70">{note}</p>
-    {/each}
+    <button type="button" class="btn ml-auto" onclick={() => ((c.hp.damage = 0), (c.hp.nonlethal = 0))}>Full heal</button>
   </div>
   <div class="print:hidden"><BonusList keys={['hp.max']} label="Extra max HP (e.g. Toughness)" /></div>
+
+  <div class="mt-1 flex items-center justify-between border-b border-ink/30">
+    <span class="subhead border-0">Resources</span>
+    <button
+      type="button"
+      class="text-xs underline opacity-70 hover:opacity-100 print:hidden"
+      title="Refill every pool to its maximum"
+      onclick={() => c.resources.forEach((r) => (r.current = app.d.resources[r.id] ?? r.max))}>Refill all</button
+    >
+  </div>
+  <DynamicTable bind:items={c.resources} cols={3} onadd={() => c.resources.push(make.resource())} addLabel="Pool" empty="Grit, Panache, Arcane Pool, Ki, Burn…">
+    {#snippet head()}
+      <th>Pool</th>
+      <th class="text-center">Current</th>
+      <th class="text-center">Max</th>
+    {/snippet}
+    {#snippet row(r)}
+      <td class="min-w-20"><input class="w-full font-semibold" bind:value={r.name} aria-label="Pool name" title={r.notes} /></td>
+      <td class="w-24">
+        <div class="flex items-center">
+          <button type="button" class="icon-btn print:hidden" aria-label="Spend one" onclick={() => (r.current = Math.max(0, r.current - 1))}>−</button>
+          <NumInput class="font-bold print:invisible" bind:value={r.current} aria-label="{r.name} current" />
+          <button type="button" class="icon-btn print:hidden" aria-label="Gain one" onclick={() => r.current++}>+</button>
+        </div>
+      </td>
+      <td class="w-14"><FormulaInput bind:value={r.max} bind:expr={r.maxExpr} result={app.d.resources[r.id] ?? r.max} label="{r.name} max" /></td>
+    {/snippet}
+  </DynamicTable>
 </Section>

@@ -9,7 +9,6 @@
   import Macros from './Macros.svelte';
   import Offense from './Offense.svelte';
   import Defense from './Defense.svelte';
-  import Resources from './Resources.svelte';
   import SpecialAbilities from './SpecialAbilities.svelte';
 </script>
 
@@ -28,6 +27,5 @@
   <Macros />
   <Offense />
   <Defense />
-  <Resources />
   <SpecialAbilities />
 </div>
