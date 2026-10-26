@@ -2,7 +2,179 @@
 
 @theme {
   --color-parchment: #f7f1e3;
+  --color-paper: #fffdf8;
   --color-ink: #1f1a17;
   --color-rule: #8a7f72;
   --color-accent: #7a1f1f;
+  --color-gold: #b8862b;
+  --font-display: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+}
+
+@layer base {
+  html {
+    @apply bg-parchment text-ink;
+    font-size: 15px;
+  }
+  input,
+  select,
+  textarea {
+    @apply min-w-0 rounded-sm border-b border-rule/60 bg-transparent px-1 py-0.5 outline-none;
+  }
+  input:focus,
+  select:focus,
+  textarea:focus {
+    @apply border-accent bg-white;
+  }
+  input[type='checkbox'] {
+    @apply size-4 accent-accent;
+  }
+  button:disabled {
+    @apply opacity-30;
+  }
+  th {
+    @apply px-1 text-left text-[0.65rem] font-semibold tracking-wide whitespace-nowrap uppercase opacity-70;
+  }
+}
+
+@layer components {
+  .sheet-section {
+    @apply flex flex-col rounded-sm border border-ink/70 bg-paper shadow-sm;
+    break-inside: avoid;
+  }
+  .section-head {
+    @apply flex items-center gap-2 bg-ink px-2 py-1 text-paper;
+  }
+  .section-head h2 {
+    @apply font-display text-sm font-bold tracking-widest uppercase;
+  }
+  .section-body {
+    @apply flex flex-1 flex-col gap-2 p-2;
+  }
+  .field {
+    @apply flex min-w-0 flex-col;
+  }
+  .field > input,
+  .field > select,
+  .field > textarea {
+    @apply w-full;
+  }
+  .field-label {
+    @apply text-[0.6rem] font-semibold tracking-wider uppercase opacity-60;
+  }
+  .num {
+    @apply w-full text-center tabular-nums;
+  }
+  .stat {
+    @apply flex min-w-12 flex-col items-center rounded-sm border border-ink/30 px-2 py-1;
+  }
+  .stat-value {
+    @apply text-xl leading-tight font-bold tabular-nums;
+  }
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full border border-ink/30 bg-parchment px-2 py-0.5 text-sm;
+  }
+  .icon-btn {
+    @apply inline-flex size-6 items-center justify-center rounded-sm text-sm hover:bg-ink/10;
+  }
+  .section-head .icon-btn {
+    @apply hover:bg-paper/20;
+  }
+  .add-btn {
+    @apply self-start rounded-sm border border-dashed border-ink/40 px-2 py-0.5 text-sm hover:bg-ink/5;
+  }
+  .btn {
+    @apply rounded-sm border border-ink/40 bg-paper px-2 py-1 text-sm hover:bg-ink/5;
+  }
+  .btn-primary {
+    @apply rounded-sm bg-accent px-2 py-1 text-sm text-paper hover:bg-accent/90;
+  }
+  .dyn-table {
+    @apply w-full border-collapse text-sm;
+  }
+  .dyn-table td {
+    @apply border-b border-ink/10 px-0.5 py-0.5 align-top;
+  }
+  .dyn-table td > input,
+  .dyn-table td > select {
+    @apply w-full;
+  }
+  .subhead {
+    @apply border-b border-ink/30 font-display text-xs font-bold tracking-widest uppercase;
+  }
+}
+
+/* --- Layout: mobile flows in mockup order, desktop/print use grid areas --- */
+.sheet-grid {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 1024px), print {
+  .sheet-grid > [data-section] {
+    grid-area: var(--area);
+  }
+  .combat-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-areas:
+      'info info info info info info currency currency logo logo logo logo'
+      'info info info info info info currency currency level level level level'
+      'hp hp hp abilities abilities abilities abilities abilities classes classes classes classes'
+      'macros macros macros macros macros macros macros macros skills skills skills skills'
+      'offense offense offense offense offense offense offense offense skills skills skills skills'
+      'defense defense defense defense defense defense defense defense skills skills skills skills'
+      'defense defense defense defense defense defense defense defense resources resources resources resources'
+      'special special special special special special special special special special special special';
+  }
+  .character-grid {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    grid-template-areas:
+      'bio bio bio bio bio bio bio portrait portrait portrait portrait portrait'
+      'traits traits traits traits traits traits traits portrait portrait portrait portrait portrait'
+      'feats feats feats feats feats feats classAbilities classAbilities classAbilities classAbilities classAbilities classAbilities'
+      'magicItems magicItems magicItems magicItems equipment equipment equipment equipment equipment equipment equipment equipment';
+  }
+}
+
+/* Hidden/collapsed apply to the screen only; print has its own toggle. */
+@media screen {
+  .screen-hidden,
+  .screen-collapsed {
+    display: none !important;
+  }
+}
+
+@media print {
+  @page {
+    size: letter;
+    margin: 0.4in;
+  }
+  html {
+    font-size: 10px;
+    background: white;
+  }
+  .sheet-section {
+    box-shadow: none;
+  }
+  .section-head {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  input,
+  select,
+  textarea {
+    border-color: transparent;
+    appearance: none;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: transparent;
+  }
+  .print-row td {
+    height: 1.6rem;
+    border-bottom: 1px solid #0003;
+  }
+  .tab-panel + .tab-panel {
+    break-before: page;
+  }
 }
