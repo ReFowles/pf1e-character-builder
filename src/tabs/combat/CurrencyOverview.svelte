@@ -9,6 +9,11 @@
 </script>
 
 <Section id="currency">
+  {#snippet info()}
+    <p>Coins carried here count toward carried weight at 50 coins per pound.</p>
+    <p>Stashes, pouches and bank accounts live in Equipment on the Character tab; mark them weightless so they don't add weight.</p>
+    <p>1 pp = 10 gp, 1 gp = 10 sp, 1 sp = 10 cp.</p>
+  {/snippet}
   <div class="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-0.5">
     {#each COINS as coin (coin)}
       <span class="field-label text-xs">{coin}</span>
