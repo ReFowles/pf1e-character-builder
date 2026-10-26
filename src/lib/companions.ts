@@ -11,7 +11,9 @@ export const companionTitle = (comp: Companion) => `${comp.name.trim() || 'Unnam
 
 /** Kinds the character's classes suggest: druids and rangers get animals, wizards familiars, summoners eidolons. */
 function guessKind(c: Character): { kind: CompanionKind; classId: string | null } {
-  const has = (re: RegExp) => c.classes.find((k) => re.test(k.presetId ?? k.name.toLowerCase()));
+  // Only classes the character has levels in.
+  const has = (re: RegExp) =>
+    c.classes.find((k) => c.levels.some((l) => l.classId === k.id) && re.test(k.presetId ?? k.name.toLowerCase()));
   const animal = has(/druid|ranger|hunter|cavalier|paladin/);
   if (animal) return { kind: 'animal', classId: animal.id };
   const familiar = has(/wizard|witch|arcanist|sorcerer|magus|shaman/);

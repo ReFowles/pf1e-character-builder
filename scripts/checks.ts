@@ -170,16 +170,16 @@ console.log('— mythic');
 await page.getByRole('button', { name: 'Config' }).click();
 await page.getByLabel('Mythic tab').check();
 await page.locator('aside').getByRole('button', { name: 'Close' }).click();
-await page.getByRole('button', { name: 'Mythic' }).click();
+await page.locator('nav').getByRole('button', { name: 'Mythic', exact: true }).click();
 await pick(page.getByLabel('Tier', { exact: true }), '3');
 await pick(page.getByLabel('Path', { exact: true }), 'Champion (5 hp/tier)');
-await page.getByRole('button', { name: 'Core' }).click();
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
 await expectText('Max HP (+15 mythic)', hpMax(), /^74$/);
 await expectStat('Initiative', '+5');
-await page.getByRole('button', { name: 'Mythic' }).click();
+await page.locator('nav').getByRole('button', { name: 'Mythic', exact: true }).click();
 await page.getByLabel('Mythic Paragon').check();
 await expectText('Mythic power with paragon', page.locator('[data-section=mythicOverview] .stat', { hasText: 'Mythic power' }).locator('.stat-value'), /^9\/9$/);
-await page.getByRole('button', { name: 'Core' }).click();
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
 await expectStat('Initiative', '+7');
 
 console.log('— collapse');
@@ -226,7 +226,7 @@ const addSpellSection = async () => {
   await page.locator('aside').getByRole('button', { name: '+ Spellcasting section' }).click();
   await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 };
-await page.getByRole('button', { name: 'Spells' }).click();
+await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 await addSpellSection();
 const summoner = page.locator('[data-section^=spells-]').first();
 await expectText('Section title', summoner.locator('.section-head h2'), /^Summoner Spells$/i);
@@ -257,8 +257,60 @@ const paperBg = () => page.evaluate(() => getComputedStyle(document.querySelecto
 const darkBg = await paperBg();
 check('dark mode on screen', (await page.evaluate(() => document.documentElement.classList.contains('dark'))) && darkBg !== 'rgb(255, 253, 248)', darkBg);
 await page.emulateMedia({ media: 'print' });
-check('print stays light', (await paperBg()) === 'rgb(255, 253, 248)', await paperBg());
+check('print stays light (white paper)', (await paperBg()) === 'rgb(255, 255, 255)', await paperBg());
 await page.emulateMedia({ media: 'screen' });
+await page.getByRole('button', { name: 'Config' }).click();
+await page.getByLabel('Dark mode').uncheck();
+await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+
+console.log('— other caster with a spell table');
+await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await pick(other.getByLabel('Spell table'), 'Wizard / Witch');
+await expectText('Other caster 3rd level (CL 5 wizard table)', other.getByText(/^3rd level$/i), /3rd level/i);
+
+console.log('— enlarge person');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await expectText('BAB single number', page.locator('.stat', { has: page.locator('.field-label', { hasText: /^BAB$/ }) }).first().locator('.stat-value'), /^\+\d+$/);
+const offenseEdit = page.locator('[data-section=offense] .section-head').getByRole('button', { name: /^(Edit|Done editing) / });
+if ((await offenseEdit.getAttribute('aria-pressed')) === 'true') await offenseEdit.click();
+const longswordDamage = page.locator('[data-section=offense] .field', { has: page.locator('.field-label', { hasText: /^Damage$/ }) }).first();
+const acBefore = await page.locator('.stat', { has: page.locator('.field-label', { hasText: /^AC$/ }) }).first().locator('.stat-value').innerText();
+await macros.locator('.section-head button').first().click(); // collapsed by the collapse check
+await toggleEdit('macros');
+await pick(page.getByLabel('Add macro from library'), 'Enlarge Person');
+await toggleEdit('macros');
+await page.getByLabel('Activate Enlarge Person').check({ force: true });
+await expectText('Longsword damage one size up', longswordDamage, /^2d6/);
+await expectStat('AC', String(Number(acBefore) - 1));
+await page.getByLabel('Activate Enlarge Person').uncheck({ force: true });
+await expectText('Longsword damage back to normal', longswordDamage, /^1d8/);
+
+console.log('— equipped checkbox');
+await page.locator('nav').getByRole('button', { name: 'Character', exact: true }).click();
+const eqp = page.locator('[data-section=equipment] tbody tr').first().getByRole('checkbox').first();
+const wasEquipped = await eqp.isChecked();
+await eqp.click();
+check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
+
+console.log('— companions');
+await page.getByRole('button', { name: 'Config' }).click();
+await page.getByLabel(/Companions tab/).check();
+await page.locator('aside').getByRole('button', { name: '+ Companion' }).click();
+await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+await page.locator('nav').getByRole('button', { name: 'Companions', exact: true }).click();
+const comp = page.locator('[data-section^=companion-]').first();
+await expectText('Companion title', comp.locator('.section-head h2'), /animal companion/i);
+// Linked to Fighter 4: animal companion level 4 = 4 HD, BAB +3.
+await expectText('Companion summary', comp.locator('p.text-sm').first(), /4 HD · level 4/);
+await expectText('Companion BAB', comp.locator('.stat', { has: page.locator('.field-label', { hasText: /^BAB$/ }) }).locator('.stat-value'), /^\+3$/);
+
+console.log('— small-screen menu');
+await page.setViewportSize({ width: 390, height: 800 });
+check('header buttons hidden on small screens', !(await page.locator('#app > header').getByRole('button', { name: 'Export JSON' }).first().isVisible()));
+await page.getByRole('button', { name: 'Menu' }).click();
+check('menu holds Export JSON', await page.getByRole('menuitem', { name: 'Export JSON' }).isVisible());
+await page.keyboard.press('Escape');
+await page.setViewportSize({ width: 1280, height: 900 });
 
 if (errors.length) {
   failed += errors.length;
