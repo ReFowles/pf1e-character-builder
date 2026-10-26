@@ -79,7 +79,8 @@ export type FcbKind = 'hp' | 'skill' | 'other';
 export interface LevelEntry extends Identified {
   classId: string;
   hpRoll: number;
-  fcb: { kind: FcbKind; note: string };
+  /** 'other' FCBs are named bonuses with a fractional amount, e.g. 1/3 channel damage. */
+  fcb: { kind: FcbKind; label: string; amount: string };
 }
 
 /** A manual modifier entered by the user against a stat key. */
@@ -102,14 +103,19 @@ export interface SkillEntry extends Identified {
   misc: number;
 }
 
+export interface OtherSpeed extends Identified {
+  /** fly, swim, climb, burrow, or anything else. */
+  mode: string;
+  value: number;
+  /** Fly maneuverability (clumsy…perfect). */
+  maneuverability: string;
+}
+
 export interface Speeds {
   base: number;
+  /** Override for speed in medium/heavy armor or load; 0 = calculate. */
   armored: number;
-  fly: number;
-  flyManeuverability: string;
-  swim: number;
-  climb: number;
-  burrow: number;
+  other: OtherSpeed[];
 }
 
 export interface Weapon extends Identified {
@@ -127,6 +133,8 @@ export interface Weapon extends Identified {
   range: string;
   type: string;
   weight: number;
+  /** Value in gp. */
+  price: number;
   ammo: string;
   notes: string;
 }
@@ -143,6 +151,7 @@ export interface ArmorPiece extends Identified {
   /** Light/medium/heavy for armor, or shield type. */
   category: string;
   weight: number;
+  price: number;
   notes: string;
 }
 
@@ -228,7 +237,8 @@ export interface Item extends Identified {
   weightless: boolean;
   /** Item (and contents) is not on the character (e.g. on a mount, at home). */
   notCarried: boolean;
-  value: string;
+  /** Value of one unit, in gp. */
+  price: number;
   notes: string;
 }
 
@@ -253,6 +263,7 @@ export interface MagicItem extends Identified {
   name: string;
   slot: MagicSlot;
   weight: number;
+  price: number;
   notes: string;
 }
 
@@ -302,6 +313,29 @@ export interface Spellcasting extends Identified {
   /** Class-specific details: domains, school, bloodline, patron, mystery... */
   details: { id: string; label: string; value: string }[];
   spells: SpellEntry[];
+}
+
+export const MYTHIC_PATHS = ['archmage', 'champion', 'guardian', 'hierophant', 'marshal', 'trickster'] as const;
+export type MythicPath = (typeof MYTHIC_PATHS)[number];
+
+export interface MythicEntry extends Identified {
+  name: string;
+  /** Tier gained (feats, path abilities) or spell level (spells). */
+  tier: number;
+  notes: string;
+}
+
+export interface Mythic {
+  enabled: boolean;
+  tier: number;
+  path: MythicPath | '';
+  powerUsed: number;
+  /** Ability raised by +2 at tiers 2, 4, 6, 8, 10. */
+  abilityIncreases: (Ability | null)[];
+  feats: MythicEntry[];
+  pathAbilities: MythicEntry[];
+  spells: MythicEntry[];
+  notes: string;
 }
 
 export interface SectionUi {
@@ -368,6 +402,7 @@ export interface Character {
   magicItems: MagicItem[];
   currency: { carried: Coins; locations: CoinLocation[] };
   spellcasting: Spellcasting[];
+  mythic: Mythic;
   ui: {
     sections: Record<string, SectionUi>;
   };

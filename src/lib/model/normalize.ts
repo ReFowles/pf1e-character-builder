@@ -29,6 +29,10 @@ const ITEM_FACTORIES: Record<string, () => unknown> = {
   magicItems: make.magicItem,
   'currency.locations': make.coinLocation,
   spellcasting: make.spellcasting,
+  'speeds.other': () => make.otherSpeed(),
+  'mythic.feats': () => make.mythicEntry(),
+  'mythic.pathAbilities': () => make.mythicEntry(),
+  'mythic.spells': () => make.mythicEntry(),
   'spellcasting.spells': () => make.spell(),
 };
 

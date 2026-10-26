@@ -15,6 +15,8 @@ import type {
   MacroEffect,
   MagicItem,
   ManualBonus,
+  MythicEntry,
+  OtherSpeed,
   Resistance,
   Resource,
   SkillEntry,
@@ -26,7 +28,7 @@ import type {
   Weapon,
 } from './types';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -54,7 +56,7 @@ export const make = {
     id: uid(),
     classId,
     hpRoll: 0,
-    fcb: { kind: 'hp', note: '' },
+    fcb: { kind: 'hp', label: '', amount: '' },
   }),
   bonus: (): ManualBonus => ({ id: uid(), key: '', value: 0, type: 'untyped', source: '' }),
   skill: (skill = '', subtype?: string): SkillEntry => ({
@@ -80,6 +82,7 @@ export const make = {
     range: '',
     type: '',
     weight: 0,
+    price: 0,
     ammo: '',
     notes: '',
   }),
@@ -95,6 +98,7 @@ export const make = {
     spellFailure: 0,
     category: '',
     weight: 0,
+    price: 0,
     notes: '',
   }),
   resistance: (): Resistance => ({ id: uid(), name: '', value: '' }),
@@ -140,10 +144,12 @@ export const make = {
     isContainer: false,
     weightless: false,
     notCarried: false,
-    value: '',
+    price: 0,
     notes: '',
   }),
-  magicItem: (): MagicItem => ({ id: uid(), name: '', slot: 'slotless', weight: 0, notes: '' }),
+  magicItem: (): MagicItem => ({ id: uid(), name: '', slot: 'slotless', weight: 0, price: 0, notes: '' }),
+  otherSpeed: (mode = 'fly'): OtherSpeed => ({ id: uid(), mode, value: 0, maneuverability: '' }),
+  mythicEntry: (tier = 1): MythicEntry => ({ id: uid(), name: '', tier, notes: '' }),
   coinLocation: (): CoinLocation => ({ id: uid(), name: '', weightless: true, coins: coins() }),
   spell: (level = 0): SpellEntry => ({
     id: uid(),
@@ -175,12 +181,15 @@ export const make = {
   }),
 };
 
-/** The starting skill list: one row per skill, plus every Knowledge. */
+/** The starting skill list: one row per skill. Knowledge rows are added for class skills. */
 export function defaultSkills(): SkillEntry[] {
-  return SKILLS.flatMap((d) => {
-    if (d.key === 'knowledge') return KNOWLEDGES.map((k) => make.skill('knowledge', k));
-    return [d.multi ? make.skill(d.key, '') : make.skill(d.key)];
-  });
+  return SKILLS.map((d) => (d.multi ? make.skill(d.key, '') : make.skill(d.key)));
+}
+
+/** Knowledge subtypes implied by a class skill list ("knowledge" = all). */
+export function classKnowledges(classSkills: string[]): string[] {
+  if (classSkills.includes('knowledge')) return [...KNOWLEDGES];
+  return classSkills.filter((s) => s.startsWith('knowledge:')).map((s) => s.slice('knowledge:'.length));
 }
 
 export function newCharacter(): Character {
@@ -228,15 +237,7 @@ export function newCharacter(): Character {
     maxHpFirstLevel: true,
     hp: { damage: 0, temp: 0, nonlethal: 0 },
     conditions: [],
-    speeds: {
-      base: 30,
-      armored: 0,
-      fly: 0,
-      flyManeuverability: '',
-      swim: 0,
-      climb: 0,
-      burrow: 0,
-    },
+    speeds: { base: 30, armored: 0, other: [] },
     heroPoints: 1,
     skills: defaultSkills(),
     bonuses: [],
@@ -256,6 +257,17 @@ export function newCharacter(): Character {
     magicItems: [],
     currency: { carried: coins(), locations: [] },
     spellcasting: [],
+    mythic: {
+      enabled: false,
+      tier: 1,
+      path: '',
+      powerUsed: 0,
+      abilityIncreases: [null, null, null, null, null],
+      feats: [],
+      pathAbilities: [],
+      spells: [],
+      notes: '',
+    },
     ui: { sections: { macros: { hidden: false, collapsed: false, printHidden: true } } },
   };
 }

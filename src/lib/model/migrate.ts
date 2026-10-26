@@ -1,10 +1,78 @@
-type Plain = Record<string, unknown>;
+import { uid } from './id';
+import { isClassSkill } from '../rules/skills';
+
+type Plain = Record<string, any>;
+
+const arr = (v: unknown): Plain[] => (Array.isArray(v) ? v : []);
+
+/** Parse a price like "15 gp", "5 sp" or "1,200" into gp. */
+export function parseGp(raw: unknown): number {
+  if (typeof raw === 'number') return raw;
+  if (typeof raw !== 'string') return 0;
+  const m = raw.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*(pp|gp|sp|cp)?/i);
+  if (!m) return 0;
+  const rate = { pp: 10, gp: 1, sp: 0.1, cp: 0.01 }[(m[2] ?? 'gp').toLowerCase() as 'gp'];
+  return Math.round(Number(m[1]) * rate * 100) / 100;
+}
+
+/** "+ 1/3 Damage to Channel" -> { amount: '1/3', label: 'Damage to Channel' }. */
+export function parseFcbNote(note: string): { amount: string; label: string } {
+  const m = note.trim().match(/^\+?\s*(\d+(?:\s*\/\s*\d+)?)\s+(.*)$/);
+  if (!m) return { amount: '1', label: note.trim() };
+  return { amount: m[1].replace(/\s+/g, ''), label: m[2].trim() };
+}
 
 /**
  * Upgrade steps keyed by the version they upgrade *from*. Each step receives
  * data at version N and returns data at version N + 1.
  */
-const STEPS: Record<number, (d: Plain) => Plain> = {};
+const STEPS: Record<number, (d: Plain) => Plain> = {
+  1: (d) => {
+    // Speeds: fixed fly/swim/climb/burrow fields become a list.
+    const sp = d.speeds ?? {};
+    const other = ['fly', 'swim', 'climb', 'burrow']
+      .filter((mode) => Number(sp[mode]) > 0)
+      .map((mode) => ({
+        id: uid(),
+        mode,
+        value: Number(sp[mode]),
+        maneuverability: mode === 'fly' ? (sp.flyManeuverability ?? '') : '',
+      }));
+    const speeds = { base: sp.base ?? 30, armored: sp.armored ?? 0, other };
+
+    // FCB notes become label + amount.
+    const levels = arr(d.levels).map((l) => {
+      const fcb = l.fcb ?? {};
+      if (fcb.kind !== 'other' || typeof fcb.note !== 'string' || !fcb.note.trim()) {
+        return { ...l, fcb: { kind: fcb.kind ?? 'hp', label: '', amount: '' } };
+      }
+      return { ...l, fcb: { kind: 'other', ...parseFcbNote(fcb.note) } };
+    });
+
+    // Items: free-text value becomes a gp price.
+    const items = arr(d.items).map(({ value, ...it }) => ({ ...it, price: parseGp(value) }));
+
+    // Knowledge rows: keep only used ones and class skills.
+    const classSkills = arr(d.classes).flatMap((k) => arr(k.classSkills) as unknown as string[]);
+    let skills = arr(d.skills).filter(
+      (s) =>
+        s.skill !== 'knowledge' ||
+        Number(s.ranks) > 0 ||
+        (Number(s.misc) || 0) !== 0 ||
+        s.favorite ||
+        s.classSkill === true ||
+        isClassSkill(classSkills, 'knowledge', s.subtype),
+    );
+    if (Array.isArray(d.skills) && !skills.some((s) => s.skill === 'knowledge')) {
+      // Keep one blank row so Knowledge still appears in the list.
+      const at = arr(d.skills).findIndex((s) => s.skill === 'knowledge');
+      skills = [...skills];
+      skills.splice(Math.max(0, at), 0, { id: uid(), skill: 'knowledge', subtype: '', ranks: 0, favorite: false, misc: 0 });
+    }
+
+    return { ...d, speeds, levels, items, ...(Array.isArray(d.skills) ? { skills } : {}) };
+  },
+};
 
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;

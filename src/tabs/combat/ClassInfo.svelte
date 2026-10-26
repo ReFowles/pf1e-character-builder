@@ -193,7 +193,7 @@
                       <option value="other">Other</option>
                     </select>
                     {#if l.fcb.kind === 'other'}
-                      <input class="flex-1" bind:value={l.fcb.note} placeholder="e.g. +1/6 rage power" aria-label="Alternate favored class bonus" />
+                      <input class="flex-1" bind:value={l.fcb.label} placeholder="e.g. rage power" aria-label="Alternate favored class bonus" />
                     {/if}
                   </div>
                 {:else}
@@ -215,7 +215,7 @@
       <div>
         {fcbs.filter((l) => l.fcb.kind === 'hp').length} HP ·
         {fcbs.filter((l) => l.fcb.kind === 'skill').length} skill ranks
-        {#each fcbs.filter((l) => l.fcb.kind === 'other' && l.fcb.note) as l (l.id)}· {l.fcb.note} {/each}
+        {#each fcbs.filter((l) => l.fcb.kind === 'other' && l.fcb.label) as l (l.id)}· +{l.fcb.amount} {l.fcb.label} {/each}
       </div>
     </div>
   {/if}
@@ -227,11 +227,7 @@
         <div class="field-label">Speed{app.d.speed.encumbered ? '*' : ''}</div>
       </div>
       <Field label="Base"><NumInput bind:value={c.speeds.base} /></Field>
-      <Field label="Fly"><NumInput bind:value={c.speeds.fly} /></Field>
-      <Field label="Swim"><NumInput bind:value={c.speeds.swim} /></Field>
       <Field label="Armored" class="col-start-2"><NumInput bind:value={c.speeds.armored} title="Leave 0 to calculate" /></Field>
-      <Field label="Climb"><NumInput bind:value={c.speeds.climb} /></Field>
-      <Field label="Burrow"><NumInput bind:value={c.speeds.burrow} /></Field>
     </div>
     <Stat label="Initiative" value={app.d.init} big />
     <div class="stat">
