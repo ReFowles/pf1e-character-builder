@@ -34,7 +34,7 @@
     onadd={() => c.specialAbilities.push(make.specialAbility())}
     addLabel="Special ability"
     empty="Rage, Channel Energy, Bombs, Wild Shape…"
-    class="grid grid-cols-1 gap-2 lg:grid-cols-2 print:grid-cols-2"
+    class="grid grid-cols-1 gap-2 @2xl:grid-cols-2 @5xl:grid-cols-3"
   >
     {#snippet item(a)}
       <div class="grid grid-cols-[2fr_1fr] gap-2">

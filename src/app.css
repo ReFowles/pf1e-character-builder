@@ -221,10 +221,10 @@
     @apply align-middle;
   }
   /* Class progression cells, joined by bullets. */
-  .progression {
+  .dyn-table td.progression {
     @apply px-0 align-middle text-xs whitespace-nowrap opacity-70;
   }
-  .progression + .progression::before {
+  .dyn-table td.progression + td.progression::before {
     content: '·';
     @apply px-1;
   }
@@ -293,10 +293,29 @@
 .core [data-section='special'] { order: 12; }
 
 @media (min-width: 1024px), print {
+  /* Row 2 holds Special Abilities; the right column spans both rows unless Special goes wide. */
   .core {
     display: grid;
     grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    grid-template-rows: auto 1fr;
     align-items: start;
+    column-gap: 0.5rem;
+    row-gap: 0.5rem;
+  }
+  .core-left {
+    grid-area: 1 / 1;
+  }
+  .core-right {
+    grid-area: 1 / 2 / 3 / 3;
+  }
+  .core > [data-section='special'] {
+    grid-area: 2 / 1;
+  }
+  .core.special-wide .core-right {
+    grid-row: 1;
+  }
+  .core.special-wide > [data-section='special'] {
+    grid-column: 1 / -1;
   }
   .core-left,
   .core-right {
