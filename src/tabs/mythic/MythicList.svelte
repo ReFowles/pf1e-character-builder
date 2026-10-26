@@ -18,7 +18,10 @@
   let { id, items = $bindable(), numberLabel = 'Tier', nameLabel, addLabel, empty }: Props = $props();
 </script>
 
-<Section {id}>
+<Section {id} editable>
+  {#snippet info()}
+    <p>{empty} Use Edit to add, reorder or remove entries.</p>
+  {/snippet}
   <DynamicTable bind:items cols={3} onadd={() => items.push(make.mythicEntry(numberLabel === 'Tier' ? app.char.mythic.tier : 1))} {addLabel} {empty}>
     {#snippet head()}
       <th class="text-center">{numberLabel}</th>
@@ -26,9 +29,9 @@
       <th>Notes</th>
     {/snippet}
     {#snippet row(e)}
-      <td class="w-12"><NumInput bind:value={e.tier} aria-label={numberLabel} /></td>
-      <td class="w-2/5"><input class="w-full font-semibold" bind:value={e.name} aria-label={nameLabel} /></td>
-      <td><textarea rows="1" class="w-full" bind:value={e.notes} aria-label="Notes"></textarea></td>
+      <td data-label={numberLabel} class="w-12"><NumInput bind:value={e.tier} aria-label={numberLabel} /></td>
+      <td data-label={nameLabel} class="w-2/5"><input class="w-full font-semibold" bind:value={e.name} aria-label={nameLabel} /></td>
+      <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={e.notes} aria-label="Notes"></textarea></td>
     {/snippet}
   </DynamicTable>
 </Section>
