@@ -10,7 +10,7 @@
 </script>
 
 {#if boxes}
-  <div class="flex flex-wrap gap-0.5" role="group" aria-label="{label} tracker">
+  <div class="flex flex-wrap items-center gap-0.5 self-center" role="group" aria-label="{label} tracker">
     {#each { length: max }, i (i)}
       <input
         type="checkbox"

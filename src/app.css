@@ -28,6 +28,15 @@
   textarea {
     @apply py-1;
   }
+  /* Own chevron (with right padding) so selects look alike everywhere, even with transparent text. */
+  select {
+    appearance: none;
+    padding-right: 1.5rem;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%231f1a17'%3E%3Cpath d='M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.4rem center;
+    background-size: 0.85rem;
+  }
   input:focus,
   select:focus,
   textarea:focus {
@@ -114,7 +123,14 @@
     @apply text-xl leading-tight font-bold tabular-nums;
   }
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full border border-ink/30 bg-parchment px-2 py-0.5 text-sm;
+    @apply inline-flex w-fit max-w-full items-center gap-1 rounded-full border border-ink/30 bg-parchment px-2 py-0.5 text-sm;
+  }
+  .chip-input {
+    @apply h-6 min-w-4 border-0 bg-transparent p-0;
+    field-sizing: content;
+  }
+  .chip-input:focus {
+    @apply ring-0;
   }
   .icon-btn {
     @apply inline-flex size-6 items-center justify-center rounded-sm text-sm transition-colors hover:bg-ink/10;
@@ -198,6 +214,39 @@
   }
 }
 
+/* Small screens: table rows wrap into labelled fields instead of scrolling sideways. */
+@media screen and (max-width: 639px) {
+  .dyn-table:not(.keep-table) thead {
+    display: none;
+  }
+  .dyn-table:not(.keep-table) tbody tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    gap: 0.25rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent);
+  }
+  .dyn-table:not(.keep-table) tbody td {
+    display: flex;
+    flex: 1 1 6rem;
+    flex-direction: column;
+    border: 0;
+    padding: 0;
+  }
+  .dyn-table:not(.keep-table) tbody td[data-label]::before {
+    content: attr(data-label);
+    font-size: 0.6rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.6;
+  }
+  .dyn-table:not(.keep-table) tbody td.row-actions {
+    flex: 0 0 auto;
+  }
+}
+
 /* Hidden/collapsed apply to the screen only; print has its own toggle. */
 @media screen {
   .screen-hidden,
@@ -227,6 +276,7 @@
   textarea {
     border-color: transparent;
     background: transparent;
+    background-image: none;
     box-shadow: none;
     appearance: none;
     resize: none;
