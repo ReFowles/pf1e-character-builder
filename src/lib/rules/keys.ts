@@ -34,6 +34,8 @@ export const BONUS_KEYS: KeyDef[] = [
   { key: 'init', label: 'Initiative' },
   { key: 'speed', label: 'Base speed (ft)' },
   { key: 'hp.max', label: 'Maximum hit points' },
+  { key: 'size.steps', label: 'Size category steps (+1 = one size larger)' },
+  { key: 'capacity.mult', label: 'Carrying capacity multiplier (highest applies)' },
   { key: 'skills', label: 'All skill checks' },
   ...SKILLS.map((s) => ({ key: `skill.${s.key}`, label: `${s.name}${s.multi ? ' (all)' : ''}` })),
   ...KNOWLEDGES.map((k) => ({ key: `skill.knowledge.${k}`, label: `Knowledge (${k})` })),

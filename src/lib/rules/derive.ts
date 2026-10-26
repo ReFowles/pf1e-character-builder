@@ -6,6 +6,7 @@ import {
   type Item,
   type Save,
   type SkillEntry,
+  type Size,
 } from '../model/types';
 import { BonusSet, stack, type Bonus, type Total } from './bonuses';
 import { findCondition } from './conditions';
@@ -13,6 +14,7 @@ import { tryEvaluate, type Vars } from './expr';
 import { abilityMod } from './math';
 import { SKILL_BY_KEY, isClassSkill, subtypeKey, type SkillDef } from './skills';
 import { SPELL_TABLE_BY_ID } from './spellTables';
+import { scaleDice } from './dice';
 import { ABILITY_INCREASE_TIERS, PATH_HP, mythicPowerMax, surgeDie } from './mythic';
 import { addFractions, formatFraction, parseFraction } from './fraction';
 import {
@@ -22,6 +24,8 @@ import {
   babFor,
   bonusSpells,
   carryingCapacity,
+  scaleCapacity,
+  shiftSize,
   iteratives,
   loadFor,
   reducedSpeed,
@@ -53,6 +57,8 @@ export interface SkillDerived {
 
 export interface WeaponDerived {
   attacks: number[];
+  /** Damage dice adjusted for size changes (Enlarge Person...). */
+  damageDice: string;
   damageBonus: number;
   attackBreakdown: Total;
 }
@@ -128,6 +134,9 @@ export interface Derived {
   fcb: FcbSummary;
   mythic: { tier: number; effectiveTier: number; paragon: boolean; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
+  /** Size after size-changing effects, and the steps applied. */
+  effectiveSize: Size;
+  sizeSteps: number;
   load: Load;
   spellcasting: Record<string, SpellcastingDerived>;
   resources: Record<string, number>;
@@ -190,15 +199,6 @@ export function derive(c: Character): Derived {
 
   // --- Bonus collection ---------------------------------------------------
   const set = new BonusSet();
-  const size = SIZE_MODS[c.info.size] ?? SIZE_MODS.medium;
-  set.add(
-    { key: 'ac', value: size.ac, type: 'size', source: 'Size' },
-    { key: 'attack', value: size.ac, type: 'size', source: 'Size' },
-    { key: 'cmb', value: size.cm, type: 'size', source: 'Size' },
-    { key: 'cmd', value: size.cm, type: 'size', source: 'Size' },
-    { key: 'skill.fly', value: size.fly, type: 'size', source: 'Size' },
-    { key: 'skill.stealth', value: size.stealth, type: 'size', source: 'Size' },
-  );
   for (const a of ABILITIES) {
     const s = c.abilities[a];
     set.add(
@@ -292,6 +292,20 @@ export function derive(c: Character): Derived {
     }
   }
 
+  // --- Size (after macros, so Enlarge Person and the like shift it) -------
+  const sizeSteps = set.total(['size.steps']).total;
+  const effectiveSize = shiftSize(c.info.size, sizeSteps);
+  const size = SIZE_MODS[effectiveSize];
+  const sizeSource = sizeSteps ? `Size (${effectiveSize})` : 'Size';
+  set.add(
+    { key: 'ac', value: size.ac, type: 'size', source: sizeSource },
+    { key: 'attack', value: size.ac, type: 'size', source: sizeSource },
+    { key: 'cmb', value: size.cm, type: 'size', source: sizeSource },
+    { key: 'cmd', value: size.cm, type: 'size', source: sizeSource },
+    { key: 'skill.fly', value: size.fly, type: 'size', source: sizeSource },
+    { key: 'skill.stealth', value: size.stealth, type: 'size', source: sizeSource },
+  );
+
   const abilities = {} as Record<Ability, AbilityDerived>;
   const mods = {} as Record<Ability, number>;
   for (const a of ABILITIES) {
@@ -344,7 +358,9 @@ export function derive(c: Character): Derived {
     total: 0,
   };
   wealth.total = round2(wealth.weapons + wealth.armor + wealth.items + wealth.coins);
-  const capacity = carryingCapacity(abilities.str.tempScore, c.info.size);
+  // Capacity multipliers (Ant Haul ×3) don't stack: the highest applies.
+  const capacityMult = Math.max(1, ...set.list(['capacity.mult']).map((b) => b.value));
+  const capacity = scaleCapacity(carryingCapacity(abilities.str.tempScore, effectiveSize), capacityMult);
   const load = loadFor(weight.total, capacity);
   const loadPen = LOAD_PENALTIES[load];
 
@@ -407,7 +423,7 @@ export function derive(c: Character): Derived {
       ...set.list(['attack', 'attack.ranged']),
     ]),
   };
-  const smallSize = ['fine', 'diminutive', 'tiny'].includes(c.info.size);
+  const smallSize = ['fine', 'diminutive', 'tiny'].includes(effectiveSize);
   const cmbAbility: Ability = smallSize ? 'dex' : 'str';
   const cmb = sumTotal([
     base('cmb', bab, 'BAB'),
@@ -449,6 +465,7 @@ export function derive(c: Character): Derived {
       set.total(['damage', `damage.${w.kind}`]).total;
     weapons[w.id] = {
       attacks: iteratives(bab).map((b) => b + offset),
+      damageDice: scaleDice(w.damage, sizeSteps),
       damageBonus,
       attackBreakdown,
     };
@@ -509,11 +526,13 @@ export function derive(c: Character): Derived {
   for (const b of c.spellcasting) {
     const mod = mods[b.ability];
     const classLevel = b.classId ? (classLevels[b.classId] ?? 0) : 0;
-    const casterLevel = classLevel + b.casterLevelMisc + set.total(['cl']).total;
+    const casterLevel = (b.classId ? classLevel : b.casterLevel) + b.casterLevelMisc + set.total(['cl']).total;
+    // Spell tables are read by class level, or by caster level for blocks without a class.
+    const tableLevel = b.classId ? classLevel : casterLevel;
     const dcBonus = set.total(['spell.dc']).total;
     const table = SPELL_TABLE_BY_ID[b.table];
     const tableRow = (rows: (number | null)[][] | undefined) =>
-      rows && classLevel > 0 ? rows[Math.min(classLevel, 20) - 1] : undefined;
+      rows && tableLevel > 0 ? rows[Math.min(tableLevel, 20) - 1] : undefined;
     // Manual blocks (no table): a level becomes castable once it has base or misc slots.
     const baseSlots = table
       ? (tableRow(table.perDay) ?? Array(10).fill(null))
@@ -579,6 +598,8 @@ export function derive(c: Character): Derived {
       ? { tier, effectiveTier, paragon: c.mythic.paragon, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier, c.mythic.surgeUpgrades), hp: mythicHp }
       : null,
     capacity,
+    effectiveSize,
+    sizeSteps,
     load,
     spellcasting,
     resources,

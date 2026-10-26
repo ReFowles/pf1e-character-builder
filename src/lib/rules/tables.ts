@@ -1,4 +1,4 @@
-import type { BabProgression, Size, XpTrack } from '../model/types';
+import { SIZES, type BabProgression, type Size, type XpTrack } from '../model/types';
 
 /** XP required to reach each level (index 0 = level 1). Core Rulebook table 3-1. */
 export const XP_TABLE: Record<XpTrack, number[]> = {
@@ -81,6 +81,18 @@ export function carryingCapacity(str: number, size: Size): Capacity {
     liftOffGround: heavy * 2,
     pushDrag: heavy * 5,
   };
+}
+
+/** Multiply every carrying capacity band (Ant Haul, Muleback Cords...). */
+export function scaleCapacity(cap: Capacity, mult: number): Capacity {
+  if (mult === 1) return cap;
+  return Object.fromEntries(Object.entries(cap).map(([k, v]) => [k, Math.floor(v * mult)])) as unknown as Capacity;
+}
+
+/** A size category moved by steps (+1 = one larger), clamped to fine..colossal. */
+export function shiftSize(size: Size, steps: number): Size {
+  const i = SIZES.indexOf(size);
+  return SIZES[Math.max(0, Math.min(SIZES.length - 1, (i < 0 ? 4 : i) + steps))];
 }
 
 export type Load = 'light' | 'medium' | 'heavy' | 'overloaded';
