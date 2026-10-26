@@ -251,13 +251,13 @@
         <tbody>
           {#each c.levels as l, i (l.id)}
             <tr>
-              <td class="align-middle tabular-nums">{i + 1}</td>
-              <td class="w-28">
+              <td data-label="#" class="align-middle tabular-nums">{i + 1}</td>
+              <td data-label="Class" class="w-28">
                 <select class="w-full" bind:value={l.classId} aria-label="Class for level {i + 1}">
                   {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed class'}</option>{/each}
                 </select>
               </td>
-              <td class="w-20 text-center align-middle">
+              <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
                   <span class="text-xs opacity-60" title="Max HP at 1st level (change in Config)">max</span>
                 {:else if showRolls}
@@ -266,7 +266,7 @@
                   <span class="opacity-40">•••</span>
                 {/if}
               </td>
-              <td>
+              <td data-label="Favored class bonus">
                 {#if l.classId === c.favoredClassId}
                   <div class="flex flex-wrap gap-1">
                     <select class="max-w-48" value={fcbValue(l)} onchange={(e) => setFcb(l, e.currentTarget.value)} aria-label="Favored class bonus at level {i + 1}">
