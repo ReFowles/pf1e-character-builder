@@ -64,6 +64,8 @@ export const CLASS_PRESETS: ClassPreset[] = [
     ['craft', 'diplomacy', 'heal', ...k('history', 'planes', 'religion'), 'profession', 'senseMotive', 'spellcraft'], 'APG', 'cha'),
   p('summoner', 'Summoner', 8, '3/4', ['will'], 2,
     ['craft', 'fly', 'handleAnimal', 'knowledge', 'linguistics', 'profession', 'ride', 'spellcraft', 'useMagicDevice'], 'APG', 'cha'),
+  p('unchained-summoner', 'Summoner (Unchained)', 8, '3/4', ['will'], 2,
+    ['craft', 'fly', 'handleAnimal', 'knowledge', 'linguistics', 'profession', 'ride', 'spellcraft', 'useMagicDevice'], 'PU', 'cha'),
   p('witch', 'Witch', 6, '1/2', ['will'], 2,
     ['craft', 'fly', 'heal', 'intimidate', ...k('arcana', 'history', 'nature', 'planes'), 'profession', 'spellcraft', 'useMagicDevice'], 'APG', 'int'),
   // Ultimate Magic / Ultimate Combat

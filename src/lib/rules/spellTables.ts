@@ -19,8 +19,6 @@ export interface SpellTable {
   kind: 'prepared' | 'spontaneous';
   perDay: Row[];
   known?: Row[];
-  /** Extra slot per spell level 1+ (cleric domain slots). */
-  domainSlot?: boolean;
 }
 
 const FULL_PREPARED = rows([
@@ -74,12 +72,12 @@ const FOUR_LEVEL = rows([
 
 export const SPELL_TABLES: SpellTable[] = [
   { id: 'wizard', name: 'Wizard / Witch', kind: 'prepared', perDay: FULL_PREPARED },
-  { id: 'cleric', name: 'Cleric (+ domain slot)', kind: 'prepared', perDay: FULL_PREPARED, domainSlot: true },
+  { id: 'cleric', name: 'Cleric', kind: 'prepared', perDay: FULL_PREPARED },
   { id: 'druid', name: 'Druid / Shaman', kind: 'prepared', perDay: FULL_PREPARED },
   { id: 'sorcerer', name: 'Sorcerer / Oracle', kind: 'spontaneous', perDay: FULL_SPONTANEOUS, known: FULL_SPONTANEOUS_KNOWN },
-  { id: 'bard', name: 'Bard / Inquisitor / Skald', kind: 'spontaneous', perDay: SIX_SPONTANEOUS, known: SIX_SPONTANEOUS_KNOWN },
+  { id: 'bard', name: 'Bard / Hunter / Inquisitor / Skald / Summoner', kind: 'spontaneous', perDay: SIX_SPONTANEOUS, known: SIX_SPONTANEOUS_KNOWN },
   { id: 'magus', name: 'Magus / Warpriest', kind: 'prepared', perDay: SIX_PREPARED },
-  { id: 'alchemist', name: 'Alchemist (extracts)', kind: 'prepared', perDay: ALCHEMIST },
+  { id: 'alchemist', name: 'Alchemist / Investigator (extracts)', kind: 'prepared', perDay: ALCHEMIST },
   { id: 'paladin', name: 'Paladin / Ranger / Antipaladin / Bloodrager', kind: 'prepared', perDay: FOUR_LEVEL },
 ];
 
@@ -99,6 +97,10 @@ export const PRESET_SPELL_TABLE: Record<string, string> = {
   bard: 'bard',
   inquisitor: 'bard',
   skald: 'bard',
+  hunter: 'bard',
+  summoner: 'bard',
+  'unchained-summoner': 'bard',
+  investigator: 'alchemist',
   magus: 'magus',
   warpriest: 'magus',
   alchemist: 'alchemist',
