@@ -9,9 +9,10 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 - **Macros.** Toggle Power Attack, Flanking, Heroism, Haste and more from a built-in library, or write your own effects against any stat key. Values can be formulas such as `-1 - floor(@bab / 4)`.
 - **Rules database.** Search more than 3,000 spells, feats, weapons, armor, gear and magic items, then add them to the sheet. Picking an entry copies it into the character, so you can edit it freely.
 - **Wealth tracking.** Every item, weapon, armor piece and magic item has a gp value. Equipment totals carried weight and overall character wealth.
-- **Mythic (optional).** Turn on the Mythic tab in **Config** to track tier, path, mythic power and surge die. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
-- **Edit mode and info.** Each section's **Edit** button reveals its add, reorder, remove and database-search controls; values are always editable. The **ℹ** button collects every breakdown and rule note that's otherwise only in hover tooltips, so it works on phones too.
-- **Configurable.** Collapse any section, or hide it on screen or in print (see **Config**). Printed dynamic tables include one blank row for handwritten additions.
+- **Mythic (optional).** Turn on the Mythic tab in **Config** to track tier, path, mythic power, surge die (with feat upgrades) and Mythic Paragon. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
+- **Spells.** Each casting class gets its own "[Class] Spells" section; add more (including "Other" for racial or item spells) from **Config**.
+- **Edit mode and info.** Each section's pencil button reveals its add, reorder, remove and database-search controls; values are always editable. The **ℹ** button collects every breakdown and rule note that's otherwise only in hover tooltips, so it works on phones too.
+- **Configurable.** Collapse any section, or hide it on screen or in print (see **Config**). Dark mode follows your system until you toggle it in Config; printing always uses the light theme. Printed dynamic tables include one blank row for handwritten additions.
 - **Multiple characters.** Create, duplicate and switch between characters. Use **Export JSON** for backups.
 - **Offline.** It's a PWA: after the first visit it runs with no network connection.
 
