@@ -4,6 +4,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
+  import EditMode from '../../lib/ui/EditMode.svelte';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
 
   const c = $derived(app.char);
@@ -16,10 +17,14 @@
   }
 </script>
 
-<Section id="feats">
+<Section id="feats" editable>
+  {#snippet info()}
+    <p>Characters gain a feat at 1st level and every odd level after ({expected} at level {app.d.level}). Bonus feats from race or class don't count toward that; mark them in Source (e.g. "Fighter bonus").</p>
+    <p>Feats that change numbers (Toughness, Weapon Focus, Power Attack…) are easiest to apply as macros.</p>
+  {/snippet}
   {#snippet actions()}
     <span class="text-xs" title="Feats from character level (excludes bonus feats)">{general}/{expected} level feats</span>
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={sortByLevel}>Sort</button>
+    <EditMode>{#snippet children(editing)}{#if editing}<button type="button" class="head-btn" onclick={sortByLevel}>Sort</button>{/if}{/snippet}</EditMode>
   {/snippet}
   <DynamicTable bind:items={c.feats} cols={4} onadd={() => c.feats.push(make.feat(Math.max(1, app.d.level)))} addLabel="Feat" empty="No feats yet.">
     {#snippet head()}
@@ -29,10 +34,10 @@
       <th>Notes</th>
     {/snippet}
     {#snippet row(f)}
-      <td class="w-10"><NumInput bind:value={f.level} aria-label="Level gained" /></td>
-      <td class="w-2/5"><input class="font-semibold" bind:value={f.name} aria-label="Feat name" /></td>
-      <td class="w-24"><input list="feat-sources" bind:value={f.source} aria-label="Source" /></td>
-      <td><textarea rows="1" class="w-full" bind:value={f.description} aria-label="Notes"></textarea></td>
+      <td data-label="Lvl" class="w-10"><NumInput bind:value={f.level} aria-label="Level gained" /></td>
+      <td data-label="Feat" class="w-2/5"><input class="font-semibold" bind:value={f.name} aria-label="Feat name" /></td>
+      <td data-label="Source" class="w-24"><input list="feat-sources" bind:value={f.source} aria-label="Source" /></td>
+      <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={f.description} aria-label="Notes"></textarea></td>
     {/snippet}
     {#snippet tools()}
       <DbPicker

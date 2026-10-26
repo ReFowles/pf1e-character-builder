@@ -4,6 +4,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
+  import EditMode from '../../lib/ui/EditMode.svelte';
 
   const c = $derived(app.char);
 
@@ -18,9 +19,13 @@
   }
 </script>
 
-<Section id="classAbilities">
+<Section id="classAbilities" editable>
+  {#snippet info()}
+    <p>Record class features as you gain them, with the class level they arrived at. Sort groups them by class, then level.</p>
+    <p>Abilities with limited uses also belong in Special Abilities on the Core tab, where uses can be tracked.</p>
+  {/snippet}
   {#snippet actions()}
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={sort}>Sort</button>
+    <EditMode>{#snippet children(editing)}{#if editing}<button type="button" class="head-btn" onclick={sort}>Sort</button>{/if}{/snippet}</EditMode>
   {/snippet}
   <DynamicTable bind:items={c.classAbilities} cols={4} onadd={add} addLabel="Class ability" empty="Bravery, Sneak Attack, Bloodline powers…">
     {#snippet head()}
@@ -30,15 +35,15 @@
       <th>Notes</th>
     {/snippet}
     {#snippet row(a)}
-      <td class="w-24">
+      <td data-label="Class" class="w-24">
         <select bind:value={a.classId} aria-label="Class">
           <option value="">—</option>
           {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed'}</option>{/each}
         </select>
       </td>
-      <td class="w-10"><NumInput bind:value={a.level} aria-label="Class level gained" /></td>
-      <td class="w-2/5"><input class="font-semibold" bind:value={a.name} aria-label="Ability name" /></td>
-      <td><textarea rows="1" class="w-full" bind:value={a.description} aria-label="Notes"></textarea></td>
+      <td data-label="Lvl" class="w-10"><NumInput bind:value={a.level} aria-label="Class level gained" /></td>
+      <td data-label="Ability" class="w-2/5"><input class="font-semibold" bind:value={a.name} aria-label="Ability name" /></td>
+      <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={a.description} aria-label="Notes"></textarea></td>
     {/snippet}
   </DynamicTable>
 </Section>
