@@ -9,6 +9,9 @@
   import UsesTracker from '../../lib/ui/UsesTracker.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import { fmt } from '../../lib/ui/format';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
+  import type { DbSpell } from '../../lib/db/types';
+  import { slug } from '../../lib/rules/derive';
 
   interface Props {
     block: Spellcasting;
@@ -60,6 +63,28 @@
   }
 
   const spellsAt = (lvl: number) => b.spells.filter((s) => s.level === lvl);
+
+  // Spell lists are keyed by class (wizard, sorcerer...). Unchained/variant presets map to the base list.
+  const classKey = $derived.by(() => {
+    const k = c.classes.find((x) => x.id === b.classId);
+    if (!k) return '';
+    const id = (k.presetId ?? slug(k.name)).replace(/^unchained-/, '');
+    return id === 'summoner' && /unchained/i.test(k.name) ? 'summonerUnchained' : id;
+  });
+
+  function addFromDb(sp: DbSpell) {
+    const level = sp.levels[classKey] ?? Math.min(...Object.values(sp.levels), 9);
+    b.spells.push({
+      ...make.spell(Number.isFinite(level) ? level : 0),
+      name: sp.name,
+      school: sp.school,
+      duration: sp.duration,
+      range: sp.range,
+      save: sp.save,
+      sr: sp.sr,
+      notes: sp.summary,
+    });
+  }
   const removeSpell = (s: SpellEntry) => b.spells.splice(b.spells.indexOf(s), 1);
 </script>
 
@@ -175,6 +200,15 @@
       {showAll ? 'Hide uncastable levels' : 'Show all spell levels'}
     </button>
   </div>
+
+  <DbPicker
+    kind="spells"
+    label="Find {c.classes.find((x) => x.id === b.classId)?.name ?? ''} spell"
+    filter={classKey ? (sp) => classKey in sp.levels : undefined}
+    onpick={addFromDb}
+  >
+    {#snippet detail(sp)}{classKey && classKey in sp.levels ? `Level ${sp.levels[classKey]}` : Object.entries(sp.levels).map(([k, v]) => `${k} ${v}`).slice(0, 4).join(', ')} · {sp.school}{sp.summary ? ` — ${sp.summary}` : ''}{/snippet}
+  </DbPicker>
 
   {#each levels as lvl (lvl)}
     <div class="subhead mt-1 flex items-baseline gap-2">
