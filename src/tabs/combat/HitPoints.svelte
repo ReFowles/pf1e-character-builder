@@ -95,7 +95,7 @@
 
   <div class="flex flex-col">
     <span class="field-label">Conditions</span>
-    <Chips bind:items={c.conditions} suggestions={CONDITION_NAMES} placeholder="Add condition…" label="Add condition" />
+    <Chips always bind:items={c.conditions} suggestions={CONDITION_NAMES} placeholder="Add condition…" label="Add condition" />
     {#each app.d.conditionNotes as note (note)}
       <p class="text-xs opacity-70">{note}</p>
     {/each}

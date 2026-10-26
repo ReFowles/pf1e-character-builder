@@ -6,9 +6,12 @@
     placeholder?: string;
     suggestions?: string[];
     label?: string;
+    /** Editable outside the section's edit mode (e.g. conditions change every fight). */
+    always?: boolean;
   }
-  let { items = $bindable(), placeholder = 'Add…', suggestions = [], label }: Props = $props();
+  let { items = $bindable(), placeholder = 'Add…', suggestions = [], label, always = false }: Props = $props();
   const section = useSection();
+  const editing = $derived(always || section.editing);
   let draft = $state('');
   const listId = `chips-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -19,10 +22,10 @@
   }
 </script>
 
-<!-- Chips size to their text; they're editable only in the section's edit mode. -->
+<!-- Chips size to their text; they're editable in the section's edit mode (or always). -->
 <div class="flex flex-wrap items-center gap-1">
   {#each items as item, i (i)}
-    {#if section.editing}
+    {#if editing}
       <span class="chip">
         <input class="chip-input" bind:value={items[i]} aria-label="Edit {item}" onblur={() => !items[i].trim() && items.splice(i, 1)} />
         <button type="button" class="print:hidden" aria-label="Remove {item}" onclick={() => items.splice(i, 1)}>×</button>
@@ -31,7 +34,7 @@
       <span class="chip">{item}</span>
     {/if}
   {/each}
-  {#if section.editing}
+  {#if editing}
     <input
       class="w-36 print:hidden"
       {placeholder}
