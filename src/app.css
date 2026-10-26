@@ -15,21 +15,40 @@
     @apply bg-parchment text-ink;
     font-size: 15px;
   }
-  input,
+  /* Editable fields: full border on a white ground so they read as inputs. */
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']),
   select,
   textarea {
-    @apply min-w-0 rounded-sm border-b border-rule/60 bg-transparent px-1 py-0.5 outline-none;
+    @apply min-w-0 rounded-sm border border-rule/50 bg-white px-1.5 outline-none;
+  }
+  input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']),
+  select {
+    @apply h-7;
+  }
+  textarea {
+    @apply py-1;
   }
   input:focus,
   select:focus,
   textarea:focus {
-    @apply border-accent bg-white;
+    @apply border-accent ring-1 ring-accent/40;
   }
-  input[type='checkbox'] {
+  input[type='checkbox'],
+  input[type='radio'] {
     @apply size-4 accent-accent;
   }
+  button,
+  select,
+  summary,
+  [role='button'],
+  label:has(> input[type='checkbox'], > input[type='radio'], > input[type='file']),
+  input[type='checkbox'],
+  input[type='radio'],
+  input[type='range'] {
+    cursor: pointer;
+  }
   button:disabled {
-    @apply opacity-30;
+    @apply cursor-default opacity-30;
   }
   th {
     @apply px-1 text-left text-[0.65rem] font-semibold tracking-wide whitespace-nowrap uppercase opacity-70;
@@ -39,6 +58,12 @@
 @layer components {
   .sheet-section {
     @apply flex min-w-0 flex-col rounded-sm border border-ink/70 bg-paper shadow-sm;
+  }
+  /* Collapsed (screen only): just the header bar on the page background. */
+  @media screen {
+    .sheet-section.collapsed {
+      @apply self-start border-transparent bg-transparent shadow-none;
+    }
   }
   .section-head {
     break-after: avoid;
@@ -80,19 +105,26 @@
     @apply inline-flex items-center gap-1 rounded-full border border-ink/30 bg-parchment px-2 py-0.5 text-sm;
   }
   .icon-btn {
-    @apply inline-flex size-6 items-center justify-center rounded-sm text-sm hover:bg-ink/10;
+    @apply inline-flex size-6 items-center justify-center rounded-sm text-sm transition-colors hover:bg-ink/10;
   }
   .section-head .icon-btn {
     @apply hover:bg-paper/20;
   }
   .add-btn {
-    @apply self-start rounded-sm border border-dashed border-ink/40 px-2 py-0.5 text-sm hover:bg-ink/5;
+    @apply self-start rounded-sm border border-dashed border-ink/40 px-2 py-0.5 text-sm transition-colors hover:border-ink hover:bg-ink/5;
   }
   .btn {
-    @apply rounded-sm border border-ink/40 bg-paper px-2 py-1 text-sm hover:bg-ink/5;
+    @apply rounded-sm border border-ink/40 bg-paper px-2 py-1 text-sm transition-colors hover:border-ink hover:bg-ink/10 active:bg-ink/20;
   }
   .btn-primary {
-    @apply rounded-sm bg-accent px-2 py-1 text-sm text-paper hover:bg-accent/90;
+    @apply rounded-sm bg-accent px-2 py-1 text-sm text-paper transition-colors hover:bg-accent/85 active:bg-accent/75;
+  }
+  /* A boxed cell for values written by hand on paper (temp scores…). */
+  .write-box {
+    @apply rounded-sm border border-ink/30;
+  }
+  .group-box {
+    @apply rounded-sm border border-ink/40 p-1;
   }
   .dyn-table {
     @apply w-full border-collapse text-sm;
@@ -129,8 +161,10 @@
       'macros macros macros macros macros macros macros macros skills skills skills skills'
       'offense offense offense offense offense offense offense offense skills skills skills skills'
       'defense defense defense defense defense defense defense defense skills skills skills skills'
-      'defense defense defense defense defense defense defense defense resources resources resources resources'
       'special special special special special special special special special special special special';
+    /* The defense row absorbs any extra height from the tall skills column,
+       so a hidden or collapsed Macros section leaves no hole. */
+    grid-template-rows: auto auto auto auto auto 1fr auto;
   }
   .character-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
@@ -156,7 +190,7 @@
 @media print {
   @page {
     size: letter;
-    margin: 0.4in;
+    margin: 0.2in;
   }
   html {
     font-size: 10px;
@@ -173,6 +207,8 @@
   select,
   textarea {
     border-color: transparent;
+    background: transparent;
+    box-shadow: none;
     appearance: none;
     resize: none;
   }
