@@ -180,20 +180,6 @@
   .sheet-grid > [data-section] {
     grid-area: var(--area);
   }
-  .combat-grid {
-    grid-template-columns: repeat(12, minmax(0, 1fr));
-    grid-template-areas:
-      'info info info info info info currency currency logo logo logo logo'
-      'info info info info info info currency currency level level level level'
-      'hp hp hp abilities abilities abilities abilities abilities classes classes classes classes'
-      'macros macros macros macros macros macros macros macros skills skills skills skills'
-      'offense offense offense offense offense offense offense offense skills skills skills skills'
-      'defense defense defense defense defense defense defense defense skills skills skills skills'
-      'special special special special special special special special special special special special';
-    /* The defense row absorbs any extra height from the tall skills column,
-       so a hidden or collapsed Macros section leaves no hole. */
-    grid-template-rows: auto auto auto auto auto 1fr auto;
-  }
   .character-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-template-areas:
@@ -211,6 +197,57 @@
       'mythicOverview mythicAbilities'
       'mythicFeats mythicPathAbilities'
       'mythicSpells mythicSpells';
+  }
+}
+
+/* --- Core tab: two columns on large screens and print, mockup order on small --- */
+.core {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.core-left,
+.core-right,
+.core-row {
+  display: contents;
+}
+.core [data-section='logo'] { order: 1; }
+.core [data-section='info'] { order: 2; }
+.core [data-section='currency'] { order: 3; }
+.core [data-section='abilities'] { order: 4; }
+.core [data-section='classes'] { order: 5; }
+.core [data-section='skills'] { order: 6; }
+.core [data-section='readiness'] { order: 7; }
+.core [data-section='hp'] { order: 8; }
+.core [data-section='macros'] { order: 9; }
+.core [data-section='offense'] { order: 10; }
+.core [data-section='defense'] { order: 11; }
+.core [data-section='special'] { order: 12; }
+
+@media (min-width: 1024px), print {
+  .core {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    align-items: start;
+  }
+  .core-left,
+  .core-right {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .core-row {
+    display: grid;
+    gap: 0.5rem;
+  }
+  .core-row-info {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 1fr);
+  }
+  .core-row-hp {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr);
+  }
+  .core [data-section] {
+    order: 0;
   }
 }
 
