@@ -97,6 +97,33 @@ if (!twoValeros) failed++;
 console.log(`${twoValeros ? 'ok  ' : 'FAIL'} roster after import: ${options.join(', ')}`);
 await expectStat('AC', '21');
 
+console.log('— database pickers');
+await page.getByRole('button', { name: '⌕ Find weapon' }).click();
+await page.getByLabel('Find weapon').fill('greatsword');
+await page.getByRole('option', { name: /^Greatsword/ }).first().click();
+const gs = page.locator('[data-section=offense] .group').last();
+// Str +3 × 1.5 = +4, Power Attack +4 at BAB 4.
+const dice = await gs.getByLabel('Damage dice').inputValue();
+await expectText(`Greatsword damage (${dice})`, gs.locator('.field').nth(2), /^\+8/);
+if (dice !== '2d6') (failed++, console.log(`FAIL greatsword dice: ${dice}`));
+await page.goto(`${args.url}/#character`);
+await page.getByRole('button', { name: '⌕ Find feat' }).click();
+await page.getByLabel('Find feat').fill('cleave');
+await page.locator('[role=listbox] [role=option]').first().waitFor();
+await page.keyboard.press('Enter');
+const feats = await page.locator('[data-section=feats] input[aria-label="Feat name"]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
+const hasCleave = feats.filter((f) => f === 'Cleave').length === 2;
+if (!hasCleave) failed++;
+console.log(`${hasCleave ? 'ok  ' : 'FAIL'} feat picked: ${feats.at(-1)}`);
+await page.goto(`${args.url}/#combat`);
+await page.getByRole('button', { name: '⌕ Find armor or shield' }).click();
+await page.getByLabel('Find armor or shield').fill('breastplate');
+await page.locator('[role=listbox] [role=option]').first().waitFor();
+await page.keyboard.press('Enter');
+const armorCount = await page.locator('[data-section=defense] tbody tr').filter({ has: page.locator('input[aria-label="Name"]') }).count();
+if (armorCount !== 3) failed++;
+console.log(`${armorCount === 3 ? 'ok  ' : 'FAIL'} armor rows after pick: ${armorCount}`);
+
 if (errors.length) {
   failed += errors.length;
   console.log('page errors:', errors);
