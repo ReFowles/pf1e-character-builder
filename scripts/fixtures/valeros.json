@@ -159,7 +159,7 @@
   "weapons": [
     {
       "id": "w1",
-      "name": "Longsword +1",
+      "name": "Longsword",
       "enhancement": 1,
       "damage": "1d8",
       "crit": "19-20/\u00d72",

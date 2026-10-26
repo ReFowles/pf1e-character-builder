@@ -231,6 +231,9 @@
     @apply align-middle;
   }
   /* Weapon card top line: name, attack, damage, critical, range, type, ammo. */
+  .weapon-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
   @media (min-width: 640px) {
     .weapon-grid {
       grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);

@@ -67,7 +67,7 @@
   <DynamicList bind:items={c.weapons} onadd={() => c.weapons.push(make.weapon())} addLabel="Weapon" empty="No weapons yet.">
     {#snippet item(w)}
       {@const wd = d.weapons[w.id]}
-      <div class="weapon-grid grid grid-cols-2 gap-x-2 gap-y-1">
+      <div class="weapon-grid grid gap-x-2 gap-y-1">
         <Field label="Weapon" class="col-span-2 sm:col-span-1">
           <div class="flex items-center gap-1">
             {#if editing}
