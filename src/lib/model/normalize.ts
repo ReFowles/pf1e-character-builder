@@ -33,6 +33,9 @@ const ITEM_FACTORIES: Record<string, () => unknown> = {
   'mythic.pathAbilities': () => make.mythicEntry(),
   'mythic.spells': () => make.mythicEntry(),
   'spellcasting.spells': () => make.spell(),
+  companions: () => make.companion(),
+  'companions.attacks': make.companionAttack,
+  'companions.skills': () => make.companionSkill(),
 };
 
 function merge(def: unknown, val: unknown, path: string): unknown {

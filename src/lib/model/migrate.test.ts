@@ -23,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(4);
+    expect(c.schemaVersion).toBe(5);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -62,6 +62,24 @@ describe('migrate v2 -> v3', () => {
     expect((c as unknown as Record<string, unknown>).magicItems).toBeUndefined();
     expect(c.favoriteOrder).toEqual(['b']);
     expect(c.spellcasting.map((b) => b.domainSlot)).toEqual([true, false]);
+  });
+});
+
+describe('migrate v4 -> v5', () => {
+  it('gives classless spell blocks a base caster level', () => {
+    const c = normalize({
+      schemaVersion: 4,
+      spellcasting: [
+        { id: 'a', classId: null, casterLevelMisc: 5 },
+        { id: 'b', classId: 'k1', casterLevelMisc: 1 },
+      ],
+    });
+    expect(c.spellcasting.map((b) => [b.casterLevel, b.casterLevelMisc])).toEqual([
+      [5, 0],
+      [0, 1],
+    ]);
+    expect(c.companions).toEqual([]);
+    expect(c.companionTab).toBe(false);
   });
 });
 

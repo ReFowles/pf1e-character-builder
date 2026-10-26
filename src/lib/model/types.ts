@@ -303,6 +303,8 @@ export interface Spellcasting extends Identified {
   table: string;
   /** One extra domain spell slot per castable spell level 1+ (clerics). */
   domainSlot: boolean;
+  /** Base caster level for blocks without a class ("Other"); class blocks use class level. */
+  casterLevel: number;
   casterLevelMisc: number;
   concentrationMisc: number;
   spellPenMisc: number;
@@ -350,6 +352,64 @@ export interface SectionUi {
   hidden: boolean;
   collapsed: boolean;
   printHidden: boolean;
+}
+
+export const COMPANION_KINDS = ['animal', 'familiar', 'eidolon', 'other'] as const;
+export type CompanionKind = (typeof COMPANION_KINDS)[number];
+export const CREATURE_TYPES = ['animal', 'magicalBeast', 'outsider', 'dragon', 'vermin', 'other'] as const;
+export type CreatureType = (typeof CREATURE_TYPES)[number];
+
+export interface CompanionAttack extends Identified {
+  name: string;
+  /** Secondary natural attacks take −5 and add ½ Str to damage. */
+  primary: boolean;
+  /** Use Dex instead of Str to hit (Weapon Finesse). */
+  finesse: boolean;
+  damage: string;
+  attackMisc: number;
+  damageMisc: number;
+  notes: string;
+}
+
+export interface CompanionSkill extends Identified {
+  name: string;
+  ability: Ability;
+  ranks: number;
+  classSkill: boolean;
+  misc: number;
+}
+
+/** A familiar, animal companion, eidolon or other creature tied to the character. */
+export interface Companion extends Identified {
+  name: string;
+  kind: CompanionKind;
+  species: string;
+  /** Class whose level drives the companion's progression. */
+  masterClassId: string | null;
+  /** Added to the master's class level (Boon Companion +4, ranger −3...). */
+  levelMisc: number;
+  creatureType: CreatureType;
+  /** Good saves for the creature type (editable for outsiders etc.). */
+  goodSaves: Save[];
+  /** Hit dice for eidolons and other companions (0 = follow the master's level). */
+  hd: number;
+  size: Size;
+  speed: string;
+  abilities: Record<Ability, { base: number; misc: number; temp: number }>;
+  /** Animal companion ability score increases at levels 4, 9 and 14. */
+  abilityIncreases: (Ability | null)[];
+  naturalArmor: number;
+  armorBonus: number;
+  acMisc: number;
+  saveMisc: Record<Save, number>;
+  hpMisc: number;
+  hp: { damage: number; temp: number };
+  attacks: CompanionAttack[];
+  skills: CompanionSkill[];
+  feats: string[];
+  tricks: string[];
+  special: string[];
+  notes: string;
 }
 
 export interface Character {
@@ -411,6 +471,9 @@ export interface Character {
   items: Item[];
   currency: { carried: Coins; locations: CoinLocation[] };
   spellcasting: Spellcasting[];
+  /** Show the Companions tab. */
+  companionTab: boolean;
+  companions: Companion[];
   mythic: Mythic;
   ui: {
     sections: Record<string, SectionUi>;

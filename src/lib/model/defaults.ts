@@ -1,7 +1,12 @@
 import { uid } from './id';
 import { KNOWLEDGES, SKILLS } from '../rules/skills';
 import type {
+  Ability,
   AbilityScore,
+  Companion,
+  CompanionAttack,
+  CompanionKind,
+  CompanionSkill,
   ArmorPiece,
   Character,
   ClassAbility,
@@ -27,7 +32,7 @@ import type {
   Weapon,
 } from './types';
 
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -150,6 +155,57 @@ export const make = {
   }),
   otherSpeed: (mode = 'fly'): OtherSpeed => ({ id: uid(), mode, value: 0, maneuverability: '' }),
   mythicEntry: (tier = 1): MythicEntry => ({ id: uid(), name: '', tier, notes: '' }),
+  companionAttack: (): CompanionAttack => ({
+    id: uid(),
+    name: '',
+    primary: true,
+    finesse: false,
+    damage: '',
+    attackMisc: 0,
+    damageMisc: 0,
+    notes: '',
+  }),
+  companionSkill: (name = '', ability: Ability = 'dex'): CompanionSkill => ({ id: uid(), name, ability, ranks: 0, classSkill: true, misc: 0 }),
+  companion: (kind: CompanionKind = 'animal'): Companion => ({
+    id: uid(),
+    name: '',
+    kind,
+    species: '',
+    masterClassId: null,
+    levelMisc: 0,
+    creatureType: kind === 'eidolon' ? 'outsider' : 'animal',
+    goodSaves: ['fort', 'ref'],
+    hd: 0,
+    size: kind === 'familiar' ? 'tiny' : 'medium',
+    speed: '30 ft',
+    abilities: {
+      str: { base: 10, misc: 0, temp: 0 },
+      dex: { base: 10, misc: 0, temp: 0 },
+      con: { base: 10, misc: 0, temp: 0 },
+      int: { base: 2, misc: 0, temp: 0 },
+      wis: { base: 10, misc: 0, temp: 0 },
+      cha: { base: 6, misc: 0, temp: 0 },
+    },
+    abilityIncreases: [null, null, null],
+    naturalArmor: 0,
+    armorBonus: 0,
+    acMisc: 0,
+    saveMisc: { fort: 0, ref: 0, will: 0 },
+    hpMisc: 0,
+    hp: { damage: 0, temp: 0 },
+    attacks: [],
+    skills: [
+      make.companionSkill('Acrobatics', 'dex'),
+      make.companionSkill('Climb', 'str'),
+      make.companionSkill('Perception', 'wis'),
+      make.companionSkill('Stealth', 'dex'),
+      make.companionSkill('Swim', 'str'),
+    ],
+    feats: [],
+    tricks: [],
+    special: [],
+    notes: '',
+  }),
   coinLocation: (): CoinLocation => ({ id: uid(), name: '', weightless: true, coins: coins() }),
   spell: (level = 0): SpellEntry => ({
     id: uid(),
@@ -173,6 +229,7 @@ export const make = {
     ability: 'int',
     table: '',
     domainSlot: false,
+    casterLevel: 0,
     casterLevelMisc: 0,
     concentrationMisc: 0,
     spellPenMisc: 0,
@@ -267,6 +324,8 @@ export function newCharacter(): Character {
     items: [],
     currency: { carried: coins(), locations: [] },
     spellcasting: [],
+    companionTab: false,
+    companions: [],
     mythic: {
       enabled: false,
       tier: 1,

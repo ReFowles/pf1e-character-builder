@@ -110,6 +110,14 @@ STEPS[3] = (d) => {
   };
 };
 
+STEPS[4] = (d) => ({
+  ...d,
+  // "Other" blocks get their own base caster level; misc becomes a real modifier.
+  spellcasting: arr(d.spellcasting).map((b) =>
+    b.classId ? b : { ...b, casterLevel: Number(b.casterLevelMisc) || 0, casterLevelMisc: 0 },
+  ),
+});
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;
