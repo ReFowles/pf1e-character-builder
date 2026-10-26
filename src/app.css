@@ -231,6 +231,10 @@
   .sorting {
     @apply cursor-grabbing select-none;
   }
+  /* Spell slots table, boxed beside the casting stats. */
+  .spell-table-box {
+    @apply m-1 flex flex-col items-start rounded-md border border-ink/40 p-1.5;
+  }
   .subhead {
     @apply border-b border-ink/30 font-display text-xs font-bold tracking-widest uppercase;
   }
@@ -255,9 +259,6 @@
       'feats feats feats feats feats feats classAbilities classAbilities classAbilities classAbilities classAbilities classAbilities'
       'equipment equipment equipment equipment equipment equipment equipment equipment equipment magicItems magicItems magicItems';
     align-items: start;
-  }
-  .spells-grid {
-    grid-template-areas: 'spellcasting';
   }
   .mythic-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

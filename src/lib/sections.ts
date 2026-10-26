@@ -6,7 +6,7 @@ export interface SectionDef {
   tab: Tab;
 }
 
-/** Every configurable section, in mobile (mockup-numbered) order per tab. */
+/** Every fixed section, in mobile (mockup-numbered) order per tab. Spell sections are per block (lib/spellBlocks.ts). */
 export const SECTIONS: SectionDef[] = [
   { id: 'info', title: 'Character Info', tab: 'combat' },
   { id: 'currency', title: 'Currency', tab: 'combat' },
@@ -26,7 +26,6 @@ export const SECTIONS: SectionDef[] = [
   { id: 'classAbilities', title: 'Class Abilities', tab: 'character' },
   { id: 'equipment', title: 'Equipment', tab: 'character' },
   { id: 'magicItems', title: 'Magic Items', tab: 'character' },
-  { id: 'spellcasting', title: 'Spellcasting', tab: 'spells' },
   { id: 'mythicOverview', title: 'Mythic', tab: 'mythic' },
   { id: 'mythicAbilities', title: 'Mythic Abilities', tab: 'mythic' },
   { id: 'mythicFeats', title: 'Mythic Feats', tab: 'mythic' },

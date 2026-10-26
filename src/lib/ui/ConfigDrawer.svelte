@@ -4,6 +4,13 @@
 
   const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
+  import { addSpellBlock, removeSpellBlock, spellSectionId, spellSectionTitle } from '../spellBlocks';
+
+  /** Sections listed under a tab; spell sections come from the character's casting blocks. */
+  const rowsFor = (tab: Tab) =>
+    tab === 'spells'
+      ? app.char.spellcasting.map((b) => ({ id: spellSectionId(b), title: spellSectionTitle(app.char, b), blockId: b.id }))
+      : SECTIONS.filter((s) => s.tab === tab).map((s) => ({ ...s, blockId: '' }));
   import Select, { opts } from './Select.svelte';
 </script>
 
@@ -56,10 +63,17 @@
               />
             </td>
           </tr>
-          {#each SECTIONS.filter((s) => s.tab === tab) as s (s.id)}
+          {#each rowsFor(tab) as s (s.id)}
             {@const ui = app.section(s.id)}
             <tr class="border-b border-ink/10">
-              <td>{s.title}</td>
+              <td>
+                <span class="inline-flex items-center gap-1">
+                  {s.title}
+                  {#if s.blockId}
+                    <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {s.title}" title="Remove section" onclick={() => removeSpellBlock(app.char, s.blockId)}>✕</button>
+                  {/if}
+                </span>
+              </td>
               <td class="text-center">
                 <input
                   type="checkbox"
@@ -78,6 +92,13 @@
               </td>
             </tr>
           {/each}
+          {#if tab === 'spells'}
+            <tr>
+              <td colspan="3" class="pt-1">
+                <button type="button" class="add-btn" onclick={() => addSpellBlock(app.char)}>+ Spellcasting section</button>
+              </td>
+            </tr>
+          {/if}
         </tbody>
       </table>
     {/each}
