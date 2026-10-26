@@ -13,7 +13,7 @@
       <th>Trait</th>
       <th>Kind</th>
       <th>Category</th>
-      <th>Benefit</th>
+      <th>Description</th>
     {/snippet}
     {#snippet row(t)}
       <td class="w-1/4"><input class="font-semibold" bind:value={t.name} aria-label="Trait name" /></td>
@@ -25,7 +25,7 @@
         </select>
       </td>
       <td class="w-24"><input bind:value={t.category} placeholder="Combat, Faith…" aria-label="Category" /></td>
-      <td><textarea rows="1" class="w-full" bind:value={t.description} aria-label="Benefit"></textarea></td>
+      <td><textarea rows="1" class="w-full" bind:value={t.description} aria-label="Description"></textarea></td>
     {/snippet}
   </DynamicTable>
   <div class="flex gap-2 print:hidden">
