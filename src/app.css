@@ -154,6 +154,15 @@
   .group-box {
     @apply rounded-sm border border-ink/40 p-1;
   }
+  /* Brown frame around grouped stats (logo brown); inner stats keep the paper ground. */
+  .group-box-dark {
+    @apply border-[#462b21] bg-[#462b21];
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .group-box-dark .stat {
+    @apply border-transparent bg-paper;
+  }
   .dyn-table {
     @apply w-full border-collapse text-sm;
   }
