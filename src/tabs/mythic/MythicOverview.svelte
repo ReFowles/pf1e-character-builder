@@ -19,7 +19,7 @@
     <p>A second path from Dual Path only grants access to that path's abilities; record them under Path Abilities.</p>
   {/snippet}
   {#snippet actions()}
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={() => (m.powerUsed = 0)}>New day</button>
+    <button type="button" class="head-btn" onclick={() => (m.powerUsed = 0)}>New day</button>
   {/snippet}
   <div class="grid grid-cols-[4.5rem_4.5rem_1fr_1fr] gap-2">
     <Field label="Tier">

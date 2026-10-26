@@ -29,7 +29,7 @@
       {#each ABILITIES as a (a)}
         {@const s = app.d.abilities[a]}
         <tr title={breakdown(s.breakdown)}>
-          <th class="w-12 bg-ink py-1 text-center text-sm text-paper opacity-100 print:bg-ink" style="print-color-adjust: exact">{a.toUpperCase()}</th>
+          <th class="w-12 bg-head py-1 text-center text-sm text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
           <td class="text-xl font-bold tabular-nums">{s.score}</td>
           <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
           <td class="px-1 py-0.5"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>

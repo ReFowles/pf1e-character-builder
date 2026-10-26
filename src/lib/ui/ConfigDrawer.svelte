@@ -1,5 +1,6 @@
 <script lang="ts">
   import { app, type Tab } from '../state.svelte';
+  import { theme } from '../theme.svelte';
 
   const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
@@ -12,6 +13,11 @@
       <h2 class="font-display text-lg font-bold">Configuration</h2>
       <button type="button" class="icon-btn" aria-label="Close" onclick={() => (app.configOpen = false)}>✕</button>
     </div>
+
+    <label class="flex items-center gap-2 text-sm" title="Saved on this device. Printing always uses the light theme.">
+      <input type="checkbox" bind:checked={() => theme.dark, (v) => (theme.dark = v)} />
+      Dark mode
+    </label>
 
     <label class="field">
       <select bind:value={app.char.xp.track}>

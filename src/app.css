@@ -7,7 +7,27 @@
   --color-rule: #8a7f72;
   --color-accent: #7a1f1f;
   --color-gold: #b8862b;
+  /* Input ground and section header bar; separate so dark mode can tune them. */
+  --color-field: #ffffff;
+  --color-head: #1f1a17;
+  --color-head-ink: #fffdf8;
   --font-display: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
+}
+
+/* Dark mode is screen-only: print and PDF always use the light palette. */
+@media screen {
+  html.dark {
+    color-scheme: dark;
+    --color-parchment: #14110f;
+    --color-paper: #221d19;
+    --color-ink: #ece4d6;
+    --color-rule: #8f8475;
+    --color-accent: #e07b6f;
+    --color-gold: #dcaa4a;
+    --color-field: #2d2621;
+    --color-head: #4a3126;
+    --color-head-ink: #f5ede0;
+  }
 }
 
 @layer base {
@@ -19,7 +39,7 @@
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']),
   select,
   textarea {
-    @apply min-w-0 rounded-sm border border-rule/50 bg-white px-1.5 outline-none;
+    @apply min-w-0 rounded-sm border border-rule/50 bg-field px-1.5 outline-none;
   }
   input:not([type='checkbox'], [type='radio'], [type='range'], [type='file']),
   select {
@@ -86,13 +106,13 @@
     break-inside: avoid;
   }
   .section-head {
-    @apply flex items-center gap-2 rounded-t-md bg-ink px-2 py-1 text-paper;
+    @apply flex items-center gap-2 rounded-t-md bg-head px-2 py-1 text-head-ink;
   }
   .head-btn {
-    @apply inline-flex items-center justify-center rounded-sm px-1.5 text-xs transition-colors hover:bg-paper/20;
+    @apply inline-flex items-center justify-center rounded-sm px-1.5 text-xs transition-colors hover:bg-head-ink/20;
   }
   .section-head .head-btn[aria-pressed='true'] {
-    @apply bg-paper text-ink;
+    @apply bg-head-ink text-head;
   }
   .info-popover {
     @apply m-auto max-h-[80vh] w-[min(28rem,92vw)] overflow-y-auto rounded-sm border border-ink/40 bg-paper p-4 text-ink shadow-xl;
@@ -140,7 +160,7 @@
     @apply inline-flex size-6 items-center justify-center rounded-sm text-sm transition-colors hover:bg-ink/10;
   }
   .section-head .icon-btn {
-    @apply hover:bg-paper/20;
+    @apply hover:bg-head-ink/20;
   }
   .add-btn {
     @apply self-start rounded-sm border border-dashed border-ink/40 px-2 py-0.5 text-sm transition-colors hover:border-ink hover:bg-ink/5;
@@ -149,7 +169,7 @@
     @apply rounded-sm border border-ink/40 bg-paper px-2 py-1 text-sm transition-colors hover:border-ink hover:bg-ink/10 active:bg-ink/20;
   }
   .btn-primary {
-    @apply rounded-sm bg-accent px-2 py-1 text-sm text-paper transition-colors hover:bg-accent/85 active:bg-accent/75;
+    @apply rounded-sm bg-accent px-2 py-1 text-sm text-white transition-colors hover:bg-accent/85 active:bg-accent/75;
   }
   /* A boxed cell for values written by hand on paper (temp scores…). */
   .write-box {

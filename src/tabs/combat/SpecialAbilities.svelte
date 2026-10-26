@@ -24,8 +24,8 @@
     <p>Maximums can be formulas, e.g. <code>3 + @cha.mod</code>. "Reset rounds" and "New day" clear per-round and per-day counters.</p>
   {/snippet}
   {#snippet actions()}
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={() => reset('round')}>Reset rounds</button>
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={() => reset('day')}>New day</button>
+    <button type="button" class="head-btn" onclick={() => reset('round')}>Reset rounds</button>
+    <button type="button" class="head-btn" onclick={() => reset('day')}>New day</button>
   {/snippet}
   <EditMode>{#snippet children(editing)}
   <DynamicList
