@@ -91,7 +91,7 @@ const chooser = page.waitForEvent('filechooser');
 await page.getByRole('button', { name: 'Import JSON' }).click();
 await (await chooser).setFiles(path!);
 await page.waitForTimeout(300);
-const options = await page.locator('body > header select').first().locator('option').allInnerTexts();
+const options = await page.locator('#app > header select').first().locator('option').allInnerTexts();
 const twoValeros = options.filter((o) => o === 'Valeros').length === 2;
 if (!twoValeros) failed++;
 console.log(`${twoValeros ? 'ok  ' : 'FAIL'} roster after import: ${options.join(', ')}`);
