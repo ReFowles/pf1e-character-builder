@@ -9,6 +9,26 @@
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
   import { breakdown, fmt } from '../../lib/ui/format';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
+  import type { DbItem } from '../../lib/db/types';
+
+  function addWeapon(it: DbItem) {
+    const w = it.weapon!;
+    const ranged = w.handedness === 'ranged';
+    c.weapons.push({
+      ...make.weapon(),
+      name: it.name,
+      kind: ranged ? 'ranged' : 'melee',
+      attackAbility: ranged ? 'dex' : 'str',
+      damageAbility: ranged ? 'none' : 'str',
+      damageMultiplier: w.handedness === 'two-handed' ? 1.5 : 1,
+      damage: w.damage,
+      crit: w.crit,
+      range: w.range,
+      type: w.type,
+      weight: it.weight,
+    });
+  }
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -92,5 +112,8 @@
       </div>
     {/snippet}
   </DynamicList>
+  <DbPicker kind="items" label="Find weapon" filter={(it) => !!it.weapon} onpick={addWeapon}>
+    {#snippet detail(it)}{it.weapon?.damage} · {it.weapon?.crit} · {it.weapon?.handedness} · {it.weight} lb{/snippet}
+  </DbPicker>
   <div class="print:hidden"><BonusList keys={KEYS} label="Attack / damage bonuses" /></div>
 </Section>

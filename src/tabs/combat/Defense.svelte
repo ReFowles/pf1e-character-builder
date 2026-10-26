@@ -7,6 +7,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -61,6 +62,24 @@
       <td class="w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
     {/snippet}
   </DynamicTable>
+  <DbPicker
+    kind="items"
+    label="Find armor or shield"
+    filter={(it) => !!it.armor}
+    onpick={(it) =>
+      c.armor.push({
+        ...make.armor(it.armor!.kind),
+        name: it.name,
+        acBonus: it.armor!.ac,
+        maxDex: it.armor!.maxDex,
+        checkPenalty: it.armor!.acp,
+        spellFailure: it.armor!.asf,
+        category: it.armor!.category,
+        weight: it.weight,
+      })}
+  >
+    {#snippet detail(it)}+{it.armor?.ac} {it.armor?.category} · max Dex {it.armor?.maxDex ?? '—'} · ACP {it.armor?.acp} · {it.weight} lb{/snippet}
+  </DbPicker>
   <datalist id="armor-categories">
     <option value="light"></option><option value="medium"></option><option value="heavy"></option>
     <option value="buckler"></option><option value="light shield"></option><option value="heavy shield"></option><option value="tower"></option>
