@@ -10,9 +10,10 @@
   import Field from '../../lib/ui/Field.svelte';
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import { fmt } from '../../lib/ui/format';
+  import EditMode from '../../lib/ui/EditMode.svelte';
 
   const c = $derived(app.char);
-  let editing = $state<Record<string, boolean>>({});
+  let open = $state<Record<string, boolean>>({});
 
   function addFromLibrary(id: string) {
     const lib = MACRO_LIBRARY.find((x) => x.id === id);
@@ -30,7 +31,7 @@
   function addCustom() {
     const m = { ...make.macro(), name: 'New macro', effects: [make.macroEffect()] };
     c.macros.push(m);
-    editing[m.id] = true;
+    open[m.id] = true;
   }
 
   function summary(m: Macro) {
@@ -44,26 +45,15 @@
   }
 </script>
 
-<Section id="macros">
-  {#snippet actions()}
-    <select
-      class="w-40 border-paper/40 bg-ink text-xs text-paper"
-      aria-label="Add macro from library"
-      onchange={(e) => {
-        addFromLibrary(e.currentTarget.value);
-        e.currentTarget.value = '';
-      }}
-    >
-      <option value="">+ From library…</option>
-      {#each ['feat', 'class', 'spell', 'condition'] as cat (cat)}
-        <optgroup label={cat}>
-          {#each MACRO_LIBRARY.filter((x) => x.category === cat) as x (x.id)}<option value={x.id}>{x.name}</option>{/each}
-        </optgroup>
-      {/each}
-    </select>
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={addCustom}>+ Custom</button>
+<Section id="macros" editable>
+  {#snippet info()}
+    <p>Toggle a macro to apply its effects everywhere they matter. Effects follow normal bonus stacking: same-typed bonuses don't stack except dodge, circumstance and untyped.</p>
+    <p>Values can be formulas using @level, @bab, @cl, @str.mod (and other abilities) or @class.&lt;name&gt;.level.</p>
+    {#each c.macros.filter((m) => m.active) as m (m.id)}<p><strong>{m.name}</strong>: {summary(m)}</p>{/each}
   {/snippet}
 
+  <EditMode>
+  {#snippet children(sectionEditing)}
   <datalist id="bonus-keys">
     {#each BONUS_KEYS as k (k.key)}<option value={k.key}>{k.label}</option>{/each}
   </datalist>
@@ -79,15 +69,17 @@
           <div class="flex items-center gap-1">
             <span class="font-semibold" class:opacity-60={!m.active}>{m.name || 'Unnamed'}</span>
             <span class="text-[0.6rem] uppercase opacity-50">{m.category}</span>
-            <button type="button" class="ml-auto text-xs underline opacity-70 print:hidden" onclick={() => (editing[m.id] = !editing[m.id])}>
-              {editing[m.id] ? 'Done' : 'Edit'}
-            </button>
+            {#if sectionEditing}
+              <button type="button" class="ml-auto text-xs underline opacity-70 print:hidden" onclick={() => (open[m.id] = !open[m.id])}>
+                {open[m.id] ? 'Done' : 'Configure'}
+              </button>
+            {/if}
           </div>
           <div class="text-xs opacity-80">{summary(m)}</div>
-          {#if m.notes && !editing[m.id]}<div class="text-xs italic opacity-60">{m.notes}</div>{/if}
+          {#if m.notes && !open[m.id]}<div class="text-xs italic opacity-60">{m.notes}</div>{/if}
         </div>
       </div>
-      {#if editing[m.id]}
+      {#if open[m.id] && sectionEditing}
         <div class="mt-1 flex flex-col gap-1 border-t border-ink/10 pt-1 text-sm print:hidden">
           <div class="grid grid-cols-[2fr_1fr] gap-2">
             <Field label="Name"><input bind:value={m.name} /></Field>
@@ -112,5 +104,25 @@
         </div>
       {/if}
     {/snippet}
+    {#snippet tools()}
+      <select
+        class="w-44 text-sm"
+        aria-label="Add macro from library"
+        onchange={(e) => {
+          addFromLibrary(e.currentTarget.value);
+          e.currentTarget.value = '';
+        }}
+      >
+        <option value="">+ From library…</option>
+        {#each ['feat', 'class', 'spell', 'condition'] as cat (cat)}
+          <optgroup label={cat}>
+            {#each MACRO_LIBRARY.filter((x) => x.category === cat) as x (x.id)}<option value={x.id}>{x.name}</option>{/each}
+          </optgroup>
+        {/each}
+      </select>
+      <button type="button" class="add-btn" onclick={addCustom}>+ Custom</button>
+    {/snippet}
   </DynamicList>
+  {/snippet}
+  </EditMode>
 </Section>
