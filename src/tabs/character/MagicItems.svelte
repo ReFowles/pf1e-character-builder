@@ -43,6 +43,9 @@
 
 <Section id="magicItems">
   <table class="w-full text-sm">
+    <thead>
+      <tr><th class="text-right">Slot</th><th>Item</th><th class="text-center">Wt</th><th class="text-center">gp</th></tr>
+    </thead>
     <tbody>
       {#each SLOTS as s (s.slot + s.index)}
         {@const item = inSlot(s.slot, s.index)}

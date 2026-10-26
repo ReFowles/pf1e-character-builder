@@ -90,9 +90,9 @@
           <th class="text-center">Qty</th>
           <th class="text-center">Wt</th>
           <th class="text-center">Total</th>
-          <th class="text-center" title="Value of one, in gp">gp ea.</th>
           <th class="print:hidden">In</th>
           <th class="print:hidden" title="Container / weightless contents / not carried">Flags</th>
+          <th class="text-center" title="Value of one, in gp">gp ea.</th>
           <th>Notes</th>
           <th class="print:hidden"></th>
         </tr>
