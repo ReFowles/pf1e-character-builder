@@ -272,7 +272,7 @@
   .dyn-table:not(.keep-table) thead {
     display: none;
   }
-  .dyn-table:not(.keep-table) tbody tr {
+  .dyn-table:not(.keep-table) tbody tr:not(.print-row) {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-end;
