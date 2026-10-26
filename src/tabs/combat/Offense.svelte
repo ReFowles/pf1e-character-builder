@@ -11,6 +11,9 @@
   import { breakdown, fmt } from '../../lib/ui/format';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import type { DbItem } from '../../lib/db/types';
+  import { parseGp } from '../../lib/model/migrate';
+  import { iterativeText } from '../../lib/rules/tables';
+  import Chevron from '../../lib/ui/Chevron.svelte';
 
   function addWeapon(it: DbItem) {
     const w = it.weapon!;
@@ -27,6 +30,7 @@
       range: w.range,
       type: w.type,
       weight: it.weight,
+      price: parseGp(it.price),
     });
   }
 
@@ -39,9 +43,9 @@
 
 <Section id="offense">
   <div class="grid grid-cols-4 gap-2">
-    <Stat label="BAB" value={d.bab} big />
-    <Stat label="Melee" value={d.attack.melee} big />
-    <Stat label="Ranged" value={d.attack.ranged} big />
+    <Stat label="BAB" value={d.bab} display={iterativeText(d.bab, d.bab)} big />
+    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} big />
+    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} big />
     <Stat label="CMB" value={d.cmb} big />
   </div>
 
@@ -72,12 +76,12 @@
             <input class="flex-1" bind:value={w.notes} placeholder="Notes" aria-label="Notes" />
           </div>
         </Field>
-        <button type="button" class="text-xs underline opacity-70 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
-          {open[w.id] ? 'Hide' : 'Details'}
+        <button type="button" class="inline-flex items-center gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
+          Details <Chevron open={!!open[w.id]} />
         </button>
       </div>
       {#if open[w.id]}
-        <div class="mt-1 grid grid-cols-4 gap-2 border-t border-ink/10 pt-1 sm:grid-cols-8 print:hidden">
+        <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-9 print:hidden">
           <Field label="Kind">
             <select bind:value={w.kind}><option value="melee">Melee</option><option value="ranged">Ranged</option></select>
           </Field>
@@ -101,6 +105,7 @@
           </Field>
           <Field label="Dmg misc"><NumInput bind:value={w.damageMisc} signed /></Field>
           <Field label="Weight"><NumInput bind:value={w.weight} /></Field>
+          <Field label="Value (gp)"><NumInput bind:value={w.price} /></Field>
         </div>
       {/if}
     {/snippet}
@@ -111,9 +116,11 @@
         {/each}
       </div>
     {/snippet}
+    {#snippet tools()}
+      <DbPicker kind="items" label="Find weapon" filter={(it) => !!it.weapon} onpick={addWeapon}>
+        {#snippet detail(it)}{it.weapon?.damage} · {it.weapon?.crit} · {it.weapon?.handedness} · {it.weight} lb{/snippet}
+      </DbPicker>
+    {/snippet}
   </DynamicList>
-  <DbPicker kind="items" label="Find weapon" filter={(it) => !!it.weapon} onpick={addWeapon}>
-    {#snippet detail(it)}{it.weapon?.damage} · {it.weapon?.crit} · {it.weapon?.handedness} · {it.weight} lb{/snippet}
-  </DbPicker>
   <div class="print:hidden"><BonusList keys={KEYS} label="Attack / damage bonuses" /></div>
 </Section>
