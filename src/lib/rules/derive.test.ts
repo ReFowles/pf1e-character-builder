@@ -101,6 +101,8 @@ describe('derive spellcasting', () => {
     c.spellcasting = [{ ...make.spellcasting(), ability: 'cha', casterLevelMisc: 5, slotsMisc: [0, 2, 0, 0, 0, 0, 0, 0, 0, 0] }];
     const s = derive(c).spellcasting[c.spellcasting[0].id];
     expect(s.casterLevel).toBe(5);
+    c.spellcasting[0].concentrationMisc = 4;
+    expect(derive(c).spellcasting[c.spellcasting[0].id].concentration).toBe(9);
     expect(s.slots.slice(0, 3)).toEqual([null, 2, null]);
   });
 

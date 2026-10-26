@@ -174,6 +174,7 @@ export const make = {
     table: '',
     domainSlot: false,
     casterLevelMisc: 0,
+    concentrationMisc: 0,
     spellPenMisc: 0,
     slots: Array(10).fill(null),
     slotsMisc: Array(10).fill(0),

@@ -304,6 +304,7 @@ export interface Spellcasting extends Identified {
   /** One extra domain spell slot per castable spell level 1+ (clerics). */
   domainSlot: boolean;
   casterLevelMisc: number;
+  concentrationMisc: number;
   spellPenMisc: number;
   /** Base slots per spell level 0..9 from the class table (null = cannot cast). */
   slots: (number | null)[];

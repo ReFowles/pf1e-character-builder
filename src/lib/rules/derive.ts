@@ -527,7 +527,7 @@ export function derive(c: Character): Derived {
     spellcasting[b.id] = {
       casterLevel,
       abilityMod: mod,
-      concentration: casterLevel + mod + set.total(['concentration']).total,
+      concentration: casterLevel + mod + b.concentrationMisc + set.total(['concentration']).total,
       dcs: baseSlots.map((_, lvl) => 10 + lvl + mod + dcBonus),
       slots: baseSlots.map((s, lvl) => (s === null ? null : s + bonus[lvl] + (misc[lvl] ?? 0))),
       base: baseSlots,
