@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { loadDb, searchByName, type DbKind } from '../db';
   import type { DbData } from '../db/types';
+  import { useSection } from './sectionContext';
 
   type Entry = DbData[K][number];
 
@@ -15,6 +16,7 @@
   }
   let { kind, label, onpick, filter, detail }: Props = $props();
 
+  const section = useSection();
   let open = $state(false);
   let query = $state('');
   let data = $state<Entry[] | null>(null);
@@ -44,10 +46,12 @@
   }
 </script>
 
-{#if !open}
+{#if !section.editing}
+  <!-- Find is a structural action: only in the section's edit mode. -->
+{:else if !open}
   <button type="button" class="add-btn print:hidden" onclick={start}>⌕ {label}</button>
 {:else}
-  <div class="relative flex w-full basis-full flex-col gap-1 print:hidden">
+  <div class="relative flex min-w-48 flex-1 flex-col print:hidden">
     <div class="flex items-center gap-1">
       <!-- svelte-ignore a11y_autofocus -->
       <input
@@ -69,9 +73,9 @@
       />
       <button type="button" class="icon-btn" aria-label="Close search" onclick={() => (open = false)}>✕</button>
     </div>
-    {#if error}<p class="text-xs text-accent">{error}</p>{/if}
+    {#if error}<p class="absolute top-full left-0 z-30 mt-1 bg-paper px-2 text-xs text-accent">{error}</p>{/if}
     {#if results.length}
-      <ul id={listId} role="listbox" class="max-h-72 overflow-y-auto rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
+      <ul id={listId} role="listbox" class="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
         {#each results as r, i (r.name)}
           <li role="option" aria-selected={i === active}>
             <button
@@ -89,7 +93,7 @@
         {/each}
       </ul>
     {:else if query && data}
-      <p class="text-xs italic opacity-60">No matches.</p>
+      <p class="absolute top-full left-0 z-30 mt-1 rounded-sm bg-paper px-2 py-1 text-xs italic shadow">No matches.</p>
     {/if}
   </div>
 {/if}

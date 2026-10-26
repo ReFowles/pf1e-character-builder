@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from 'svelte';
+  import { useSection } from './sectionContext';
 
   interface Props {
     items: T[];
@@ -31,6 +32,8 @@
     class: cls = '',
   }: Props = $props();
 
+  const section = useSection();
+
   function move(i: number, by: number) {
     const j = i + by;
     if (j < 0 || j >= items.length) return;
@@ -39,18 +42,19 @@
   }
 </script>
 
-<div class="overflow-x-auto">
+<div>
   <table class="dyn-table {cls}">
     <thead>
       <tr>
         {@render head()}
-        <th class="w-0 print:hidden"><span class="sr-only">Actions</span></th>
+        {#if section.editing}<th class="w-0 print:hidden"><span class="sr-only">Actions</span></th>{/if}
       </tr>
     </thead>
     <tbody>
       {#each items as item, i (item.id)}
         <tr>
           {@render row(item, i)}
+          {#if section.editing}
           <td class="row-actions print:hidden">
             <div class="flex">
               {#if reorder}
@@ -60,6 +64,7 @@
               <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => (onremove ? onremove(item) : items.splice(i, 1))}>✕</button>
             </div>
           </td>
+          {/if}
         </tr>
       {:else}
         <tr class="print:hidden"><td colspan={cols + 1} class="py-2 text-center text-sm italic opacity-60">{empty}</td></tr>
@@ -71,7 +76,7 @@
     </tbody>
   </table>
 </div>
-{#if onadd || tools}
+{#if section.editing && (onadd || tools)}
   <div class="flex flex-wrap items-start gap-2 print:hidden">
     {#if onadd}<button type="button" class="add-btn" onclick={onadd}>+ {addLabel}</button>{/if}
     {#if tools}{@render tools()}{/if}
