@@ -4,6 +4,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
 
   const c = $derived(app.char);
   // One feat at 1st level and every odd level after.
@@ -34,6 +35,13 @@
       <td><textarea rows="1" class="w-full" bind:value={f.description} aria-label="Notes"></textarea></td>
     {/snippet}
   </DynamicTable>
+  <DbPicker
+    kind="feats"
+    label="Find feat"
+    onpick={(f) => c.feats.push({ ...make.feat(Math.max(1, app.d.level)), name: f.name, source: 'Level', description: f.summary })}
+  >
+    {#snippet detail(f)}{f.tags.join(', ')}{f.summary ? ` — ${f.summary}` : ''}{/snippet}
+  </DbPicker>
   <datalist id="feat-sources">
     <option value="Level"></option><option value="Human bonus"></option><option value="Fighter bonus"></option>
     <option value="Class bonus"></option><option value="Racial"></option><option value="Item"></option>
