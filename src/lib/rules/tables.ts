@@ -18,7 +18,7 @@ export const XP_TABLE: Record<XpTrack, number[]> = {
 
 /** XP needed for the level after `level`, or null at level 20+. */
 export function xpForNextLevel(track: XpTrack, level: number): number | null {
-  return XP_TABLE[track][Math.max(level, 0)] ?? null;
+  return XP_TABLE[track][Math.max(level, 1)] ?? null;
 }
 
 export interface SizeMods {
