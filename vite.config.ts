@@ -20,7 +20,7 @@ export default defineConfig({
         icons: [{ src: 'pf-logo.svg', sizes: 'any', type: 'image/svg+xml' }],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,json,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,json,txt,woff2}'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       },
     }),
