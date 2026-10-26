@@ -8,6 +8,9 @@
     head: Snippet;
     row: Snippet<[T, number]>;
     onadd?: () => void;
+    /** Needed when `items` is a filtered view rather than the source array. */
+    onremove?: (item: T) => void;
+    reorder?: boolean;
     addLabel?: string;
     empty?: string;
     class?: string;
@@ -18,6 +21,8 @@
     head,
     row,
     onadd,
+    onremove,
+    reorder = true,
     addLabel = 'Add',
     empty = 'Nothing yet.',
     class: cls = '',
@@ -45,9 +50,11 @@
           {@render row(item, i)}
           <td class="row-actions print:hidden">
             <div class="flex">
-              <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
-              <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>
-              <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => items.splice(i, 1)}>✕</button>
+              {#if reorder}
+                <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
+                <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>
+              {/if}
+              <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => (onremove ? onremove(item) : items.splice(i, 1))}>✕</button>
             </div>
           </td>
         </tr>
