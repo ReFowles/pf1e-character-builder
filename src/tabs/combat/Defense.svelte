@@ -122,26 +122,26 @@
   </datalist>
 
   <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    <Stat label="AC" value={d.ac.normal} signed={false} big />
-    <Stat label="Touch" value={d.ac.touch} signed={false} big />
-    <Stat label="Flat-footed" value={d.ac.flatFooted} signed={false} big />
+    <Stat label="AC" value={d.ac.normal} signed={false} size="md" />
+    <Stat label="Touch" value={d.ac.touch} signed={false} />
+    <Stat label="Flat-footed" value={d.ac.flatFooted} signed={false} />
   </div>
   <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    <Stat label="Fortitude" value={d.saves.fort} big />
-    <Stat label="Reflex" value={d.saves.ref} big />
-    <Stat label="Will" value={d.saves.will} big />
+    <Stat label="Fortitude" value={d.saves.fort} size="md" />
+    <Stat label="Reflex" value={d.saves.ref} size="md" />
+    <Stat label="Will" value={d.saves.will} size="md" />
   </div>
   <div class="grid grid-cols-3 gap-1 px-1">
     <div class="stat" title="Flat-footed CMD: {d.cmdFlatFooted}">
-      <div class="stat-value text-3xl">{d.cmd.total}</div>
+      <div class="stat-value text-2xl">{d.cmd.total}</div>
       <div class="field-label">CMD <span class="normal-case">(FF {d.cmdFlatFooted})</span></div>
     </div>
     <div class="stat">
-      <NumInput class="stat-value h-9 w-20 text-3xl" bind:value={c.spellResistance} aria-label="Spell resistance" />
+      <NumInput class="stat-value h-8 w-20 text-2xl" bind:value={c.spellResistance} aria-label="Spell resistance" />
       <div class="field-label">Spell resist.</div>
     </div>
     <div class="stat">
-      <input class="stat-value h-9 w-24 text-center text-3xl" bind:value={c.damageReduction} placeholder="—" aria-label="Damage reduction" />
+      <input class="stat-value h-8 w-24 text-center text-2xl" bind:value={c.damageReduction} placeholder="—" aria-label="Damage reduction" />
       <div class="field-label">DR</div>
     </div>
   </div>

@@ -6,17 +6,19 @@
     label: string;
     value: number | Total;
     signed?: boolean;
-    big?: boolean;
+    /** Value size: sm = text-xl, md = text-2xl, lg = text-3xl. */
+    size?: 'sm' | 'md' | 'lg';
     /** Text to show instead of the number (e.g. iterative attacks). */
     display?: string;
     class?: string;
   }
-  let { label, value, signed = true, big = false, display, class: cls = '' }: Props = $props();
+  let { label, value, signed = true, size = 'sm', display, class: cls = '' }: Props = $props();
+  const SIZES = { sm: 'text-xl', md: 'text-2xl', lg: 'text-3xl' };
   const n = $derived(typeof value === 'number' ? value : value.total);
   const tip = $derived(typeof value === 'number' ? undefined : breakdown(value));
 </script>
 
 <div class="stat {cls}" title={tip}>
-  <div class="stat-value whitespace-nowrap" class:text-3xl={big && !display} class:text-2xl={big && !!display}>{display ?? (signed ? fmt(n) : n)}</div>
+  <div class="stat-value whitespace-nowrap {SIZES[size]}">{display ?? (signed ? fmt(n) : n)}</div>
   <div class="field-label">{label}</div>
 </div>

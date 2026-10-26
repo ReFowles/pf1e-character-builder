@@ -158,10 +158,14 @@
     @apply w-full text-center tabular-nums;
   }
   .stat {
-    @apply flex min-w-12 flex-col items-center rounded-sm border border-ink/30 px-2 py-1;
+    @apply flex min-w-12 flex-col items-center justify-between rounded-sm border border-ink/30 px-2 py-1;
   }
   .stat-value {
     @apply text-xl leading-tight font-bold tabular-nums;
+  }
+  /* In equal-height rows, smaller values sit centered and labels line up along the bottom. */
+  .stat > div.stat-value {
+    margin-block: auto;
   }
   .chip {
     @apply inline-flex w-fit max-w-full items-center gap-1 rounded-full border border-ink/30 bg-parchment px-2 py-0.5 text-sm;

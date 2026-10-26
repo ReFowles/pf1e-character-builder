@@ -60,7 +60,7 @@
     <p><strong>Resources</strong> can use a formula for their maximum, e.g. <code>max(1, @wis.mod)</code>.</p>
   {/snippet}
   <div class="flex flex-wrap items-stretch gap-1.5">
-    <Stat label="Initiative" value={d.init} big />
+    <Stat label="Initiative" value={d.init} size="lg" />
     <div class="stat" title={d.speed.encumbered ? 'Reduced by armor or load' : undefined}>
       <div class="stat-value text-3xl">{d.speed.base}<span class="text-xs">ft</span></div>
       <div class="field-label">Speed{d.speed.encumbered ? '*' : ''}</div>

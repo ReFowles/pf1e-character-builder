@@ -57,10 +57,10 @@
     <p>Extra attacks come every 5 points of BAB above +5 (−5 each). Damage adds the damage ability modifier × its multiplier (½ off-hand, 1½ two-handed), enhancement and damage bonuses.</p>
   {/snippet}
   <div class="grid grid-cols-4 gap-2">
-    <Stat label="BAB" value={d.bab} display={iterativeText(d.bab, d.bab)} big />
-    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} big />
-    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} big />
-    <Stat label="CMB" value={d.cmb} big />
+    <Stat label="BAB" value={d.bab} display={iterativeText(d.bab, d.bab)} size="md" />
+    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" />
+    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" />
+    <Stat label="CMB" value={d.cmb} size="md" />
   </div>
 
   <DynamicList bind:items={c.weapons} onadd={() => c.weapons.push(make.weapon())} addLabel="Weapon" empty="No weapons yet.">
@@ -90,7 +90,7 @@
             <input class="flex-1" bind:value={w.notes} placeholder="Notes" aria-label="Notes" />
           </div>
         </Field>
-        <button type="button" class="-mr-6 inline-flex w-12 items-center justify-end gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
+        <button type="button" class="inline-flex w-12 items-center justify-end gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
           Details <Chevron open={!!open[w.id]} />
         </button>
       </div>
