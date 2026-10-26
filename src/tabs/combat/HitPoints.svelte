@@ -47,7 +47,7 @@
   <div class="relative grid grid-cols-[1fr_2.5rem_1fr] items-center rounded-sm border-2 border-ink px-1 py-2">
     <div class="flex flex-col items-center">
       <input
-        class="w-full border-0 bg-transparent text-center text-5xl font-bold tabular-nums print:invisible"
+        class="h-14 w-full border-0 bg-transparent text-center text-5xl leading-none font-bold tabular-nums print:invisible"
         class:text-accent={hp.current <= hp.max.total / 4}
         inputmode="numeric"
         aria-label="Current hit points"
