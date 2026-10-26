@@ -198,10 +198,11 @@
   .character-grid {
     grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-template-areas:
-      'bio bio bio bio bio bio bio portrait portrait portrait portrait portrait'
-      'traits traits traits traits traits traits traits portrait portrait portrait portrait portrait'
+      'bio bio bio bio bio bio bio bio bio portrait portrait portrait'
+      'traits traits traits traits traits traits traits traits traits portrait portrait portrait'
       'feats feats feats feats feats feats classAbilities classAbilities classAbilities classAbilities classAbilities classAbilities'
-      'magicItems magicItems magicItems magicItems equipment equipment equipment equipment equipment equipment equipment equipment';
+      'equipment equipment equipment equipment equipment equipment equipment equipment equipment magicItems magicItems magicItems';
+    align-items: start;
   }
   .spells-grid {
     grid-template-areas: 'spellcasting';

@@ -73,6 +73,9 @@
 </script>
 
 <Section id="portrait" bodyClass="p-0">
+  {#snippet info()}
+    <p>Upload or drop an image, then drag to position it and zoom to frame it. It's saved as a 600×800 (3:4) JPEG; transparent areas become white.</p>
+  {/snippet}
   <div
     class="relative aspect-[3/4] w-full overflow-hidden bg-parchment"
     class:flex-1={!img}
