@@ -104,11 +104,15 @@ describe('derive spellcasting', () => {
     expect(s.slots.slice(0, 3)).toEqual([null, 2, null]);
   });
 
-  it('uses effective mythic tier for power and surge but real tier for hp', () => {
+  it('applies mythic paragon to potency only and steps the surge die', () => {
     const c = newCharacter();
-    c.mythic = { ...c.mythic, enabled: true, tier: 3, tierMisc: 2, path: 'archmage' };
-    const m = derive(c).mythic!;
-    expect([m.effectiveTier, m.powerMax, m.surgeDie, m.hp]).toEqual([5, 13, '1d8', 9]);
+    c.mythic = { ...c.mythic, enabled: true, tier: 3, paragon: true, surgeUpgrades: 1, path: 'archmage' };
+    const d = derive(c);
+    const m = d.mythic!;
+    expect([m.effectiveTier, m.powerMax, m.surgeDie, m.hp]).toEqual([5, 9, '1d8', 9]);
+    expect(d.init.total).toBe(5);
+    c.mythic.surgeUpgrades = 9;
+    expect(derive(c).mythic!.surgeDie).toBe('2d12');
   });
 });
 

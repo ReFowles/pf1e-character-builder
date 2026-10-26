@@ -126,7 +126,7 @@ export interface Derived {
   weight: WeightDerived;
   wealth: WealthDerived;
   fcb: FcbSummary;
-  mythic: { tier: number; effectiveTier: number; powerMax: number; surgeDie: string; hp: number } | null;
+  mythic: { tier: number; effectiveTier: number; paragon: boolean; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
   load: Load;
   spellcasting: Record<string, SpellcastingDerived>;
@@ -213,8 +213,8 @@ export function derive(c: Character): Derived {
 
   const mythicOn = c.mythic.enabled && c.mythic.tier > 0;
   const tier = mythicOn ? Math.min(10, c.mythic.tier) : 0;
-  // Effective tier (tier + misc) drives power, surge and initiative; HP and ability increases use the real tier.
-  const effectiveTier = mythicOn ? Math.max(0, tier + c.mythic.tierMisc) : 0;
+  // Mythic Paragon raises the tier for potency only (not power, surge or access).
+  const effectiveTier = mythicOn ? tier + (c.mythic.paragon ? 2 : 0) : 0;
   const mythicHp = mythicOn && c.mythic.path ? PATH_HP[c.mythic.path] * tier : 0;
   if (mythicOn) {
     ABILITY_INCREASE_TIERS.forEach((t, i) => {
@@ -223,7 +223,7 @@ export function derive(c: Character): Derived {
     });
     set.add(
       { key: 'hp.max', value: mythicHp, type: 'untyped', source: 'Mythic path' },
-      { key: 'init', value: effectiveTier >= 2 ? effectiveTier : 0, type: 'untyped', source: 'Amazing Initiative' },
+      { key: 'init', value: tier >= 2 ? effectiveTier : 0, type: 'untyped', source: 'Amazing Initiative' },
     );
   }
 
@@ -576,7 +576,7 @@ export function derive(c: Character): Derived {
     wealth,
     fcb,
     mythic: mythicOn
-      ? { tier, effectiveTier, powerMax: mythicPowerMax(effectiveTier), surgeDie: surgeDie(effectiveTier), hp: mythicHp }
+      ? { tier, effectiveTier, paragon: c.mythic.paragon, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier, c.mythic.surgeUpgrades), hp: mythicHp }
       : null,
     capacity,
     load,

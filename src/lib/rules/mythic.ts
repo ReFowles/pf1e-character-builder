@@ -12,11 +12,12 @@ export const PATH_HP: Record<MythicPath, number> = {
 
 export const mythicPowerMax = (tier: number) => 3 + 2 * tier;
 
-export function surgeDie(tier: number): string {
-  if (tier >= 10) return '1d12';
-  if (tier >= 7) return '1d10';
-  if (tier >= 4) return '1d8';
-  return '1d6';
+const SURGE_DICE = ['1d6', '1d8', '1d10', '1d12', '2d8', '2d10', '2d12'];
+
+/** Surge die by tier (d6 at 1st, d8 at 4th, d10 at 7th, d12 at 10th), raised a step per upgrade. */
+export function surgeDie(tier: number, upgrades = 0): string {
+  const base = tier >= 10 ? 3 : tier >= 7 ? 2 : tier >= 4 ? 1 : 0;
+  return SURGE_DICE[Math.min(SURGE_DICE.length - 1, Math.max(0, base + upgrades))];
 }
 
 /** Tiers that grant a +2 ability score increase. */
