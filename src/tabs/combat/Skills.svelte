@@ -64,7 +64,7 @@
   {@const sd = app.d.skills[e.id]}
   {#if sd}
     <tr class={[{ 'opacity-50': sd.unusable, 'print:hidden': !inFavorites && e.favorite }]} data-sort-index={inFavorites ? i : undefined}>
-      {#if inFavorites}
+      {#if inFavorites && editing}
         <td class="w-4 print:hidden">
           <span class="cursor-grab touch-none px-0.5 opacity-40 select-none hover:opacity-80" data-sort-handle title="Drag to reorder" aria-hidden="true">⋮⋮</span>
         </td>
@@ -123,7 +123,7 @@
 {#snippet head(inFavorites: boolean, editing: boolean)}
   <thead>
     <tr>
-      {#if inFavorites}<th class="print:hidden"><span class="sr-only">Reorder</span></th>{/if}
+      {#if inFavorites && editing}<th class="print:hidden"><span class="sr-only">Reorder</span></th>{/if}
       <th title="Favorite"><span class="sr-only">Favorite</span>★</th>
       <th title="Class skill">CS</th>
       <th>Skill</th>
@@ -142,7 +142,7 @@
   {/snippet}
   {#snippet info()}
     <p>Total = ranks + ability modifier + 3 for a class skill with at least one rank + size (Fly, Stealth) + armor check penalty ({app.d.acp}) where marked * + bonuses.</p>
-    <p><span class="font-bold text-accent">T</span> skills need at least one rank. Drag ⋮⋮ to reorder favorites.</p>
+    <p><span class="font-bold text-accent">T</span> skills need at least one rank. In Edit mode, drag ⋮⋮ (or use the arrows) to reorder favorites.</p>
     <BreakdownList
       items={c.skills
         .filter((s) => s.favorite || s.ranks > 0)
