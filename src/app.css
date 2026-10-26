@@ -39,6 +39,12 @@
 @layer components {
   .sheet-section {
     @apply flex min-w-0 flex-col rounded-sm border border-ink/70 bg-paper shadow-sm;
+  }
+  .section-head {
+    break-after: avoid;
+  }
+  .dyn-table tr,
+  .stat {
     break-inside: avoid;
   }
   .section-head {
@@ -134,6 +140,9 @@
       'feats feats feats feats feats feats classAbilities classAbilities classAbilities classAbilities classAbilities classAbilities'
       'magicItems magicItems magicItems magicItems equipment equipment equipment equipment equipment equipment equipment equipment';
   }
+  .spells-grid {
+    grid-template-areas: 'spellcasting';
+  }
 }
 
 /* Hidden/collapsed apply to the screen only; print has its own toggle. */
@@ -160,11 +169,12 @@
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  input,
+  input:not([type='checkbox'], [type='radio']),
   select,
   textarea {
     border-color: transparent;
     appearance: none;
+    resize: none;
   }
   input::placeholder,
   textarea::placeholder {

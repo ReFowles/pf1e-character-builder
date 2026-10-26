@@ -32,7 +32,7 @@
   }
 </script>
 
-<div class="sheet-grid">
+<div class="sheet-grid spells-grid">
   <Section id="spellcasting">
     {#each c.spellcasting as block, i (block.id)}
       <CastingBlock {block} onremove={() => remove(i)} />

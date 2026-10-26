@@ -31,7 +31,7 @@
 
 <div class={cls}>
   {#each items as it, i (it.id)}
-    <div class="group relative min-h-[4.75rem] rounded-sm border border-ink/20 p-1.5 pr-7 print:min-h-0">
+    <div class="group relative min-h-[4.75rem] break-inside-avoid rounded-sm border border-ink/20 p-1.5 pr-7 print:min-h-0">
       {@render item(it, i)}
       <div class="absolute top-0.5 right-0.5 flex flex-col print:hidden">
         <button type="button" class="icon-btn text-accent" aria-label="Remove" onclick={() => items.splice(i, 1)}>✕</button>

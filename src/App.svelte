@@ -52,7 +52,14 @@
 <main class="mx-auto max-w-[1200px] p-2 print:max-w-none print:p-0">
   {#each TABS as tab (tab)}
     <div
-      class={['tab-panel', { 'screen-hidden': app.tab !== tab, 'print:hidden': app.section(`tab:${tab}`).printHidden }]}
+      class={[
+        'tab-panel',
+        {
+          'screen-hidden': app.tab !== tab,
+          // Non-casters don't need a blank spells page.
+          'print:hidden': app.section(`tab:${tab}`).printHidden || (tab === 'spells' && !app.char.spellcasting.length),
+        },
+      ]}
     >
       {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else}<SpellsTab />{/if}
     </div>
