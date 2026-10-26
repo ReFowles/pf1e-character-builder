@@ -12,6 +12,7 @@ function fighter(): Character {
   c.abilities.con.base = 14;
   const k = { ...make.classDef(), name: 'Fighter', hd: 10, bab: 'full' as const, goodSaves: ['fort' as const], classSkills: ['climb'] };
   c.classes = [k];
+  c.favoredClassId = k.id;
   c.levels = [6, 6, 7].map((roll) => ({ ...make.level(k.id), hpRoll: roll }));
   c.armor = [
     { ...make.armor('armor'), name: 'Chain shirt', acBonus: 4, maxDex: 4, checkPenalty: -2, category: 'light' },

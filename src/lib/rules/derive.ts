@@ -156,8 +156,9 @@ export function derive(c: Character): Derived {
   for (const l of c.levels) if (l.classId in classLevels) classLevels[l.classId]++;
   const level = c.levels.length;
   const bab = c.classes.reduce((s, k) => s + babFor(k.bab, classLevels[k.id]), 0);
-  const fcbHp = c.levels.filter((l) => l.fcb.kind === 'hp').length;
-  const fcbSkill = c.levels.filter((l) => l.fcb.kind === 'skill').length;
+  const favoredLevels = c.levels.filter((l) => l.classId === c.favoredClassId);
+  const fcbHp = favoredLevels.filter((l) => l.fcb.kind === 'hp').length;
+  const fcbSkill = favoredLevels.filter((l) => l.fcb.kind === 'skill').length;
 
   // --- Bonus collection ---------------------------------------------------
   const set = new BonusSet();
