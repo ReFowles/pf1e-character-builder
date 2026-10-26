@@ -39,6 +39,8 @@ async function expectText(desc: string, loc: ReturnType<Page['locator']>, want: 
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${desc}: ${got}${ok ? '' : ` (want ${want})`}`);
 }
 const hpMax = () => page.locator('[data-section=hp] span.text-5xl');
+/** Toggle a section's Edit mode (structural controls only show while editing). */
+const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done)$/ }).click();
 const skillTotal = (name: string) =>
   page.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
 
@@ -67,11 +69,14 @@ await con.blur();
 await expectText('Max HP', hpMax(), /^59$/);
 
 console.log('— remove Shaken');
+await toggleEdit('hp');
 await page.getByLabel('Remove Shaken').click();
+await toggleEdit('hp');
 await expectStat('Melee', '+8');
 
 console.log('— gear weight → load');
 await page.goto(`${args.url}/#character`);
+await toggleEdit('equipment');
 await page.getByRole('button', { name: '+ Item' }).click();
 const wt = page.getByLabel('Weight each').last();
 await wt.fill('50');
@@ -104,6 +109,7 @@ console.log(`${twoValeros ? 'ok  ' : 'FAIL'} roster after import: ${options.join
 await expectStat('AC', '21');
 
 console.log('— database pickers');
+await toggleEdit('offense');
 await page.getByRole('button', { name: '⌕ Find weapon' }).click();
 await page.getByLabel('Find weapon').fill('greatsword');
 await page.getByRole('option', { name: /^Greatsword/ }).first().click();
@@ -113,6 +119,7 @@ const dice = await gs.getByLabel('Damage dice').inputValue();
 await expectText(`Greatsword damage (${dice})`, gs.locator('.field').nth(2), /^\+8/);
 if (dice !== '2d6') (failed++, console.log(`FAIL greatsword dice: ${dice}`));
 await page.goto(`${args.url}/#character`);
+await toggleEdit('feats');
 await page.getByRole('button', { name: '⌕ Find feat' }).click();
 await page.getByLabel('Find feat').fill('cleave');
 await page.locator('[role=listbox] [role=option]').first().waitFor();
@@ -122,6 +129,7 @@ const hasCleave = feats.filter((f) => f === 'Cleave').length === 2;
 if (!hasCleave) failed++;
 console.log(`${hasCleave ? 'ok  ' : 'FAIL'} feat picked: ${feats.at(-1)}`);
 await page.goto(`${args.url}/#combat`);
+await toggleEdit('defense');
 await page.getByRole('button', { name: '⌕ Find armor or shield' }).click();
 await page.getByLabel('Find armor or shield').fill('breastplate');
 await page.locator('[role=listbox] [role=option]').first().waitFor();
@@ -131,10 +139,11 @@ if (armorCount !== 3) failed++;
 console.log(`${armorCount === 3 ? 'ok  ' : 'FAIL'} armor rows after pick: ${armorCount}`);
 
 console.log('— extra speed');
+await toggleEdit('readiness');
 await page.getByRole('button', { name: '+ Speed' }).click();
 await page.getByLabel('fly speed', { exact: true }).fill('60');
 await page.getByLabel('fly speed', { exact: true }).blur();
-await page.locator('[data-section=classes]').getByRole('button', { name: 'Done' }).click();
+await toggleEdit('readiness');
 await expectStat('fly', '60ft');
 
 console.log('— mythic');
@@ -144,7 +153,7 @@ await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 await page.getByRole('button', { name: 'Mythic' }).click();
 await page.locator('[data-section=mythicOverview] select').first().selectOption('3');
 await page.locator('[data-section=mythicOverview] select').nth(1).selectOption('champion');
-await page.getByRole('button', { name: 'Combat' }).click();
+await page.getByRole('button', { name: 'Core' }).click();
 await expectText('Max HP (+15 mythic)', hpMax(), /^74$/);
 await expectStat('Initiative', '+5');
 
@@ -155,6 +164,52 @@ const box = await macros.boundingBox();
 const collapsedOk = !!box && box.height < 40 && (await macros.locator('.section-body').isHidden());
 if (!collapsedOk) failed++;
 console.log(`${collapsedOk ? 'ok  ' : 'FAIL'} collapsed macros height: ${box?.height}`);
+
+console.log('— other favored class bonus');
+await page.getByRole('button', { name: /Level history/ }).click();
+await page.getByLabel('Favored class bonus at level 1').selectOption('new');
+await page.getByLabel('Amount per level').fill('1/3');
+await page.getByLabel('Alternate favored class bonus').pressSequentially('channel damage');
+await page.getByLabel('Alternate favored class bonus').press('Enter');
+await expectText('FCB summary', page.locator('[data-section=classes] ul'), /channel damage \+1\/3/);
+
+console.log('— drag favorites');
+const favRows = page.locator('[data-section=skills] table').first().locator('tbody tr');
+const handle = (i: number) => favRows.nth(i).locator('[data-sort-handle]');
+await favRows.first().scrollIntoViewIfNeeded();
+const target = await favRows.first().boundingBox();
+const src = await handle(2).boundingBox();
+await page.mouse.move(src!.x + src!.width / 2, src!.y + src!.height / 2);
+await page.mouse.down();
+await page.mouse.move(target!.x + 40, target!.y + target!.height / 2, { steps: 8 });
+await page.mouse.up();
+await expectText('First favorite after drag', favRows.first().locator('td').nth(3), /^Perception/);
+
+console.log('— summoner preset and other caster');
+await toggleEdit('classes');
+await page.getByRole('button', { name: '+ Class' }).click();
+const nameInput = page.getByLabel('Class name').last();
+await nameInput.fill('Summoner');
+await nameInput.blur();
+await toggleEdit('classes');
+await page.getByRole('button', { name: 'Spells' }).click();
+await toggleEdit('spellcasting');
+await page.getByRole('button', { name: '+ Spellcasting class' }).click();
+const tableOk = (await page.locator('[data-section=spellcasting] select').nth(3).inputValue()) === 'bard';
+if (!tableOk) failed++;
+console.log(`${tableOk ? 'ok  ' : 'FAIL'} summoner uses the bard spell table`);
+await page.getByRole('button', { name: '+ Spellcasting class' }).click();
+const other = page.locator('[data-section=spellcasting] .section-body > div').last();
+await other.locator('select').first().selectOption({ label: 'Other' });
+await other.getByLabel('Spell table').selectOption('');
+const cl = other.locator('label', { hasText: 'Caster level' }).locator('input');
+await cl.fill('5');
+await cl.blur();
+const misc1 = other.getByLabel('Misc slots level 1');
+await misc1.fill('2');
+await misc1.blur();
+// Int 12 (+1) adds a bonus 1st-level spell: 0 base + 1 bonus + 2 misc.
+await expectText('Other caster 1st level', other.getByText(/^DC \d+ · \d+\/day$/), /3\/day/);
 
 if (errors.length) {
   failed += errors.length;
