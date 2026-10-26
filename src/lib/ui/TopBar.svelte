@@ -1,5 +1,8 @@
 <script lang="ts">
   import { app } from '../state.svelte';
+  import AboutDialog from './AboutDialog.svelte';
+
+  let about: AboutDialog;
 
   const sorted = $derived([...app.roster].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 </script>
@@ -25,6 +28,8 @@
     <button type="button" class="btn" onclick={() => app.importJson()}>Import JSON</button>
     <button type="button" class="btn" onclick={() => app.exportJson()}>Export JSON</button>
     <button type="button" class="btn" title="Print, or choose “Save as PDF” in the print dialog" onclick={() => print()}>Print / PDF</button>
+    <button type="button" class="btn" onclick={() => about.open()}>About</button>
     <button type="button" class="btn-primary" onclick={() => (app.configOpen = true)}>Config</button>
   </div>
 </header>
+<AboutDialog bind:this={about} />

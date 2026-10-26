@@ -1,0 +1,7 @@
+Additional Section 15 copyright notices for the bundled rules data:
+
+Pathfinder Roleplaying Game Core Rulebook. © 2009, Paizo Publishing, LLC; Author: Jason Bulmahn, based on material by Jonathan Tweet, Monte Cook, and Skip Williams.
+Pathfinder Roleplaying Game Advanced Player's Guide. © 2010, Paizo Publishing, LLC; Author: Jason Bulmahn.
+Foundry VTT Pathfinder 1e system compendium data (gitlab.com/foundryvtt_pathfinder1e/foundryvtt-pathfinder1), distributed under the Open Game License v1.0a.
+
+Each spell, feat and item lists its source product code (e.g. PZO1110 = Core Rulebook).
