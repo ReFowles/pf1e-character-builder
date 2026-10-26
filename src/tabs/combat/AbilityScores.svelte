@@ -4,20 +4,16 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import { breakdown, fmt } from '../../lib/ui/format';
-  import Chips from '../../lib/ui/Chips.svelte';
-  import { CONDITIONS } from '../../lib/rules/conditions';
+  import EditMode from '../../lib/ui/EditMode.svelte';
+  import BreakdownList from '../../lib/ui/BreakdownList.svelte';
 
-  const CONDITION_NAMES = Object.values(CONDITIONS).map((d) => d.name);
-
-  let editing = $state(false);
   const PARTS = ['base', 'racial', 'enhancement', 'inherent', 'misc', 'temp'] as const;
 </script>
 
-<Section id="abilities">
-  {#snippet actions()}
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" aria-pressed={editing} onclick={() => (editing = !editing)}>
-      {editing ? 'Done' : 'Edit'}
-    </button>
+<Section id="abilities" editable>
+  {#snippet info()}
+    <BreakdownList items={ABILITIES.map((a) => ({ label: a.toUpperCase(), total: app.d.abilities[a].breakdown, signed: false }))} />
+    <p>Temp columns show scores including temporary changes, active macros and conditions. Use Edit to change base, racial, enhancement, inherent, misc and temp values.</p>
   {/snippet}
   <table class="w-full text-center">
     <thead>
@@ -42,6 +38,7 @@
       {/each}
     </tbody>
   </table>
+  <EditMode>{#snippet children(editing)}
   {#if editing}
     <div class="overflow-x-auto print:hidden">
       <table class="w-full text-sm">
@@ -65,11 +62,5 @@
       <p class="mt-1 text-xs opacity-60">Temp holds damage/drain or short-term changes. Active macros and conditions also show in the temp columns.</p>
     </div>
   {/if}
-  <div class="mt-auto flex flex-col border-t border-ink/20 pt-1">
-    <span class="field-label">Conditions</span>
-    <Chips bind:items={app.char.conditions} suggestions={CONDITION_NAMES} placeholder="Add condition…" label="Add condition" />
-    {#each app.d.conditionNotes as note (note)}
-      <p class="text-xs opacity-70">{note}</p>
-    {/each}
-  </div>
+  {/snippet}</EditMode>
 </Section>
