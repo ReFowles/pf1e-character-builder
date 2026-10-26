@@ -13,7 +13,6 @@
   const c = $derived(app.char);
   const d = $derived(app.d);
   const ready = $derived(d.xpNext !== null && c.xp.current >= d.xpNext);
-  let showRolls = $state(false);
   let showLog = $state(false);
   let newLevelClass = $state('');
   const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
@@ -119,7 +118,7 @@
 <Section id="classes" editable>
   {#snippet info()}
     <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Config).</p>
-    <p><strong>Hit points</strong> per level are rolled and kept hidden in Level history; 1st level takes the maximum when Config says so. Each level adds at least 1 HP after Con.</p>
+    <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Config says so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in the favored class (★). Fractional "other" bonuses add up as entered and round down when used.</p>
   {/snippet}
@@ -151,8 +150,8 @@
       <thead>
         <tr>
           <th title="Favored class">FC</th>
+          <th class="text-center">Lv</th>
           <th>Class</th>
-          <th class="text-center">Lvl</th>
           {#if editing}
             <th class="text-center">HD</th>
             <th class="text-center">BAB</th>
@@ -160,7 +159,7 @@
             <th class="text-center" title="Skill ranks per level">Ranks</th>
             <th></th>
           {:else}
-            <th>Progression</th>
+            <th colspan="4">Progression</th>
           {/if}
         </tr>
       </thead>
@@ -178,8 +177,8 @@
                 onclick={() => (c.favoredClassId = k.id)}>★</button
               >
             </td>
+            <td class="w-8 text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
             <td><input list="class-presets" class="w-full font-semibold" bind:value={k.name} onchange={() => onName(k)} placeholder="Class name" aria-label="Class name" /></td>
-            <td class="text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
             {#if editing}
               <td>
                 <Select class="w-16" bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />
@@ -211,18 +210,22 @@
               <td class="w-12"><NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" /></td>
               <td><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
             {:else}
-              <td class="align-middle text-xs whitespace-nowrap opacity-70">d{k.hd} · {BAB_LABEL[k.bab]} · {k.goodSaves.map((s) => s[0].toUpperCase()).join('') || '—'} · {k.skillRanks}+Int</td>
+              <!-- Separate cells so the bullets line up across classes. -->
+              <td class="progression">d{k.hd}</td>
+              <td class="progression">{BAB_LABEL[k.bab]}</td>
+              <td class="progression">{k.goodSaves.map((s) => s[0].toUpperCase()).join('') || '—'}</td>
+              <td class="progression">{k.skillRanks}+Int</td>
             {/if}
           </tr>
         {/each}
-        <tr class="print-row hidden print:table-row"><td></td><td></td><td></td><td></td></tr>
+        <tr class="print-row hidden print:table-row">{#each { length: 7 }, i (i)}<td></td>{/each}</tr>
       </tbody>
     </table>
   </div>
 
   <div class="flex flex-wrap items-center gap-2 print:hidden">
     {#if editing || !c.classes.length}<button type="button" class="add-btn" onclick={addClass}>+ Class</button>{/if}
-    {#if c.classes.length}
+    {#if c.classes.length && (editing || !c.levels.length)}
       <Select
         bind:value={() => newLevelClass || c.favoredClassId || c.classes[0]?.id, (v) => (newLevelClass = v ?? '')}
         options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))}
@@ -230,23 +233,22 @@
         class="text-sm"
       />
       <button type="button" class="btn-primary" onclick={addLevel}>+ Level</button>
-      <button type="button" class="btn inline-flex items-center gap-1" aria-expanded={showLog} onclick={() => (showLog = !showLog)}>
-        Level history <Chevron open={showLog} />
-      </button>
+      {#if editing && c.levels.length}
+        <button type="button" class="btn inline-flex items-center gap-1" aria-expanded={showLog} onclick={() => (showLog = !showLog)}>
+          Level history <Chevron open={showLog} />
+        </button>
+      {/if}
     {/if}
   </div>
 
-  {#if showLog && c.levels.length}
+  {#if editing && showLog && c.levels.length}
     <div class="overflow-x-auto print:hidden">
       <table class="dyn-table">
         <thead>
           <tr>
             <th>#</th>
             <th>Class</th>
-            <th class="text-center">
-              HP roll
-              <button type="button" class="ml-1 underline" onclick={() => (showRolls = !showRolls)}>{showRolls ? 'hide' : 'show'}</button>
-            </th>
+            <th class="text-center">HP roll</th>
             <th>Favored class bonus</th>
             <th></th>
           </tr>
@@ -261,10 +263,8 @@
               <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
                   <span class="text-xs opacity-60" title="Max HP at 1st level (change in Config)">max</span>
-                {:else if showRolls}
-                  <NumInput bind:value={l.hpRoll} aria-label="HP rolled at level {i + 1}" />
                 {:else}
-                  <span class="opacity-40">•••</span>
+                  <NumInput bind:value={l.hpRoll} aria-label="HP rolled at level {i + 1}" />
                 {/if}
               </td>
               <td data-label="Favored class bonus">

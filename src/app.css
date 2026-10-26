@@ -220,6 +220,14 @@
   .skills-table td {
     @apply align-middle;
   }
+  /* Class progression cells, joined by bullets. */
+  .progression {
+    @apply px-0 align-middle text-xs whitespace-nowrap opacity-70;
+  }
+  .progression + .progression::before {
+    content: '·';
+    @apply px-1;
+  }
   .sorting {
     @apply cursor-grabbing select-none;
   }
