@@ -230,6 +230,17 @@
   .skills-table td {
     @apply align-middle;
   }
+  /* Weapon card top line: name, attack, damage, critical, range, type, ammo. */
+  @media (min-width: 640px) {
+    .weapon-grid {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);
+    }
+  }
+  @media print {
+    .weapon-grid {
+      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);
+    }
+  }
   /* Ability scores: a ruled grid (the temp cells double as write-in boxes on paper). */
   .ability-table {
     @apply border-collapse;

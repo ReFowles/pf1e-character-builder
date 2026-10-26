@@ -13,8 +13,8 @@
   import type { DbItem } from '../../lib/db/types';
   import { parseGp } from '../../lib/model/migrate';
   import { iterativeText } from '../../lib/rules/tables';
-  import Chevron from '../../lib/ui/Chevron.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import Iterative from '../../lib/ui/Iterative.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
@@ -39,7 +39,6 @@
 
   const c = $derived(app.char);
   const d = $derived(app.d);
-  let open = $state<Record<string, boolean>>({});
 
   const KEYS = ['attack', 'attack.melee', 'attack.ranged', 'damage', 'damage.melee', 'damage.ranged', 'cmb'];
 </script>
@@ -58,7 +57,7 @@
     <p>Extra attacks come every 5 points of BAB above +5 (−5 each). Damage adds the damage ability modifier × its multiplier (½ off-hand, 1½ two-handed), enhancement and damage bonuses.</p>
   {/snippet}
   <div class="grid grid-cols-4 gap-2">
-    <Stat label="BAB" value={d.bab} display={iterativeText(d.bab, d.bab)} size="md" />
+    <Stat label="BAB" value={d.bab} size="md" />
     <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" />
     <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" />
     <Stat label="CMB" value={d.cmb} size="md" />
@@ -68,38 +67,41 @@
   <DynamicList bind:items={c.weapons} onadd={() => c.weapons.push(make.weapon())} addLabel="Weapon" empty="No weapons yet.">
     {#snippet item(w)}
       {@const wd = d.weapons[w.id]}
-      <div class="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-[2fr_1.3fr_1fr_0.8fr_0.8fr_0.8fr]">
-        <Field label="Weapon" class="col-span-2 sm:col-span-1"><input class="font-semibold" bind:value={w.name} /></Field>
+      <div class="weapon-grid grid grid-cols-2 gap-x-2 gap-y-1">
+        <Field label="Weapon" class="col-span-2 sm:col-span-1">
+          <div class="flex items-center gap-1">
+            {#if editing}
+              <NumInput class="w-10 shrink-0" bind:value={w.enhancement} signed aria-label="Enhancement" title="Enhancement bonus" />
+            {:else if w.enhancement}
+              <span class="font-semibold tabular-nums" title="Enhancement bonus">{fmt(w.enhancement)}</span>
+            {/if}
+            <input class="w-full min-w-0 font-semibold" bind:value={w.name} aria-label="Weapon name" />
+          </div>
+        </Field>
         <div class="field" title={wd ? breakdown(wd.attackBreakdown) : ''}>
-          <div class="px-1 font-bold tabular-nums">{wd?.attacks.map(fmt).join('/')}</div>
+          <div class="px-1 leading-7 font-bold tabular-nums"><Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} /></div>
           <span class="field-label">Attack</span>
         </div>
         <Field label="Damage">
-          <div class="flex items-baseline">
-            <input class="w-full" bind:value={w.damage} placeholder="1d8" aria-label="Damage dice" />
-            {#if wd && wd.damageBonus !== 0}<span class="font-bold whitespace-nowrap tabular-nums">{fmt(wd.damageBonus)}</span>{/if}
-          </div>
+          {#if editing}
+            <div class="flex items-center gap-0.5">
+              <input class="w-16 min-w-0" bind:value={w.damage} placeholder="1d8" aria-label="Damage dice" />
+              {#if wd && wd.damageBonus !== 0}<span class="font-bold whitespace-nowrap tabular-nums">{fmt(wd.damageBonus)}</span>{/if}
+            </div>
+          {:else}
+            <!-- Dice (adjusted for size changes) with the modifier right after: 2d6+8. -->
+            <div class="px-1 leading-7 font-bold whitespace-nowrap tabular-nums" title={wd && wd.damageDice !== w.damage ? `${w.damage} before size change` : undefined}>
+              {wd?.damageDice || '—'}{wd && wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}
+            </div>
+          {/if}
         </Field>
         <Field label="Critical"><input bind:value={w.crit} /></Field>
         <Field label="Range"><input bind:value={w.range} /></Field>
         <Field label="Type"><input bind:value={w.type} placeholder="S/P/B" /></Field>
+        <Field label="Ammo"><input bind:value={w.ammo} /></Field>
       </div>
-      <div class={['mt-1 flex flex-wrap items-end gap-2', { 'print:hidden': !w.ammo && !w.notes && !editing }]}>
-        <Field label="Ammo / notes" class="min-w-40 flex-1">
-          <input value={[w.ammo, w.notes].filter(Boolean).join(' · ')} readonly class="hidden print:block" aria-hidden="true" tabindex="-1" />
-          <div class="flex gap-1 print:hidden">
-            <input class="w-24" bind:value={w.ammo} placeholder="Ammo" aria-label="Ammo" />
-            <input class="flex-1" bind:value={w.notes} placeholder="Notes" aria-label="Notes" />
-          </div>
-        </Field>
-        {#if editing}
-          <Field label="Value (gp)" class="w-20 print:hidden"><NumInput bind:value={w.price} aria-label="Value in gp" /></Field>
-        {/if}
-        <button type="button" class="inline-flex w-12 items-center justify-end gap-0.5 text-xs opacity-70 hover:opacity-100 print:hidden" aria-expanded={!!open[w.id]} onclick={() => (open[w.id] = !open[w.id])}>
-          Details <Chevron open={!!open[w.id]} />
-        </button>
-      </div>
-      {#if open[w.id]}
+      <Field label="Notes" class="mt-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
+      {#if editing}
         <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-8 print:hidden">
           <Field label="Kind">
             <Select bind:value={w.kind} options={opts(['melee', 'ranged'] as const)} />
@@ -107,7 +109,6 @@
           <Field label="Atk abil">
             <Select bind:value={w.attackAbility} options={opts(ABILITIES, (a) => a.toUpperCase())} />
           </Field>
-          <Field label="Enh."><NumInput bind:value={w.enhancement} signed /></Field>
           <Field label="Atk misc"><NumInput bind:value={w.attackMisc} signed /></Field>
           <Field label="Dmg abil">
             <Select bind:value={w.damageAbility} options={[{ value: 'none' as const, label: 'None' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} />
@@ -124,12 +125,13 @@
           </Field>
           <Field label="Dmg misc"><NumInput bind:value={w.damageMisc} signed /></Field>
           <Field label="Weight"><NumInput bind:value={w.weight} /></Field>
+          <Field label="Value (gp)"><NumInput bind:value={w.price} aria-label="Value in gp" /></Field>
         </div>
       {/if}
     {/snippet}
     {#snippet blank()}
-      <div class="grid grid-cols-[2fr_1.3fr_1fr_0.8fr_0.8fr_0.8fr] gap-2">
-        {#each ['Weapon', 'Attack', 'Damage', 'Critical', 'Range', 'Type'] as l (l)}
+      <div class="weapon-grid grid gap-2">
+        {#each ['Weapon', 'Attack', 'Damage', 'Critical', 'Range', 'Type', 'Ammo'] as l (l)}
           <div class="field"><div class="h-5 border-b border-ink/30"></div><span class="field-label">{l}</span></div>
         {/each}
       </div>
