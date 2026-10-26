@@ -60,7 +60,6 @@ export interface WeaponDerived {
 export interface WeightDerived {
   weapons: number;
   armor: number;
-  magicItems: number;
   items: number;
   coins: number;
   total: number;
@@ -77,13 +76,17 @@ export interface SpellcastingDerived {
   base: (number | null)[];
   known: (number | null)[];
   bonus: number[];
+  /** Extra domain slot per level (0 or 1), kept apart from `slots`. */
+  domain: number[];
+  /** Times prepared, excluding domain spells. */
   prepared: number[];
+  domainPrepared: number[];
+  spellPen: number;
 }
 
 export interface WealthDerived {
   weapons: number;
   armor: number;
-  magicItems: number;
   items: number;
   coins: number;
   total: number;
@@ -123,7 +126,7 @@ export interface Derived {
   weight: WeightDerived;
   wealth: WealthDerived;
   fcb: FcbSummary;
-  mythic: { tier: number; powerMax: number; surgeDie: string; hp: number } | null;
+  mythic: { tier: number; effectiveTier: number; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
   load: Load;
   spellcasting: Record<string, SpellcastingDerived>;
@@ -210,6 +213,8 @@ export function derive(c: Character): Derived {
 
   const mythicOn = c.mythic.enabled && c.mythic.tier > 0;
   const tier = mythicOn ? Math.min(10, c.mythic.tier) : 0;
+  // Effective tier (tier + misc) drives power, surge and initiative; HP and ability increases use the real tier.
+  const effectiveTier = mythicOn ? Math.max(0, tier + c.mythic.tierMisc) : 0;
   const mythicHp = mythicOn && c.mythic.path ? PATH_HP[c.mythic.path] * tier : 0;
   if (mythicOn) {
     ABILITY_INCREASE_TIERS.forEach((t, i) => {
@@ -218,7 +223,7 @@ export function derive(c: Character): Derived {
     });
     set.add(
       { key: 'hp.max', value: mythicHp, type: 'untyped', source: 'Mythic path' },
-      { key: 'init', value: tier >= 2 ? tier : 0, type: 'untyped', source: 'Amazing Initiative' },
+      { key: 'init', value: effectiveTier >= 2 ? effectiveTier : 0, type: 'untyped', source: 'Amazing Initiative' },
     );
   }
 
@@ -322,25 +327,23 @@ export function derive(c: Character): Derived {
   const weight: WeightDerived = {
     weapons: c.weapons.reduce((s, w) => s + w.weight, 0),
     armor: c.armor.reduce((s, a) => s + a.weight, 0),
-    magicItems: c.magicItems.reduce((s, m) => s + m.weight, 0),
     items: carried.reduce((s, i) => s + i.weight * i.quantity, 0),
     coins: coinWeight(c),
     total: 0,
   };
   weight.total = round2(
-    weight.weapons + weight.armor + weight.magicItems + weight.items + weight.coins,
+    weight.weapons + weight.armor + weight.items + weight.coins,
   );
   const coinsGp = (k: { pp: number; gp: number; sp: number; cp: number }) =>
     k.pp * 10 + k.gp + k.sp / 10 + k.cp / 100;
   const wealth: WealthDerived = {
     weapons: c.weapons.reduce((s, w) => s + w.price, 0),
     armor: c.armor.reduce((s, a) => s + a.price, 0),
-    magicItems: c.magicItems.reduce((s, m) => s + m.price, 0),
     items: c.items.reduce((s, i) => s + i.price * i.quantity, 0),
     coins: coinsGp(c.currency.carried) + c.currency.locations.reduce((s, l) => s + coinsGp(l.coins), 0),
     total: 0,
   };
-  wealth.total = round2(wealth.weapons + wealth.armor + wealth.magicItems + wealth.items + wealth.coins);
+  wealth.total = round2(wealth.weapons + wealth.armor + wealth.items + wealth.coins);
   const capacity = carryingCapacity(abilities.str.tempScore, c.info.size);
   const load = loadFor(weight.total, capacity);
   const loadPen = LOAD_PENALTIES[load];
@@ -511,12 +514,16 @@ export function derive(c: Character): Derived {
     const table = SPELL_TABLE_BY_ID[b.table];
     const tableRow = (rows: (number | null)[][] | undefined) =>
       rows && classLevel > 0 ? rows[Math.min(classLevel, 20) - 1] : undefined;
+    // Manual blocks (no table): a level becomes castable once it has base or misc slots.
     const baseSlots = table
       ? (tableRow(table.perDay) ?? Array(10).fill(null))
-      : b.slots;
+      : b.slots.map((s, lvl) => (s === null && (b.slotsMisc[lvl] ?? 0) > 0 ? 0 : s));
     const known = (table ? tableRow(table.known) : undefined) ?? b.known;
-    const misc = b.slotsMisc.map((m, lvl) => m + (table?.domainSlot && lvl > 0 ? 1 : 0));
+    const misc = b.slotsMisc;
     const bonus = baseSlots.map((s, lvl) => (s === null ? 0 : bonusSpells(mod, lvl)));
+    const domain = baseSlots.map((s, lvl) => (b.domainSlot && lvl > 0 && s !== null ? 1 : 0));
+    const preparedAt = (lvl: number, isDomain: boolean) =>
+      b.spells.filter((sp) => sp.level === lvl && !!sp.domain === isDomain).reduce((s, sp) => s + sp.prepared, 0);
     spellcasting[b.id] = {
       casterLevel,
       abilityMod: mod,
@@ -526,9 +533,10 @@ export function derive(c: Character): Derived {
       base: baseSlots,
       known,
       bonus,
-      prepared: baseSlots.map((_, lvl) =>
-        b.spells.filter((sp) => sp.level === lvl).reduce((s, sp) => s + sp.prepared, 0),
-      ),
+      domain,
+      prepared: baseSlots.map((_, lvl) => preparedAt(lvl, false)),
+      domainPrepared: baseSlots.map((_, lvl) => preparedAt(lvl, true)),
+      spellPen: casterLevel + b.spellPenMisc + set.total(['spell.pen']).total,
     };
   }
   const firstCl = Object.values(spellcasting)[0]?.casterLevel;
@@ -568,7 +576,7 @@ export function derive(c: Character): Derived {
     wealth,
     fcb,
     mythic: mythicOn
-      ? { tier, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier), hp: mythicHp }
+      ? { tier, effectiveTier, powerMax: mythicPowerMax(effectiveTier), surgeDie: surgeDie(effectiveTier), hp: mythicHp }
       : null,
     capacity,
     load,

@@ -86,12 +86,29 @@ describe('derive spellcasting', () => {
     const k = { ...make.classDef(), name: 'Cleric' };
     c.classes = [k];
     c.levels = [1, 2, 3].map(() => make.level(k.id));
-    c.spellcasting = [{ ...make.spellcasting(), classId: k.id, ability: 'wis', table: 'cleric' }];
+    c.spellcasting = [{ ...make.spellcasting(), classId: k.id, ability: 'wis', table: 'cleric', domainSlot: true, spellPenMisc: 2 }];
     const s = derive(c).spellcasting[c.spellcasting[0].id];
     expect(s.casterLevel).toBe(3);
-    // Cleric 3: 4/2/1 + bonus (Wis +3: 1/1/1) + domain (0/1/1)
-    expect(s.slots.slice(0, 4)).toEqual([4, 4, 3, null]);
+    // Cleric 3: 4/2/1 + bonus (Wis +3: 0/1/1); domain slots reported separately.
+    expect(s.slots.slice(0, 4)).toEqual([4, 3, 2, null]);
+    expect(s.domain.slice(0, 4)).toEqual([0, 1, 1, 0]);
     expect(s.dcs[2]).toBe(15);
+    expect(s.spellPen).toBe(5);
+  });
+
+  it('lets manual "other" blocks become castable through misc slots', () => {
+    const c = newCharacter();
+    c.spellcasting = [{ ...make.spellcasting(), ability: 'cha', casterLevelMisc: 5, slotsMisc: [0, 2, 0, 0, 0, 0, 0, 0, 0, 0] }];
+    const s = derive(c).spellcasting[c.spellcasting[0].id];
+    expect(s.casterLevel).toBe(5);
+    expect(s.slots.slice(0, 3)).toEqual([null, 2, null]);
+  });
+
+  it('uses effective mythic tier for power and surge but real tier for hp', () => {
+    const c = newCharacter();
+    c.mythic = { ...c.mythic, enabled: true, tier: 3, tierMisc: 2, path: 'archmage' };
+    const m = derive(c).mythic!;
+    expect([m.effectiveTier, m.powerMax, m.surgeDie, m.hp]).toEqual([5, 13, '1d8', 9]);
   });
 });
 

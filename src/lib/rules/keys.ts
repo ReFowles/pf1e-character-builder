@@ -40,6 +40,7 @@ export const BONUS_KEYS: KeyDef[] = [
   { key: 'cl', label: 'Caster level' },
   { key: 'concentration', label: 'Concentration checks' },
   { key: 'spell.dc', label: 'Spell save DCs' },
+  { key: 'spell.pen', label: 'Spell penetration (caster level checks vs SR)' },
 ];
 
 export const KEY_LABELS: Record<string, string> = Object.fromEntries(
