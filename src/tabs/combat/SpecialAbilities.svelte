@@ -7,6 +7,7 @@
   import FormulaInput from '../../lib/ui/FormulaInput.svelte';
   import UsesTracker from '../../lib/ui/UsesTracker.svelte';
   import DynamicList from '../../lib/ui/DynamicList.svelte';
+  import EditMode from '../../lib/ui/EditMode.svelte';
 
   const c = $derived(app.char);
   const PERIODS: UsePeriod[] = ['round', 'minute', 'hour', 'day', 'week', 'month', 'year', 'other'];
@@ -17,11 +18,16 @@
   }
 </script>
 
-<Section id="special">
+<Section id="special" editable>
+  {#snippet info()}
+    <p>Track limited-use abilities from classes, feats, racial traits and items. Each can have several counters (e.g. 3/day and 5 rounds).</p>
+    <p>Maximums can be formulas, e.g. <code>3 + @cha.mod</code>. "Reset rounds" and "New day" clear per-round and per-day counters.</p>
+  {/snippet}
   {#snippet actions()}
     <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={() => reset('round')}>Reset rounds</button>
     <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" onclick={() => reset('day')}>New day</button>
   {/snippet}
+  <EditMode>{#snippet children(editing)}
   <DynamicList
     bind:items={c.specialAbilities}
     onadd={() => c.specialAbilities.push(make.specialAbility())}
@@ -43,13 +49,14 @@
               {#each PERIODS as p (p)}<option value={p}>{p}</option>{/each}
             </select>
             <UsesTracker max={app.d.uses[u.id] ?? u.max} bind:used={u.used} label="{a.name} use" />
-            <button type="button" class="icon-btn ml-auto text-accent print:hidden" aria-label="Remove uses" onclick={() => a.uses.splice(i, 1)}>✕</button>
+            {#if editing}<button type="button" class="icon-btn ml-auto text-accent print:hidden" aria-label="Remove uses" onclick={() => a.uses.splice(i, 1)}>✕</button>{/if}
           </div>
         {/each}
-        <button type="button" class="self-start text-xs underline opacity-70 print:hidden" onclick={() => a.uses.push(make.useCounter())}>+ uses</button>
+        {#if editing}<button type="button" class="self-start text-xs underline opacity-70 print:hidden" onclick={() => a.uses.push(make.useCounter())}>+ uses</button>{/if}
       </div>
       <textarea class="mt-1 w-full text-sm" rows="1" bind:value={a.notes} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
     {#snippet blank()}<div class="h-14"></div>{/snippet}
   </DynamicList>
+  {/snippet}</EditMode>
 </Section>
