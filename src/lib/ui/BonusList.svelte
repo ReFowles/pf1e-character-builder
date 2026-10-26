@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { Snippet } from 'svelte';
   import { make } from '../model/defaults';
   import { BONUS_TYPES } from '../model/types';
   import { app } from '../state.svelte';
@@ -9,8 +10,10 @@
     /** Keys this list shows; the first is used for new entries. */
     keys: string[];
     label?: string;
+    /** Permanent first row(s), e.g. natural armor. */
+    fixed?: Snippet;
   }
-  let { keys, label = 'Misc bonuses' }: Props = $props();
+  let { keys, label = 'Misc bonuses', fixed }: Props = $props();
   const rows = $derived(app.char.bonuses.filter((b) => keys.includes(b.key)));
 
   function remove(id: string) {
@@ -19,7 +22,7 @@
   }
 </script>
 
-<div class={["flex flex-col gap-1 text-sm", { "print:hidden": rows.length === 0 }]}>
+<div class={['flex flex-col gap-1 text-sm', { 'print:hidden': rows.length === 0 && !fixed }]}>
   <div class="flex items-center gap-2">
     <span class="field-label">{label}</span>
     <button
@@ -29,6 +32,7 @@
       onclick={() => app.char.bonuses.push({ ...make.bonus(), key: keys[0] })}>＋</button
     >
   </div>
+  {#if fixed}{@render fixed()}{/if}
   {#each rows as b (b.id)}
     <div class="flex items-center gap-1">
       <NumInput class="w-12" bind:value={b.value} signed aria-label="Bonus value" />
