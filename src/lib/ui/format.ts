@@ -11,3 +11,6 @@ export function breakdown(t: Total): string {
 }
 
 export const lb = (n: number) => `${Math.round(n * 100) / 100} lb`;
+
+/** Gold pieces with thousands separators, up to 2 decimals. */
+export const gp = (n: number) => `${(Math.round(n * 100) / 100).toLocaleString(undefined, { maximumFractionDigits: 2 })} gp`;

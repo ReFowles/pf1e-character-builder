@@ -5,7 +5,8 @@
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
-  import { lb } from '../../lib/ui/format';
+  import { gp, lb } from '../../lib/ui/format';
+  import { parseGp } from '../../lib/model/migrate';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
 
   const c = $derived(app.char);
@@ -72,6 +73,15 @@
 </script>
 
 <Section id="equipment">
+  <div class="grid grid-cols-3 gap-1 text-center text-sm sm:grid-cols-6">
+    <div class="stat"><div class="font-bold">{d.capacity.light}</div><div class="field-label">Light load</div></div>
+    <div class="stat"><div class="font-bold">{d.capacity.medium}</div><div class="field-label">Medium load</div></div>
+    <div class="stat"><div class="font-bold">{d.capacity.heavy}</div><div class="field-label">Heavy load</div></div>
+    <div class="stat"><div class="font-bold">{d.capacity.liftOverHead}</div><div class="field-label">Over head</div></div>
+    <div class="stat"><div class="font-bold">{d.capacity.liftOffGround}</div><div class="field-label">Off ground</div></div>
+    <div class="stat"><div class="font-bold">{d.capacity.pushDrag}</div><div class="field-label">Push/drag</div></div>
+  </div>
+
   <div class="overflow-x-auto">
     <table class="dyn-table">
       <thead>
@@ -80,9 +90,10 @@
           <th class="text-center">Qty</th>
           <th class="text-center">Wt</th>
           <th class="text-center">Total</th>
+          <th class="text-center" title="Value of one, in gp">gp ea.</th>
           <th class="print:hidden">In</th>
           <th class="print:hidden" title="Container / weightless contents / not carried">Flags</th>
-          <th>Value / notes</th>
+          <th>Notes</th>
           <th class="print:hidden"></th>
         </tr>
       </thead>
@@ -116,32 +127,31 @@
               {/if}
               <label class="text-xs" title="Not on the character (mount, camp, home)"><input type="checkbox" bind:checked={it.notCarried} /> away</label>
             </td>
-            <td><input bind:value={it.notes} aria-label="Value or notes" /></td>
+            <td class="w-16"><NumInput bind:value={it.price} aria-label="Value each in gp" /></td>
+            <td><input class="w-full" bind:value={it.notes} aria-label="Notes" /></td>
             <td class="whitespace-nowrap print:hidden">
               {#if it.isContainer}<button type="button" class="icon-btn" title="Add item inside" aria-label="Add item inside {it.name}" onclick={() => addItem(it.id)}>＋</button>{/if}
               <button type="button" class="icon-btn text-accent" aria-label="Remove {it.name}" onclick={() => remove(it)}>✕</button>
             </td>
           </tr>
         {:else}
-          <tr class="print:hidden"><td colspan="8" class="py-2 text-center text-sm italic opacity-60">No gear yet.</td></tr>
+          <tr class="print:hidden"><td colspan="9" class="py-2 text-center text-sm italic opacity-60">No gear yet.</td></tr>
         {/each}
-        <tr class="print-row hidden print:table-row">{#each { length: 5 }, i (i)}<td></td>{/each}</tr>
+        <tr class="print-row hidden print:table-row">{#each { length: 6 }, i (i)}<td></td>{/each}</tr>
       </tbody>
     </table>
   </div>
-  <div class="flex flex-wrap items-start gap-2">
-    <button type="button" class="add-btn print:hidden" onclick={() => addItem()}>+ Item</button>
-    <div class="min-w-60 flex-1">
-      <DbPicker
-        kind="items"
-        label="Find gear"
-        filter={(it) => !it.weapon && !it.armor && it.category !== 'magic'}
-        onpick={(it) =>
-          c.items.push({ ...make.item(), name: it.name, weight: it.weight, notes: it.price, isContainer: it.category === 'container' })}
-      >
-        {#snippet detail(it)}{it.category} · {it.weight} lb · {it.price}{/snippet}
-      </DbPicker>
-    </div>
+  <div class="flex flex-wrap items-start gap-2 print:hidden">
+    <button type="button" class="add-btn" onclick={() => addItem()}>+ Item</button>
+    <DbPicker
+      kind="items"
+      label="Find gear"
+      filter={(it) => !it.weapon && !it.armor && it.category !== 'magic'}
+      onpick={(it) =>
+        c.items.push({ ...make.item(), name: it.name, weight: it.weight, price: parseGp(it.price), isContainer: it.category === 'container' })}
+    >
+      {#snippet detail(it)}{it.category} · {it.weight} lb · {it.price}{/snippet}
+    </DbPicker>
   </div>
 
   <div class="grid grid-cols-1 gap-3 border-t border-ink/20 pt-2 sm:grid-cols-2">
@@ -177,25 +187,30 @@
     </div>
 
     <div class="flex flex-col gap-1 text-sm">
-      <div class="subhead">Carrying capacity</div>
-      <div class="grid grid-cols-3 gap-1 text-center">
-        <div class="stat"><div class="font-bold">{d.capacity.light}</div><div class="field-label">Light</div></div>
-        <div class="stat"><div class="font-bold">{d.capacity.medium}</div><div class="field-label">Medium</div></div>
-        <div class="stat"><div class="font-bold">{d.capacity.heavy}</div><div class="field-label">Heavy</div></div>
-        <div class="stat"><div class="font-bold">{d.capacity.liftOverHead}</div><div class="field-label">Over head</div></div>
-        <div class="stat"><div class="font-bold">{d.capacity.liftOffGround}</div><div class="field-label">Off ground</div></div>
-        <div class="stat"><div class="font-bold">{d.capacity.pushDrag}</div><div class="field-label">Push/drag</div></div>
+      <div class="subhead">Carried weight & value</div>
+      <table class="w-full tabular-nums" aria-label="Carried weight and value">
+        <thead>
+          <tr><th></th><th class="text-right" title="What you carry">Weight</th><th class="text-right" title="Everything you own">Value</th></tr>
+        </thead>
+        <tbody>
+          {#each [['Weapons', 'weapons'], ['Armor & shields', 'armor'], ['Magic items', 'magicItems'], ['Gear', 'items'], ['Coins', 'coins']] as const as [label, key] (key)}
+            <tr class="border-b border-ink/10">
+              <td>{label}</td>
+              <td class="text-right">{lb(d.weight[key])}</td>
+              <td class="text-right">{gp(d.wealth[key])}</td>
+            </tr>
+          {/each}
+          <tr class="font-bold">
+            <td>Total</td>
+            <td class="text-right">{lb(d.weight.total)} <span class="font-normal capitalize" class:text-accent={d.load !== 'light'}>({d.load})</span></td>
+            <td class="text-right" title="Character wealth: all coins and items owned, carried or not">{gp(d.wealth.total)}</td>
+          </tr>
+        </tbody>
+      </table>
+      <div class="flex items-baseline justify-between rounded-sm bg-ink/5 px-2 py-1">
+        <span class="field-label text-xs">Character wealth</span>
+        <span class="text-lg font-bold tabular-nums">{gp(d.wealth.total)}</span>
       </div>
-      <div class="subhead mt-1">Carried weight</div>
-      <dl class="grid grid-cols-[1fr_auto] gap-x-2 tabular-nums">
-        <dt>Weapons</dt><dd>{lb(d.weight.weapons)}</dd>
-        <dt>Armor & shields</dt><dd>{lb(d.weight.armor)}</dd>
-        <dt>Magic items</dt><dd>{lb(d.weight.magicItems)}</dd>
-        <dt>Gear</dt><dd>{lb(d.weight.items)}</dd>
-        <dt>Coins</dt><dd>{lb(d.weight.coins)}</dd>
-        <dt class="font-bold">Total</dt>
-        <dd class="font-bold">{lb(d.weight.total)} <span class="capitalize" class:text-accent={d.load !== 'light'}>({d.load})</span></dd>
-      </dl>
     </div>
   </div>
 </Section>
