@@ -10,11 +10,17 @@
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import { sortable } from '../../lib/ui/sortable';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
   const KEYS = ['ac', 'save', 'save.fort', 'save.ref', 'save.will', 'cmd'];
+
+  function moveResistance(from: number, to: number) {
+    const [r] = c.resistances.splice(from, 1);
+    c.resistances.splice(to, 0, r);
+  }
 </script>
 
 {#snippet naturalRow()}
@@ -40,6 +46,7 @@
     />
     <p>Touch AC ignores armor, shield and natural armor bonuses. Flat-footed AC loses Dex and dodge bonuses. Flat-footed CMD is {d.cmdFlatFooted}.</p>
     <p>Max Dex and armor check penalty use the worst of your armor, shield and carried load.</p>
+    <p>In Edit mode, armor values (gp) appear and resistances can be dragged by ⋮⋮ to reorder.</p>
   {/snippet}
   <div class="flex flex-wrap items-baseline gap-x-4 border-b border-ink/30 pb-1 text-sm">
     <span><span class="field-label">Max Dex</span> {d.maxDex ?? '—'}</span>
@@ -48,9 +55,10 @@
     <span class="ml-auto"><span class="field-label">Load</span> <span class="capitalize" class:text-accent={d.load !== 'light'}>{d.load}</span></span>
   </div>
 
+  <EditMode>{#snippet children(editing)}
   <DynamicTable
     bind:items={c.armor}
-    cols={11}
+    cols={editing ? 11 : 10}
     onadd={() => c.armor.push(make.armor(c.armor.some((a) => a.kind === 'armor') ? 'shield' : 'armor'))}
     addLabel="Armor / shield"
     empty="No armor or shield."
@@ -66,7 +74,7 @@
       <th class="text-center">ASF%</th>
       <th>Category</th>
       <th class="text-center">Wt</th>
-      <th class="text-center">gp</th>
+      {#if editing}<th class="text-center">gp</th>{/if}
     {/snippet}
     {#snippet row(a)}
       <td data-label="Eq" class="text-center align-middle"><input type="checkbox" bind:checked={a.equipped} aria-label="Equipped" /></td>
@@ -92,7 +100,7 @@
       <td data-label="ASF%" class="w-11"><NumInput bind:value={a.spellFailure} aria-label="Arcane spell failure" /></td>
       <td data-label="Category" class="w-24"><input class="w-full" list="armor-categories" bind:value={a.category} aria-label="Category" /></td>
       <td data-label="Wt" class="w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
-      <td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>
+      {#if editing}<td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>{/if}
     {/snippet}
     {#snippet tools()}
       <DbPicker
@@ -116,6 +124,7 @@
       </DbPicker>
     {/snippet}
   </DynamicTable>
+  {/snippet}</EditMode>
   <datalist id="armor-categories">
     <option value="light"></option><option value="medium"></option><option value="heavy"></option>
     <option value="buckler"></option><option value="light shield"></option><option value="heavy shield"></option><option value="tower"></option>
@@ -156,10 +165,11 @@
 
       <div class="mt-auto flex flex-col border-t border-ink/30 pt-1">
         <span class="field-label">Resistances & immunities</span>
-        <div class="flex flex-wrap items-center gap-1">
+        <div class="flex flex-wrap items-center gap-1" use:sortable={{ onmove: moveResistance }}>
           {#each c.resistances as r, i (r.id)}
             {#if editing}
-              <span class="chip">
+              <span class="chip" data-sort-index={i}>
+                <span class="-ml-0.5 cursor-grab touch-none text-xs opacity-40 select-none hover:opacity-80 print:hidden" data-sort-handle title="Drag to reorder" aria-hidden="true">⋮⋮</span>
                 <input class="chip-input" bind:value={r.name} placeholder="fire" aria-label="Resistance type" />
                 <input class="chip-input font-semibold" bind:value={r.value} placeholder="—" aria-label="Resistance amount (blank for immunity)" />
                 <button type="button" class="print:hidden" aria-label="Remove resistance" onclick={() => c.resistances.splice(i, 1)}>×</button>
