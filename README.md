@@ -5,11 +5,12 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 ## Features
 
 - **Tabs: Core, Character and Spells** (plus optional Mythic). The layout follows `character-sheet-mockup.pdf`. On narrow screens the sections stack in the mockup's numbered order.
-- **Live calculations.** Ability scores, size, class levels, armor, conditions and macros flow into AC, saves, attacks, CMB/CMD, skills, HP, carrying capacity and spell DCs. Hover a number to see its breakdown.
+- **Live calculations.** Ability scores, size (including Enlarge/Reduce Person, which also scale weapon dice), class levels, armor, conditions and macros flow into AC, saves, attacks, CMB/CMD, skills, HP, carrying capacity and spell DCs. Hover a number to see its breakdown.
 - **Macros.** Toggle Power Attack, Flanking, Heroism, Haste and more from a built-in library, or write your own effects against any stat key. Values can be formulas such as `-1 - floor(@bab / 4)`.
 - **Rules database.** Search more than 3,000 spells, feats, weapons, armor, gear and magic items, then add them to the sheet. Picking an entry copies it into the character, so you can edit it freely.
 - **Wealth tracking.** Every item, weapon, armor piece and magic item has a gp value. Equipment totals carried weight and overall character wealth.
 - **Mythic (optional).** Turn on the Mythic tab in **Config** to track tier, path, mythic power, surge die (with feat upgrades) and Mythic Paragon. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
+- **Companions (optional).** Turn on the Companions tab in **Config** for familiars, animal companions, eidolons and other creatures. Animal companions and familiars follow their core progression tables from the master's class level; others use hit dice with creature-type math.
 - **Spells.** Each casting class gets its own "[Class] Spells" section; add more (including "Other" for racial or item spells) from **Config**.
 - **Edit mode and info.** Each section's pencil button reveals its add, reorder, remove and database-search controls; values are always editable. The **ℹ** button collects every breakdown and rule note that's otherwise only in hover tooltips, so it works on phones too.
 - **Configurable.** Collapse any section, or hide it on screen or in print (see **Config**). Dark mode follows your system until you toggle it in Config; printing always uses the light theme. Printed dynamic tables include one blank row for handwritten additions.
