@@ -11,6 +11,7 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
   import { sortable } from '../../lib/ui/sortable';
+  import { fmt } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
@@ -58,17 +59,17 @@
   <EditMode>{#snippet children(editing)}
   <DynamicTable
     bind:items={c.armor}
-    cols={editing ? 11 : 10}
+    cols={editing ? 11 : 9}
     onadd={() => c.armor.push(make.armor(c.armor.some((a) => a.kind === 'armor') ? 'shield' : 'armor'))}
     addLabel="Armor / shield"
     empty="No armor or shield."
   >
     {#snippet head()}
       <th title="Equipped">Eq</th>
+      {#if editing}<th class="text-center" title="Enhancement bonus">Enh</th>{/if}
       <th>Armor / shield</th>
       <th>Kind</th>
       <th class="text-center">AC</th>
-      <th class="text-center">Enh</th>
       <th class="text-center">Max Dex</th>
       <th class="text-center">ACP</th>
       <th class="text-center">ASF%</th>
@@ -78,12 +79,17 @@
     {/snippet}
     {#snippet row(a)}
       <td data-label="Eq" class="text-center align-middle"><input type="checkbox" bind:checked={a.equipped} aria-label="Equipped" /></td>
-      <td data-label="Armor / shield" class="min-w-32"><input class="w-full" bind:value={a.name} aria-label="Name" /></td>
+      {#if editing}<td data-label="Enh" class="w-11"><NumInput bind:value={a.enhancement} signed aria-label="Enhancement" /></td>{/if}
+      <td data-label="Armor / shield" class="min-w-32">
+        <div class="flex items-center gap-1">
+          {#if !editing && a.enhancement}<span class="font-semibold tabular-nums" title="Enhancement bonus">{fmt(a.enhancement)}</span>{/if}
+          <input class="w-full" bind:value={a.name} aria-label="Name" />
+        </div>
+      </td>
       <td data-label="Kind">
         <Select bind:value={a.kind} options={opts(['armor', 'shield'] as const)} aria-label="Kind" />
       </td>
       <td data-label="AC" class="w-11"><NumInput bind:value={a.acBonus} signed aria-label="AC bonus" /></td>
-      <td data-label="Enh" class="w-11"><NumInput bind:value={a.enhancement} signed aria-label="Enhancement" /></td>
       <td data-label="Max Dex" class="w-12">
         <input
           class="num"
