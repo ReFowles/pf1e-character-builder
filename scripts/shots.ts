@@ -13,6 +13,8 @@ const { values: args } = parseArgs({
     widths: { type: 'string', default: '1280,390' },
     pdf: { type: 'boolean', default: false },
     full: { type: 'boolean', default: true },
+    // Split full-page shots into chunks of this many px (easier to inspect).
+    slice: { type: 'string' },
   },
 });
 
@@ -46,6 +48,15 @@ for (const width of args.widths.split(',').map(Number)) {
     const file = `${out}/${tab}-${width}.png`;
     await page.screenshot({ path: file, fullPage: args.full });
     console.log(file);
+    if (args.slice) {
+      const step = Number(args.slice);
+      const height = await page.evaluate(() => document.documentElement.scrollHeight);
+      for (let y = 0, i = 0; y < height; y += step, i++) {
+        const part = `${out}/${tab}-${width}-${i}.png`;
+        await page.screenshot({ path: part, fullPage: true, clip: { x: 0, y, width, height: Math.min(step, height - y) } });
+        console.log(part);
+      }
+    }
   }
   await page.close();
 }

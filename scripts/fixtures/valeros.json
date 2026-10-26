@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-valeros",
+  "info": { "name": "Valeros", "player": "Sam", "alignment": "NG", "race": "Human", "size": "medium", "deity": "Cayden Cailean", "languages": ["Common", "Halfling"], "homeland": "Andoran" },
+  "xp": { "current": 13250, "track": "medium" },
+  "abilities": {
+    "str": { "base": 15, "racial": 2 }, "dex": { "base": 14 }, "con": { "base": 14 },
+    "int": { "base": 12 }, "wis": { "base": 10 }, "cha": { "base": 8 }
+  },
+  "classes": [
+    { "id": "c-fighter", "name": "Fighter", "presetId": "fighter", "hd": 10, "bab": "full", "goodSaves": ["fort"], "skillRanks": 2,
+      "classSkills": ["climb", "craft", "handleAnimal", "intimidate", "knowledge:dungeoneering", "knowledge:engineering", "profession", "ride", "survival", "swim"] },
+    { "id": "c-rogue", "name": "Rogue", "presetId": "rogue", "hd": 8, "bab": "3/4", "goodSaves": ["ref"], "skillRanks": 8,
+      "classSkills": ["acrobatics", "appraise", "bluff", "climb", "craft", "diplomacy", "disableDevice", "disguise", "escapeArtist", "intimidate", "knowledge:dungeoneering", "knowledge:local", "linguistics", "perception", "perform", "profession", "senseMotive", "sleightOfHand", "stealth", "swim", "useMagicDevice"] }
+  ],
+  "favoredClassId": "c-fighter",
+  "levels": [
+    { "id": "l1", "classId": "c-fighter", "hpRoll": 10, "fcb": { "kind": "hp", "note": "" } },
+    { "id": "l2", "classId": "c-fighter", "hpRoll": 7, "fcb": { "kind": "hp", "note": "" } },
+    { "id": "l3", "classId": "c-rogue", "hpRoll": 5, "fcb": { "kind": "other", "note": "" } },
+    { "id": "l4", "classId": "c-fighter", "hpRoll": 6, "fcb": { "kind": "skill", "note": "" } },
+    { "id": "l5", "classId": "c-fighter", "hpRoll": 8, "fcb": { "kind": "hp", "note": "" } }
+  ],
+  "hp": { "damage": 9, "temp": 0, "nonlethal": 2 },
+  "conditions": ["Shaken"],
+  "heroPoints": 1,
+  "bonuses": [],
+  "weapons": [
+    { "id": "w1", "name": "Longsword +1", "enhancement": 1, "damage": "1d8", "crit": "19-20/×2", "type": "S", "weight": 4 },
+    { "id": "w2", "name": "Composite longbow (+2)", "kind": "ranged", "attackAbility": "dex", "damageAbility": "str", "damage": "1d8", "crit": "×3", "range": "110 ft", "type": "P", "weight": 3, "ammo": "20 arrows" }
+  ],
+  "armor": [
+    { "id": "a1", "name": "Breastplate", "kind": "armor", "acBonus": 6, "maxDex": 3, "checkPenalty": -4, "spellFailure": 25, "category": "medium", "weight": 30 },
+    { "id": "a2", "name": "Heavy steel shield", "kind": "shield", "acBonus": 2, "checkPenalty": -2, "spellFailure": 15, "category": "heavy shield", "weight": 15 }
+  ],
+  "resistances": [{ "id": "r1", "name": "fire", "value": "5" }],
+  "resources": [{ "id": "res1", "name": "Grit", "maxExpr": "max(1, @wis.mod)", "current": 1, "notes": "Amateur gunslinger" }],
+  "specialAbilities": [
+    { "id": "sa1", "name": "Sneak Attack +1d6", "source": "Rogue 1", "uses": [], "notes": "Flanking or flat-footed targets." },
+    { "id": "sa2", "name": "Potion of Cure Light Wounds", "source": "Item", "uses": [{ "id": "u1", "max": 3, "per": "other", "used": 1 }], "notes": "1d8+1" },
+    { "id": "sa3", "name": "Bravery", "source": "Fighter 2", "uses": [{ "id": "u2", "max": 2, "per": "day", "used": 0 }, { "id": "u3", "max": 5, "per": "round", "used": 2 }], "notes": "" }
+  ],
+  "macros": [
+    { "id": "m1", "name": "Power Attack", "category": "feat", "libraryId": "power-attack", "active": true, "effects": [
+      { "id": "e1", "key": "attack.melee", "value": "-1 - floor(@bab / 4)", "type": "untyped" },
+      { "id": "e2", "key": "damage.melee", "value": "2 * (1 + floor(@bab / 4))", "type": "untyped" }], "notes": "" },
+    { "id": "m2", "name": "Toughness", "category": "feat", "active": true, "effects": [{ "id": "e3", "key": "hp.max", "value": "max(3, @level)", "type": "untyped" }], "notes": "" },
+    { "id": "m3", "name": "Heroism", "category": "spell", "active": false, "effects": [
+      { "id": "e4", "key": "attack", "value": "2", "type": "morale" }, { "id": "e5", "key": "save", "value": "2", "type": "morale" }, { "id": "e6", "key": "skills", "value": "2", "type": "morale" }], "notes": "" }
+  ],
+  "skills": [
+    { "id": "s-acro", "skill": "acrobatics", "ranks": 1, "favorite": false },
+    { "id": "s-climb", "skill": "climb", "ranks": 5, "favorite": true },
+    { "id": "s-craft1", "skill": "craft", "subtype": "weapons", "ranks": 2, "favorite": false },
+    { "id": "s-craft2", "skill": "craft", "subtype": "armor", "ranks": 1, "favorite": false },
+    { "id": "s-intim", "skill": "intimidate", "ranks": 5, "favorite": true },
+    { "id": "s-kdun", "skill": "knowledge", "subtype": "dungeoneering", "ranks": 2, "favorite": false },
+    { "id": "s-perc", "skill": "perception", "ranks": 5, "favorite": true },
+    { "id": "s-ride", "skill": "ride", "ranks": 1, "favorite": false },
+    { "id": "s-stealth", "skill": "stealth", "ranks": 1, "favorite": false },
+    { "id": "s-swim", "skill": "swim", "ranks": 2, "favorite": false },
+    { "id": "s-umd", "skill": "useMagicDevice", "ranks": 0, "favorite": false }
+  ],
+  "currency": { "carried": { "pp": 2, "gp": 143, "sp": 18, "cp": 40 }, "locations": [{ "id": "cl1", "name": "Bank of Abadar", "weightless": true, "coins": { "pp": 0, "gp": 500, "sp": 0, "cp": 0 } }] },
+  "items": [
+    { "id": "i1", "name": "Backpack", "weight": 2, "isContainer": true },
+    { "id": "i2", "name": "Bedroll", "weight": 5, "containerId": "i1" },
+    { "id": "i3", "name": "Trail rations", "quantity": 5, "weight": 1, "containerId": "i1" },
+    { "id": "i4", "name": "Silk rope (50 ft)", "weight": 5 },
+    { "id": "i5", "name": "Tent", "weight": 20, "notCarried": true, "notes": "On the horse" }
+  ],
+  "ui": { "sections": { "macros": { "hidden": false, "collapsed": false, "printHidden": true } } }
+}
