@@ -61,10 +61,15 @@
     </label>
   </div>
 
-  <div class="grid grid-cols-[1fr_2.5rem_1fr] items-center rounded-sm border-2 border-ink px-1 py-2">
+  <!-- Max HP in a small box on the left; current HP (tracked in play) fills the rest. -->
+  <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border-2 border-ink p-1.5">
+    <div class="flex min-w-16 flex-col items-center rounded-sm border border-ink/40 px-2 py-1" title={breakdown(hp.max)}>
+      <span class="text-2xl leading-tight font-bold tabular-nums" data-hp-max>{hp.max.total}</span>
+      <span class="field-label">Max HP</span>
+    </div>
     <div class="flex flex-col items-center">
       <input
-        class="h-14 w-full border-0 bg-transparent text-center text-5xl leading-none font-bold tabular-nums print:invisible"
+        class="h-11 w-full border-0 bg-transparent text-center text-4xl leading-none font-bold tabular-nums print:invisible"
         class:text-accent={hp.current <= hp.max.total / 4}
         inputmode="numeric"
         aria-label="Current hit points"
@@ -75,14 +80,7 @@
           e.currentTarget.value = String(app.d.hp.current);
         }}
       />
-      <span class="field-label">Current{status ? ` — ${status}` : ''}</span>
-    </div>
-    <svg class="h-14 w-full text-ink" viewBox="0 0 40 56" preserveAspectRatio="none" aria-hidden="true">
-      <line x1="34" y1="2" x2="6" y2="54" stroke="currentColor" stroke-width="1.5" />
-    </svg>
-    <div class="flex flex-col items-center" title={breakdown(hp.max)}>
-      <span class="text-5xl leading-[3rem] font-bold tabular-nums">{hp.max.total}</span>
-      <span class="field-label">Max HP</span>
+      <span class="field-label">Current HP{status ? ` — ${status}` : ''}</span>
     </div>
   </div>
 

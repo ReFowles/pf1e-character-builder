@@ -42,7 +42,7 @@ function check(desc: string, ok: boolean, detail = '') {
   if (!ok) failed++;
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${desc}${detail ? `: ${detail}` : ''}`);
 }
-const hpMax = () => page.locator('[data-section=hp] span.text-5xl');
+const hpMax = () => page.locator('[data-section=hp] [data-hp-max]');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
 /** Choose an option from a custom Select (combobox button + popover listbox). */
