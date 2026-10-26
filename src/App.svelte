@@ -7,8 +7,9 @@
   import CharacterTab from './tabs/character/CharacterTab.svelte';
   import MythicTab from './tabs/mythic/MythicTab.svelte';
   import SpellsTab from './tabs/spells/SpellsTab.svelte';
+  import CompanionsTab from './tabs/companions/CompanionsTab.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
+  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
@@ -65,11 +66,11 @@
         {
           'screen-hidden': app.tab !== tab,
           // Non-casters don't need a blank spells page.
-          'print:hidden': app.section(`tab:${tab}`).printHidden || (tab === 'spells' && !app.char.spellcasting.length),
+          'print:hidden': app.section(`tab:${tab}`).printHidden || (tab === 'spells' && !app.char.spellcasting.length) || (tab === 'companions' && !app.char.companions.length),
         },
       ]}
     >
-      {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'spells'}<SpellsTab />{:else}<MythicTab />{/if}
+      {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'companions'}<CompanionsTab />{:else if tab === 'spells'}<SpellsTab />{:else}<MythicTab />{/if}
     </div>
   {/each}
 </main>

@@ -9,7 +9,7 @@
 </script>
 
 <dl class="flex flex-col gap-1.5">
-  {#each items as it (it.label)}
+  {#each items as it, i (i)}
     <div>
       <dt class="flex justify-between font-semibold">
         <span>{it.label}</span><span class="tabular-nums">{it.signed === false ? it.total.total : fmt(it.total.total)}</span>

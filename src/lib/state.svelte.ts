@@ -15,7 +15,7 @@ import {
   type RosterEntry,
 } from './storage/local';
 
-export const TABS = ['combat', 'character', 'spells', 'mythic'] as const;
+export const TABS = ['combat', 'character', 'companions', 'spells', 'mythic'] as const;
 export type Tab = (typeof TABS)[number];
 
 const tabFromHash = (): Tab => {
@@ -29,8 +29,10 @@ class AppState {
   roster = $state<RosterEntry[]>([]);
   char = $state<Character>(newCharacter());
   d = $derived(derive(this.char));
-  /** Tabs this character uses; Mythic only once enabled in Config. */
-  tabs = $derived(TABS.filter((t) => t !== 'mythic' || this.char.mythic.enabled));
+  /** Tabs this character uses; Companions and Mythic only once enabled in Config. */
+  tabs = $derived(
+    TABS.filter((t) => (t !== 'mythic' || this.char.mythic.enabled) && (t !== 'companions' || this.char.companionTab)),
+  );
   tab = $state<Tab>(tabFromHash());
   toast = $state<string | null>(null);
   configOpen = $state(false);

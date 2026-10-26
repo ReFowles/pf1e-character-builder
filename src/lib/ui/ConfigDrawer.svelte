@@ -2,15 +2,18 @@
   import { app, type Tab } from '../state.svelte';
   import { theme } from '../theme.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
+  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
   import { addSpellBlock, removeSpellBlock, spellSectionId, spellSectionTitle } from '../spellBlocks';
+  import { addCompanion, companionSectionId, companionTitle, removeCompanion } from '../companions';
 
   /** Sections listed under a tab; spell sections come from the character's casting blocks. */
-  const rowsFor = (tab: Tab) =>
+  const rowsFor = (tab: Tab): { id: string; title: string; remove?: () => void }[] =>
     tab === 'spells'
-      ? app.char.spellcasting.map((b) => ({ id: spellSectionId(b), title: spellSectionTitle(app.char, b), blockId: b.id }))
-      : SECTIONS.filter((s) => s.tab === tab).map((s) => ({ ...s, blockId: '' }));
+      ? app.char.spellcasting.map((b) => ({ id: spellSectionId(b), title: spellSectionTitle(app.char, b), remove: () => removeSpellBlock(app.char, b.id) }))
+      : tab === 'companions'
+        ? app.char.companions.map((x) => ({ id: companionSectionId(x), title: companionTitle(x), remove: () => removeCompanion(app.char, x.id) }))
+        : SECTIONS.filter((s) => s.tab === tab);
   import Select, { opts } from './Select.svelte';
 </script>
 
@@ -41,6 +44,11 @@
       Mythic tab
     </label>
 
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={app.char.companionTab} />
+      Companions tab (familiars, animal companions, eidolons…)
+    </label>
+
     {#each app.tabs as tab (tab)}
       <table class="w-full text-sm">
         <thead>
@@ -69,8 +77,8 @@
               <td>
                 <span class="inline-flex items-center gap-1">
                   {s.title}
-                  {#if s.blockId}
-                    <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {s.title}" title="Remove section" onclick={() => removeSpellBlock(app.char, s.blockId)}>✕</button>
+                  {#if s.remove}
+                    <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {s.title}" title="Remove section" onclick={s.remove}>✕</button>
                   {/if}
                 </span>
               </td>
@@ -92,10 +100,14 @@
               </td>
             </tr>
           {/each}
-          {#if tab === 'spells'}
+          {#if tab === 'spells' || tab === 'companions'}
             <tr>
               <td colspan="3" class="pt-1">
-                <button type="button" class="add-btn" onclick={() => addSpellBlock(app.char)}>+ Spellcasting section</button>
+                {#if tab === 'spells'}
+                  <button type="button" class="add-btn" onclick={() => addSpellBlock(app.char)}>+ Spellcasting section</button>
+                {:else}
+                  <button type="button" class="add-btn" onclick={() => addCompanion(app.char)}>+ Companion</button>
+                {/if}
               </td>
             </tr>
           {/if}

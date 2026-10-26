@@ -302,5 +302,141 @@
         "printHidden": true
       }
     }
-  }
+  },
+  "companionTab": true,
+  "companions": [
+    {
+      "id": "comp-cat",
+      "name": "Whiskers",
+      "kind": "familiar",
+      "species": "cat",
+      "masterClassId": "c-wiz",
+      "levelMisc": 0,
+      "creatureType": "animal",
+      "goodSaves": [
+        "fort",
+        "ref"
+      ],
+      "hd": 0,
+      "size": "tiny",
+      "speed": "30 ft",
+      "abilities": {
+        "str": {
+          "base": 3,
+          "misc": 0,
+          "temp": 0
+        },
+        "dex": {
+          "base": 15,
+          "misc": 0,
+          "temp": 0
+        },
+        "con": {
+          "base": 8,
+          "misc": 0,
+          "temp": 0
+        },
+        "int": {
+          "base": 2,
+          "misc": 0,
+          "temp": 0
+        },
+        "wis": {
+          "base": 12,
+          "misc": 0,
+          "temp": 0
+        },
+        "cha": {
+          "base": 7,
+          "misc": 0,
+          "temp": 0
+        }
+      },
+      "abilityIncreases": [
+        null,
+        null,
+        null
+      ],
+      "naturalArmor": 0,
+      "armorBonus": 0,
+      "acMisc": 0,
+      "saveMisc": {
+        "fort": 0,
+        "ref": 0,
+        "will": 0
+      },
+      "hpMisc": 0,
+      "hp": {
+        "damage": 0,
+        "temp": 0
+      },
+      "attacks": [
+        {
+          "id": "atk1",
+          "name": "Claw",
+          "primary": true,
+          "finesse": true,
+          "damage": "1d2",
+          "attackMisc": 0,
+          "damageMisc": 0,
+          "notes": ""
+        },
+        {
+          "id": "atk2",
+          "name": "Claw",
+          "primary": true,
+          "finesse": true,
+          "damage": "1d2",
+          "attackMisc": 0,
+          "damageMisc": 0,
+          "notes": ""
+        },
+        {
+          "id": "atk3",
+          "name": "Bite",
+          "primary": true,
+          "finesse": true,
+          "damage": "1d3",
+          "attackMisc": 0,
+          "damageMisc": 0,
+          "notes": ""
+        }
+      ],
+      "skills": [
+        {
+          "id": "s1",
+          "name": "Climb",
+          "ability": "dex",
+          "ranks": 0,
+          "classSkill": true,
+          "misc": 0
+        },
+        {
+          "id": "s2",
+          "name": "Perception",
+          "ability": "wis",
+          "ranks": 1,
+          "classSkill": true,
+          "misc": 0
+        },
+        {
+          "id": "s3",
+          "name": "Stealth",
+          "ability": "dex",
+          "ranks": 1,
+          "classSkill": true,
+          "misc": 4
+        }
+      ],
+      "feats": [
+        "Weapon Finesse"
+      ],
+      "tricks": [],
+      "special": [
+        "Low-light vision",
+        "Scent"
+      ],
+      "notes": "Master gains +3 on Stealth checks."
+    }
+  ]
 }
