@@ -130,5 +130,13 @@ export function iteratives(bab: number): number[] {
   return out;
 }
 
+/** Attack line for a BAB plus other modifiers: "+11/+6/+1". */
+export function iterativeText(bab: number, total: number): string {
+  return iteratives(bab)
+    .map((b) => b + total - bab)
+    .map((n) => (n >= 0 ? `+${n}` : `${n}`))
+    .join('/');
+}
+
 /** Coins weigh 50 to the pound. */
 export const COINS_PER_LB = 50;
