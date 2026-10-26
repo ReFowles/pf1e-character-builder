@@ -34,14 +34,16 @@
       <td class="w-24"><input list="feat-sources" bind:value={f.source} aria-label="Source" /></td>
       <td><textarea rows="1" class="w-full" bind:value={f.description} aria-label="Notes"></textarea></td>
     {/snippet}
+    {#snippet tools()}
+      <DbPicker
+        kind="feats"
+        label="Find feat"
+        onpick={(f) => c.feats.push({ ...make.feat(Math.max(1, app.d.level)), name: f.name, source: 'Level', description: f.summary })}
+      >
+        {#snippet detail(f)}{f.tags.join(', ')}{f.summary ? ` — ${f.summary}` : ''}{/snippet}
+      </DbPicker>
+    {/snippet}
   </DynamicTable>
-  <DbPicker
-    kind="feats"
-    label="Find feat"
-    onpick={(f) => c.feats.push({ ...make.feat(Math.max(1, app.d.level)), name: f.name, source: 'Level', description: f.summary })}
-  >
-    {#snippet detail(f)}{f.tags.join(', ')}{f.summary ? ` — ${f.summary}` : ''}{/snippet}
-  </DbPicker>
   <datalist id="feat-sources">
     <option value="Level"></option><option value="Human bonus"></option><option value="Fighter bonus"></option>
     <option value="Class bonus"></option><option value="Racial"></option><option value="Item"></option>
