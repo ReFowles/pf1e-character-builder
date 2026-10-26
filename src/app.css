@@ -134,6 +134,34 @@
   .field > textarea {
     @apply w-full;
   }
+  /* Custom dropdown (Select.svelte): looks like an input; the list floats in the top layer. */
+  .select-btn {
+    @apply inline-flex h-7 min-w-0 items-center gap-1 rounded-sm border border-rule/50 bg-field px-1.5 text-left outline-none;
+  }
+  .select-btn:focus-visible,
+  .select-btn[aria-expanded='true'] {
+    @apply border-accent ring-1 ring-accent/40;
+  }
+  .select-chevron {
+    @apply size-3.5 shrink-0 opacity-70;
+  }
+  .select-list {
+    @apply fixed m-0 max-h-72 overflow-y-auto rounded-md border border-ink/30 bg-paper p-0.5 text-sm text-ink shadow-lg;
+    inset: auto;
+  }
+  .select-option {
+    @apply cursor-pointer rounded-sm px-2 py-1 whitespace-nowrap;
+  }
+  .select-option.active {
+    @apply bg-ink/10;
+  }
+  .select-option[aria-selected='true'] {
+    @apply font-semibold text-accent;
+  }
+  .field > .select-btn,
+  .dyn-table td > .select-btn {
+    @apply w-full;
+  }
   .field-label {
     @apply text-[0.6rem] font-semibold tracking-wider uppercase opacity-60;
   }
@@ -350,7 +378,8 @@
   }
   input:not([type='checkbox'], [type='radio']),
   select,
-  textarea {
+  textarea,
+  .select-btn {
     border-color: transparent;
     background: transparent;
     background-image: none;
@@ -361,6 +390,9 @@
   input::placeholder,
   textarea::placeholder {
     color: transparent;
+  }
+  .select-chevron {
+    display: none;
   }
   /* Condensed skills on paper. */
   .skills-table {
