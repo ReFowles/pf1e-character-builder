@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { app, TABS } from '../state.svelte';
+  import { app } from '../state.svelte';
   import { SECTIONS } from '../sections';
 </script>
 
@@ -24,7 +24,12 @@
       Max hit points at first level
     </label>
 
-    {#each TABS as tab (tab)}
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={app.char.mythic.enabled} />
+      Mythic tab
+    </label>
+
+    {#each app.tabs as tab (tab)}
       <table class="w-full text-sm">
         <thead>
           <tr>

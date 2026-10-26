@@ -1,13 +1,19 @@
 <script lang="ts">
-  import { app, TABS, type Tab } from './lib/state.svelte';
+  import { app, type Tab } from './lib/state.svelte';
   import { saveCharacter } from './lib/storage/local';
   import TopBar from './lib/ui/TopBar.svelte';
   import ConfigDrawer from './lib/ui/ConfigDrawer.svelte';
   import CombatTab from './tabs/combat/CombatTab.svelte';
   import CharacterTab from './tabs/character/CharacterTab.svelte';
+  import MythicTab from './tabs/mythic/MythicTab.svelte';
   import SpellsTab from './tabs/spells/SpellsTab.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Combat', character: 'Character', spells: 'Spells' };
+  const LABELS: Record<Tab, string> = { combat: 'Combat', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
+
+  // Leave the Mythic tab if it gets disabled while open.
+  $effect(() => {
+    if (!app.tabs.includes(app.tab)) app.setTab('combat');
+  });
 
   // Autosave: serialize (which tracks every field), then write after a pause.
   let timer: ReturnType<typeof setTimeout>;
@@ -35,7 +41,7 @@
 <TopBar />
 
 <nav class="sticky top-0 z-10 flex gap-1 border-b border-ink/30 bg-parchment/95 px-2 pt-2 backdrop-blur print:hidden" aria-label="Sheet tabs">
-  {#each TABS as tab (tab)}
+  {#each app.tabs as tab (tab)}
     <button
       type="button"
       class="rounded-t-sm border border-b-0 px-4 py-1.5 font-display text-sm font-bold tracking-wider uppercase"
@@ -50,7 +56,7 @@
 </nav>
 
 <main class="mx-auto max-w-[1200px] p-2 print:max-w-none print:p-0">
-  {#each TABS as tab (tab)}
+  {#each app.tabs as tab (tab)}
     <div
       class={[
         'tab-panel',
@@ -61,7 +67,7 @@
         },
       ]}
     >
-      {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else}<SpellsTab />{/if}
+      {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'spells'}<SpellsTab />{:else}<MythicTab />{/if}
     </div>
   {/each}
 </main>

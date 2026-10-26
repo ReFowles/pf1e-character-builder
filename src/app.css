@@ -177,6 +177,13 @@
   .spells-grid {
     grid-template-areas: 'spellcasting';
   }
+  .mythic-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-areas:
+      'mythicOverview mythicAbilities'
+      'mythicFeats mythicPathAbilities'
+      'mythicSpells mythicSpells';
+  }
 }
 
 /* Hidden/collapsed apply to the screen only; print has its own toggle. */

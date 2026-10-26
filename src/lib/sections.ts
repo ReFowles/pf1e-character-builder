@@ -27,6 +27,11 @@ export const SECTIONS: SectionDef[] = [
   { id: 'equipment', title: 'Equipment', tab: 'character' },
   { id: 'magicItems', title: 'Magic Items', tab: 'character' },
   { id: 'spellcasting', title: 'Spellcasting', tab: 'spells' },
+  { id: 'mythicOverview', title: 'Mythic', tab: 'mythic' },
+  { id: 'mythicAbilities', title: 'Mythic Abilities', tab: 'mythic' },
+  { id: 'mythicFeats', title: 'Mythic Feats', tab: 'mythic' },
+  { id: 'mythicPathAbilities', title: 'Path Abilities', tab: 'mythic' },
+  { id: 'mythicSpells', title: 'Mythic Spells', tab: 'mythic' },
 ];
 
 export const SECTION_BY_ID = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));
