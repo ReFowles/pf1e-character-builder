@@ -5,6 +5,13 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
+  import { MAGIC_SLOTS } from '../../lib/model/types';
+
+  const toSlot = (s: string): MagicSlot => {
+    const slot = s === 'wrists' ? 'wrist' : s;
+    return (MAGIC_SLOTS as readonly string[]).includes(slot) ? (slot as MagicSlot) : 'slotless';
+  };
 
   const c = $derived(app.char);
   // Body slots in sheet order; two ring slots.
@@ -50,6 +57,15 @@
       {/each}
     </tbody>
   </table>
+
+  <DbPicker
+    kind="items"
+    label="Find magic item"
+    filter={(it) => it.category === 'magic'}
+    onpick={(it) => c.magicItems.push({ ...make.magicItem(), name: it.name, slot: toSlot(it.slot), weight: it.weight })}
+  >
+    {#snippet detail(it)}{it.slot || 'slotless'} · {it.price}{it.summary ? ` — ${it.summary}` : ''}{/snippet}
+  </DbPicker>
 
   <div class="subhead mt-1">Slotless</div>
   <DynamicTable items={slotless} cols={2} reorder={false} onremove={(m) => c.magicItems.splice(c.magicItems.indexOf(m), 1)} onadd={() => c.magicItems.push(make.magicItem())} addLabel="Slotless item" empty="Ioun stones, wondrous items…">

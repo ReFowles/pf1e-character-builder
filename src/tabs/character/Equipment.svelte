@@ -6,6 +6,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import { lb } from '../../lib/ui/format';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -128,7 +129,20 @@
       </tbody>
     </table>
   </div>
-  <button type="button" class="add-btn print:hidden" onclick={() => addItem()}>+ Item</button>
+  <div class="flex flex-wrap items-start gap-2">
+    <button type="button" class="add-btn print:hidden" onclick={() => addItem()}>+ Item</button>
+    <div class="min-w-60 flex-1">
+      <DbPicker
+        kind="items"
+        label="Find gear"
+        filter={(it) => !it.weapon && !it.armor && it.category !== 'magic'}
+        onpick={(it) =>
+          c.items.push({ ...make.item(), name: it.name, weight: it.weight, notes: it.price, isContainer: it.category === 'container' })}
+      >
+        {#snippet detail(it)}{it.category} · {it.weight} lb · {it.price}{/snippet}
+      </DbPicker>
+    </div>
+  </div>
 
   <div class="grid grid-cols-1 gap-3 border-t border-ink/20 pt-2 sm:grid-cols-2">
     <div class="flex flex-col gap-1">
