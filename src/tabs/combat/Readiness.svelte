@@ -31,7 +31,7 @@
           <Select class="w-full text-xs" bind:value={s.maneuverability} options={[{ value: '' as const, label: '—' }, ...opts(MANEUVERABILITY)]} aria-label="Fly maneuverability" />
         {/if}
       {:else}
-        <div class="stat-value text-3xl">{s.value}<span class="text-xs">ft</span></div>
+        <div class="stat-value text-2xl">{s.value}<span class="text-xs">ft</span></div>
         <div class="field-label">{s.mode}{s.maneuverability ? ` (${s.maneuverability})` : ''}</div>
       {/if}
     </div>
@@ -60,14 +60,14 @@
     <p><strong>Resources</strong> can use a formula for their maximum, e.g. <code>max(1, @wis.mod)</code>.</p>
   {/snippet}
   <div class="flex flex-wrap items-stretch gap-1.5">
-    <Stat label="Initiative" value={d.init} size="lg" />
+    <Stat label="Initiative" value={d.init} size="md" />
     <div class="stat" title={d.speed.encumbered ? 'Reduced by armor or load' : undefined}>
-      <div class="stat-value text-3xl">{d.speed.base}<span class="text-xs">ft</span></div>
+      <div class="stat-value text-2xl">{d.speed.base}<span class="text-xs">ft</span></div>
       <div class="field-label">Speed{d.speed.encumbered ? '*' : ''}</div>
     </div>
     <EditMode>{#snippet children(editing)}{@render speeds(editing)}{/snippet}</EditMode>
     <div class="stat ml-auto">
-      <NumInput class="stat-value w-14" bind:value={c.heroPoints} aria-label="Hero points" />
+      <NumInput class="stat-value w-14 text-lg" bind:value={c.heroPoints} aria-label="Hero points" />
       <div class="field-label">Hero pts</div>
     </div>
   </div>
