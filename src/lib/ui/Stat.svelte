@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { Total } from '../rules/bonuses';
   import { breakdown, fmt } from './format';
+  import Iterative from './Iterative.svelte';
 
   interface Props {
     label: string;
@@ -19,6 +20,8 @@
 </script>
 
 <div class="stat {cls}" title={tip}>
-  <div class="stat-value whitespace-nowrap {SIZES[size]}">{display ?? (signed ? fmt(n) : n)}</div>
+  <div class="stat-value text-center {SIZES[size]}" class:whitespace-nowrap={!display?.includes('/')}>
+    {#if display?.includes('/')}<Iterative text={display} />{:else}{display ?? (signed ? fmt(n) : n)}{/if}
+  </div>
   <div class="field-label">{label}</div>
 </div>

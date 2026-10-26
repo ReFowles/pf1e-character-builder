@@ -5,6 +5,15 @@
 
   let about: AboutDialog;
 
+  let menu: HTMLDivElement;
+  // Shared by the wide button row and the small-screen ☰ menu.
+  const ACTIONS: { label: string; title?: string; run: () => void }[] = [
+    { label: 'Import JSON', run: () => app.importJson() },
+    { label: 'Export JSON', run: () => app.exportJson() },
+    { label: 'Print / PDF', title: 'Print, or choose “Save as PDF” in the print dialog', run: () => print() },
+    { label: 'About', run: () => about.open() },
+  ];
+
   const sorted = $derived([...app.roster].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
 </script>
 
@@ -29,11 +38,27 @@
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5A1 1 0 0 0 7.7 16.5h4.6a1 1 0 0 0 1-.9L14 6M8.5 9v4.5M11.5 9v4.5"/></svg>
   </button>
   <div class="ml-auto flex flex-wrap gap-2">
-    <button type="button" class="btn" onclick={() => app.importJson()}>Import JSON</button>
-    <button type="button" class="btn" onclick={() => app.exportJson()}>Export JSON</button>
-    <button type="button" class="btn" title="Print, or choose “Save as PDF” in the print dialog" onclick={() => print()}>Print / PDF</button>
-    <button type="button" class="btn" onclick={() => about.open()}>About</button>
+    {#each ACTIONS as a (a.label)}
+      <button type="button" class="btn hidden sm:inline-block" title={a.title} onclick={a.run}>{a.label}</button>
+    {/each}
+    <button type="button" class="btn p-1.5 sm:hidden" aria-label="Menu" title="Menu" popovertarget="app-menu">
+      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M3.5 6h13M3.5 10h13M3.5 14h13" /></svg>
+    </button>
     <button type="button" class="btn-primary" onclick={() => (app.configOpen = true)}>Config</button>
+  </div>
+  <div bind:this={menu} id="app-menu" popover="auto" role="menu" class="app-menu">
+    {#each ACTIONS as a (a.label)}
+      <button
+        type="button"
+        role="menuitem"
+        class="rounded-sm px-3 py-1.5 text-left text-sm hover:bg-ink/10"
+        title={a.title}
+        onclick={() => {
+          menu.hidePopover();
+          a.run();
+        }}>{a.label}</button
+      >
+    {/each}
   </div>
 </header>
 <AboutDialog bind:this={about} />

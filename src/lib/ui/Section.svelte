@@ -10,6 +10,8 @@
     title?: string;
     /** Extra header controls, hidden in print. */
     actions?: Snippet;
+    /** Header controls shown only while editing (e.g. remove the section). */
+    editActions?: Snippet;
     /** Content for the ℹ popover: breakdowns and rules that are otherwise hover-only. */
     info?: Snippet;
     /** Show an Edit/Done toggle; add, move, delete and find controls appear only while editing. */
@@ -23,6 +25,7 @@
     id,
     title = SECTION_BY_ID[id]?.title ?? id,
     actions,
+    editActions,
     info,
     editable = false,
     children,
@@ -60,6 +63,7 @@
       </button>
       <div class="flex items-center gap-1 print:hidden">
         {#if actions}{@render actions()}{/if}
+        {#if editActions && editable && editing && !ui.collapsed}{@render editActions()}{/if}
         {#if editable && !ui.collapsed}
           <button
             type="button"
