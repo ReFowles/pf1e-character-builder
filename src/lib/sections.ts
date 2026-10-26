@@ -9,11 +9,11 @@ export interface SectionDef {
 /** Every configurable section, in mobile (mockup-numbered) order per tab. */
 export const SECTIONS: SectionDef[] = [
   { id: 'info', title: 'Character Info', tab: 'combat' },
-  { id: 'level', title: 'Level & Experience', tab: 'combat' },
   { id: 'currency', title: 'Currency', tab: 'combat' },
   { id: 'abilities', title: 'Ability Scores', tab: 'combat' },
   { id: 'classes', title: 'Class Info', tab: 'combat' },
   { id: 'skills', title: 'Skills', tab: 'combat' },
+  { id: 'readiness', title: 'Readiness', tab: 'combat' },
   { id: 'hp', title: 'Hit Points', tab: 'combat' },
   { id: 'macros', title: 'Macros', tab: 'combat' },
   { id: 'offense', title: 'Offense', tab: 'combat' },

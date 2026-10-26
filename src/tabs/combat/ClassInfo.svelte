@@ -6,19 +6,16 @@
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
-  import Stat from '../../lib/ui/Stat.svelte';
-  import Field from '../../lib/ui/Field.svelte';
   import Chevron from '../../lib/ui/Chevron.svelte';
-  import BonusList from '../../lib/ui/BonusList.svelte';
+  import EditMode from '../../lib/ui/EditMode.svelte';
 
   const c = $derived(app.char);
+  const d = $derived(app.d);
+  const ready = $derived(d.xpNext !== null && c.xp.current >= d.xpNext);
   let showRolls = $state(false);
   let showLog = $state(false);
-  let editing = $state(false);
   let newLevelClass = $state('');
   const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
-  const SPEED_MODES = ['fly', 'swim', 'climb', 'burrow'];
-  const MANEUVERABILITY = ['clumsy', 'poor', 'average', 'good', 'perfect'];
 
   /** Add Knowledge rows for any knowledge class skills not already on the sheet. */
   function ensureKnowledgeRows(classSkills: string[]) {
@@ -89,22 +86,28 @@
     return [...seen].map(([label, amount]) => ({ label, amount }));
   });
 
-  // Levels whose new "other" FCB is being typed; keeps the inputs open until committed.
-  let draftFcb = $state<Record<string, boolean>>({});
+  // A new "other" FCB is typed into a local draft and committed on blur/Enter,
+  // so the character (and every dropdown built from it) doesn't change mid-typing.
+  let drafts = $state<Record<string, { label: string; amount: string }>>({});
 
   const fcbValue = (l: LevelEntry) =>
-    l.fcb.kind !== 'other'
-      ? l.fcb.kind
-      : draftFcb[l.id] || !knownOther.some((o) => o.label === l.fcb.label.trim())
-        ? 'new'
+    drafts[l.id] || (l.fcb.kind === 'other' && !l.fcb.label.trim())
+      ? 'new'
+      : l.fcb.kind !== 'other'
+        ? l.fcb.kind
         : `other:${l.fcb.label.trim()}`;
 
+  function commitDraft(l: LevelEntry) {
+    const d = drafts[l.id];
+    if (!d) return;
+    if (d.label.trim()) l.fcb = { kind: 'other', label: d.label.trim(), amount: d.amount.trim() || '1' };
+    delete drafts[l.id];
+  }
+
   function setFcb(l: LevelEntry, v: string) {
+    delete drafts[l.id];
     if (v === 'hp' || v === 'skill') l.fcb = { kind: v, label: '', amount: '' };
-    else if (v === 'new') {
-      l.fcb = { kind: 'other', label: '', amount: '1' };
-      draftFcb[l.id] = true;
-    }
+    else if (v === 'new') drafts[l.id] = { label: '', amount: '1' };
     else {
       const o = knownOther.find((x) => `other:${x.label}` === v)!;
       l.fcb = { kind: 'other', label: o.label, amount: o.amount };
@@ -112,12 +115,32 @@
   }
 </script>
 
-<Section id="classes">
-  {#snippet actions()}
-    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" aria-pressed={editing} onclick={() => (editing = !editing)}>
-      {editing ? 'Done' : 'Edit'}
-    </button>
+<Section id="classes" editable>
+  {#snippet info()}
+    <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Config).</p>
+    <p><strong>Hit points</strong> per level are rolled and kept hidden in Level history; 1st level takes the maximum when Config says so. Each level adds at least 1 HP after Con.</p>
+    <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
+    <p><strong>Favored class bonuses</strong> only count on levels taken in the favored class (★). Fractional "other" bonuses add up as entered and round down when used.</p>
   {/snippet}
+  <EditMode>
+  {#snippet children(editing)}
+  <div class="flex items-center gap-3 border-b border-ink/20 pb-2">
+    <div class="stat">
+      <div class="stat-value text-lg">{d.level}</div>
+      <div class="field-label">Level</div>
+    </div>
+    <div class="flex flex-1 flex-col items-end">
+      <div class="flex items-center justify-end gap-1">
+        <NumInput class="w-28 text-right" bind:value={c.xp.current} aria-label="Current experience" />
+        <span class="opacity-60">/</span>
+        <span class="tabular-nums" title="{c.xp.track} track (change in Config)">{d.xpNext?.toLocaleString() ?? '—'}</span>
+      </div>
+      <span class="field-label">
+        Experience
+        {#if ready}<span class="ml-1 rounded-sm bg-gold px-1 text-paper normal-case">Level up!</span>{/if}
+      </span>
+    </div>
+  </div>
   <datalist id="class-presets">
     {#each CLASS_PRESETS as p (p.id)}<option value={p.name}>{p.source}</option>{/each}
   </datalist>
@@ -126,7 +149,7 @@
     <table class="dyn-table">
       <thead>
         <tr>
-          <th title="Favored class"><span class="sr-only">Favored</span>★</th>
+          <th title="Favored class">FC</th>
           <th>Class</th>
           <th class="text-center">Lvl</th>
           {#if editing}
@@ -252,9 +275,16 @@
                       {#each knownOther as o (o.label)}<option value="other:{o.label}">+{o.amount} {o.label}</option>{/each}
                       <option value="new">Other…</option>
                     </select>
-                    {#if fcbValue(l) === 'new'}
-                      <input class="w-14 text-center" bind:value={l.fcb.amount} placeholder="1/3" aria-label="Amount per level" title="Amount gained this level, e.g. 1/3" />
-                      <input class="min-w-24 flex-1" bind:value={l.fcb.label} placeholder="e.g. channel damage" aria-label="Alternate favored class bonus" onchange={() => (draftFcb[l.id] = false)} />
+                    {#if drafts[l.id]}
+                      <input class="w-14 text-center" bind:value={drafts[l.id].amount} placeholder="1/3" aria-label="Amount per level" title="Amount gained this level, e.g. 1/3" />
+                      <input
+                        class="min-w-24 flex-1"
+                        bind:value={drafts[l.id].label}
+                        placeholder="e.g. channel damage"
+                        aria-label="Alternate favored class bonus"
+                        onblur={() => commitDraft(l)}
+                        onkeydown={(e) => e.key === 'Enter' && commitDraft(l)}
+                      />
                     {/if}
                   </div>
                 {:else}
@@ -282,52 +312,6 @@
     </div>
   {/if}
 
-  <div class="mt-auto flex flex-wrap items-stretch gap-1.5 border-t border-ink/20 pt-2">
-    <Stat label="Initiative" value={app.d.init} big />
-    <div class="stat" title={app.d.speed.encumbered ? 'Reduced by armor or load' : undefined}>
-      <div class="stat-value text-3xl">{app.d.speed.base}<span class="text-xs">ft</span></div>
-      <div class="field-label">Speed{app.d.speed.encumbered ? '*' : ''}</div>
-    </div>
-    {#each c.speeds.other as s, i (s.id)}
-      <div class="stat">
-        {#if editing}
-          <div class="flex items-center gap-0.5">
-            <NumInput class="w-12" bind:value={s.value} aria-label="{s.mode} speed" />
-            <button type="button" class="icon-btn text-accent" aria-label="Remove {s.mode} speed" onclick={() => c.speeds.other.splice(i, 1)}>✕</button>
-          </div>
-          <select class="w-full text-xs capitalize" bind:value={s.mode} aria-label="Movement mode">
-            {#each SPEED_MODES as m (m)}<option value={m}>{m}</option>{/each}
-          </select>
-          {#if s.mode === 'fly'}
-            <select class="w-full text-xs" bind:value={s.maneuverability} aria-label="Fly maneuverability">
-              <option value="">—</option>
-              {#each MANEUVERABILITY as m (m)}<option value={m}>{m}</option>{/each}
-            </select>
-          {/if}
-        {:else}
-          <div class="stat-value text-3xl">{s.value}<span class="text-xs">ft</span></div>
-          <div class="field-label">{s.mode}{s.maneuverability ? ` (${s.maneuverability})` : ''}</div>
-        {/if}
-      </div>
-    {/each}
-    <button
-      type="button"
-      class="add-btn self-center print:hidden"
-      onclick={() => {
-        c.speeds.other.push(make.otherSpeed('fly'));
-        editing = true;
-      }}>+ Speed</button
-    >
-    <div class="stat ml-auto">
-      <NumInput class="stat-value w-14" bind:value={c.heroPoints} aria-label="Hero points" />
-      <div class="field-label">Hero pts</div>
-    </div>
-  </div>
-  {#if editing}
-    <div class="flex gap-2 print:hidden">
-      <Field label="Base speed" class="w-24"><NumInput bind:value={c.speeds.base} /></Field>
-      <Field label="Armored (0 = calc)" class="w-32"><NumInput bind:value={c.speeds.armored} /></Field>
-    </div>
-  {/if}
-  <div class="print:hidden"><BonusList keys={['init', 'speed']} label="Initiative / speed bonuses" /></div>
+  {/snippet}
+  </EditMode>
 </Section>
