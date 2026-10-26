@@ -72,8 +72,8 @@
     return id === 'summoner' && /unchained/i.test(k.name) ? 'summonerUnchained' : id;
   });
 
-  function addFromDb(sp: DbSpell) {
-    const level = sp.levels[classKey] ?? Math.min(...Object.values(sp.levels), 9);
+  function addFromDb(sp: DbSpell, fallbackLevel: number) {
+    const level = sp.levels[classKey] ?? fallbackLevel;
     b.spells.push({
       ...make.spell(Number.isFinite(level) ? level : 0),
       name: sp.name,
@@ -201,15 +201,6 @@
     </button>
   </div>
 
-  <DbPicker
-    kind="spells"
-    label="Find {c.classes.find((x) => x.id === b.classId)?.name ?? ''} spell"
-    filter={classKey ? (sp) => classKey in sp.levels : undefined}
-    onpick={addFromDb}
-  >
-    {#snippet detail(sp)}{classKey && classKey in sp.levels ? `Level ${sp.levels[classKey]}` : Object.entries(sp.levels).map(([k, v]) => `${k} ${v}`).slice(0, 4).join(', ')} · {sp.school}{sp.summary ? ` — ${sp.summary}` : ''}{/snippet}
-  </DbPicker>
-
   {#each levels as lvl (lvl)}
     <div class="subhead mt-1 flex items-baseline gap-2">
       <span>{lvl === 0 ? 'Level 0' : `${ORD[lvl]} level`}</span>
@@ -249,6 +240,16 @@
         <td class="w-20"><input bind:value={s.save} aria-label="Save" /></td>
         <td class="w-10"><input bind:value={s.sr} aria-label="Spell resistance" /></td>
         <td><input bind:value={s.notes} aria-label="Notes" /></td>
+      {/snippet}
+      {#snippet tools()}
+        <DbPicker
+          kind="spells"
+          label="Find {ORD[lvl]}-level {c.classes.find((x) => x.id === b.classId)?.name ?? ''} spell"
+          filter={classKey ? (sp) => sp.levels[classKey] === lvl : undefined}
+          onpick={(sp) => addFromDb(sp, lvl)}
+        >
+          {#snippet detail(sp)}{sp.school}{sp.summary ? ` — ${sp.summary}` : ''}{/snippet}
+        </DbPicker>
       {/snippet}
     </DynamicTable>
   {/each}
