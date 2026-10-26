@@ -20,6 +20,7 @@
   let data = $state<Entry[] | null>(null);
   let error = $state('');
   let active = $state(0);
+  const listId = `db-results-${Math.random().toString(36).slice(2, 8)}`;
 
   const results = $derived.by(() => {
     if (!data) return [];
@@ -55,7 +56,7 @@
         aria-label={label}
         role="combobox"
         aria-expanded={results.length > 0}
-        aria-controls="db-results-{kind}"
+        aria-controls={listId}
         autofocus
         bind:value={query}
         oninput={() => (active = 0)}
@@ -70,7 +71,7 @@
     </div>
     {#if error}<p class="text-xs text-accent">{error}</p>{/if}
     {#if results.length}
-      <ul id="db-results-{kind}" role="listbox" class="max-h-72 overflow-y-auto rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
+      <ul id={listId} role="listbox" class="max-h-72 overflow-y-auto rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
         {#each results as r, i (r.name)}
           <li role="option" aria-selected={i === active}>
             <button
