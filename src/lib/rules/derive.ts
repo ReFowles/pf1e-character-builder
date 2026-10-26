@@ -13,6 +13,8 @@ import { tryEvaluate, type Vars } from './expr';
 import { abilityMod } from './math';
 import { SKILL_BY_KEY, isClassSkill, subtypeKey, type SkillDef } from './skills';
 import { SPELL_TABLE_BY_ID } from './spellTables';
+import { ABILITY_INCREASE_TIERS, PATH_HP, mythicPowerMax, surgeDie } from './mythic';
+import { addFractions, formatFraction, parseFraction } from './fraction';
 import {
   COINS_PER_LB,
   LOAD_PENALTIES,
@@ -78,6 +80,22 @@ export interface SpellcastingDerived {
   prepared: number[];
 }
 
+export interface WealthDerived {
+  weapons: number;
+  armor: number;
+  magicItems: number;
+  items: number;
+  coins: number;
+  total: number;
+}
+
+export interface FcbSummary {
+  hp: number;
+  skill: number;
+  /** Named "other" bonuses with their summed amounts. */
+  other: { label: string; amount: string; value: number }[];
+}
+
 export interface Derived {
   level: number;
   classLevels: Record<string, number>;
@@ -103,6 +121,9 @@ export interface Derived {
   classSkills: Set<string>;
   weapons: Record<string, WeaponDerived>;
   weight: WeightDerived;
+  wealth: WealthDerived;
+  fcb: FcbSummary;
+  mythic: { tier: number; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
   load: Load;
   spellcasting: Record<string, SpellcastingDerived>;
@@ -187,6 +208,20 @@ export function derive(c: Character): Derived {
   }
   set.add(...c.bonuses.map((b) => ({ ...b, source: b.source || 'Misc' })));
 
+  const mythicOn = c.mythic.enabled && c.mythic.tier > 0;
+  const tier = mythicOn ? Math.min(10, c.mythic.tier) : 0;
+  const mythicHp = mythicOn && c.mythic.path ? PATH_HP[c.mythic.path] * tier : 0;
+  if (mythicOn) {
+    ABILITY_INCREASE_TIERS.forEach((t, i) => {
+      const a = c.mythic.abilityIncreases[i];
+      if (a && tier >= t) set.add({ key: `ability.${a}`, value: 2, type: 'untyped', source: `Mythic tier ${t}` });
+    });
+    set.add(
+      { key: 'hp.max', value: mythicHp, type: 'untyped', source: 'Mythic path' },
+      { key: 'init', value: tier >= 2 ? tier : 0, type: 'untyped', source: 'Amazing Initiative' },
+    );
+  }
+
   const equipped = c.armor.filter((a) => a.equipped);
   for (const a of equipped) {
     set.add({
@@ -269,6 +304,19 @@ export function derive(c: Character): Derived {
   }
   const vars = makeVars();
 
+  // --- Favored class bonuses ----------------------------------------------
+  const otherFcb = new Map<string, ReturnType<typeof parseFraction>>();
+  for (const l of favoredLevels) {
+    if (l.fcb.kind !== 'other' || !l.fcb.label.trim()) continue;
+    const label = l.fcb.label.trim();
+    otherFcb.set(label, addFractions(otherFcb.get(label) ?? { n: 0, d: 1 }, parseFraction(l.fcb.amount || '1')));
+  }
+  const fcb: FcbSummary = {
+    hp: fcbHp,
+    skill: fcbSkill,
+    other: [...otherFcb].map(([label, f]) => ({ label, amount: formatFraction(f), value: Math.floor(f.n / f.d) })),
+  };
+
   // --- Encumbrance --------------------------------------------------------
   const carried = carriedItems(c.items);
   const weight: WeightDerived = {
@@ -282,6 +330,17 @@ export function derive(c: Character): Derived {
   weight.total = round2(
     weight.weapons + weight.armor + weight.magicItems + weight.items + weight.coins,
   );
+  const coinsGp = (k: { pp: number; gp: number; sp: number; cp: number }) =>
+    k.pp * 10 + k.gp + k.sp / 10 + k.cp / 100;
+  const wealth: WealthDerived = {
+    weapons: c.weapons.reduce((s, w) => s + w.price, 0),
+    armor: c.armor.reduce((s, a) => s + a.price, 0),
+    magicItems: c.magicItems.reduce((s, m) => s + m.price, 0),
+    items: c.items.reduce((s, i) => s + i.price * i.quantity, 0),
+    coins: coinsGp(c.currency.carried) + c.currency.locations.reduce((s, l) => s + coinsGp(l.coins), 0),
+    total: 0,
+  };
+  wealth.total = round2(wealth.weapons + wealth.armor + wealth.magicItems + wealth.items + wealth.coins);
   const capacity = carryingCapacity(abilities.str.tempScore, c.info.size);
   const load = loadFor(weight.total, capacity);
   const loadPen = LOAD_PENALTIES[load];
@@ -506,6 +565,11 @@ export function derive(c: Character): Derived {
     classSkills,
     weapons,
     weight,
+    wealth,
+    fcb,
+    mythic: mythicOn
+      ? { tier, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier), hp: mythicHp }
+      : null,
     capacity,
     load,
     spellcasting,

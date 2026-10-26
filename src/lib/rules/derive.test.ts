@@ -94,3 +94,24 @@ describe('derive spellcasting', () => {
     expect(s.dcs[2]).toBe(15);
   });
 });
+
+describe('derive round 2', () => {
+  it('sums wealth, groups other fcbs and applies mythic', () => {
+    const c = fighter();
+    c.weapons[0].price = 15;
+    c.items = [{ ...make.item(), name: 'Rope', price: 1, quantity: 2, notCarried: true }];
+    c.currency.carried.gp = 10;
+    c.currency.locations = [{ ...make.coinLocation(), coins: { pp: 1, gp: 0, sp: 5, cp: 0 } }];
+    c.levels = c.levels.map((l) => ({ ...l, fcb: { kind: 'other' as const, label: 'Channel', amount: '1/3' } }));
+    c.mythic = { ...c.mythic, enabled: true, tier: 3, path: 'champion', abilityIncreases: ['str', 'con', null, null, null] };
+    const d = derive(c);
+    expect(d.wealth.total).toBe(15 + 2 + 10 + 10.5);
+    expect(d.fcb.other).toEqual([{ label: 'Channel', amount: '1', value: 1 }]);
+    expect(d.abilities.str.score).toBe(18);
+    expect(d.abilities.con.score).toBe(14);
+    expect(d.init.total).toBe(2 + 3);
+    // 3 levels of d10 at Con +2 (rolls 6/6/7, first max) + 15 mythic, no FCB hp.
+    expect(d.hp.max.total).toBe(12 + 8 + 9 + 15);
+    expect(d.mythic).toMatchObject({ powerMax: 9, surgeDie: '1d6' });
+  });
+});
