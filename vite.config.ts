@@ -9,7 +9,7 @@ export default defineConfig({
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['pf-logo.svg'],
+      includeAssets: ['pf-logo.svg', 'favicon.svg'],
       manifest: {
         name: 'PF1e Character Sheet',
         short_name: 'PF1e Sheet',
@@ -17,7 +17,7 @@ export default defineConfig({
         theme_color: '#7a1f1f',
         background_color: '#f7f1e3',
         display: 'standalone',
-        icons: [{ src: 'pf-logo.svg', sizes: 'any', type: 'image/svg+xml' }],
+        icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,json,txt,woff2}'],
