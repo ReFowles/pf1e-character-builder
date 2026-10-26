@@ -164,6 +164,12 @@
   .dyn-table td > select {
     @apply w-full;
   }
+  .skills-table td {
+    @apply align-middle;
+  }
+  .sorting {
+    @apply cursor-grabbing select-none;
+  }
   .subhead {
     @apply border-b border-ink/30 font-display text-xs font-bold tracking-widest uppercase;
   }
@@ -321,6 +327,22 @@
   input::placeholder,
   textarea::placeholder {
     color: transparent;
+  }
+  /* Condensed skills on paper. */
+  .skills-table {
+    font-size: 0.9rem;
+  }
+  .skills-table td {
+    padding-top: 0;
+    padding-bottom: 0;
+    line-height: 1.15;
+  }
+  .skills-table input:not([type='checkbox']) {
+    height: 1.15rem;
+  }
+  .skills-table input[type='checkbox'] {
+    width: 0.8rem;
+    height: 0.8rem;
   }
   .print-row td {
     height: 1.6rem;
