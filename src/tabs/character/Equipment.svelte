@@ -94,7 +94,7 @@
   {#snippet info()}
     <p>Carried weight counts weapons, armor, gear and coins. Items in a weightless container (bag of holding) or marked away (on a mount, at home) don't count, nor do their contents.</p>
     <p>Value counts everything you own, carried or not, including stashed coins (1 pp = 10 gp, 1 sp = 0.1 gp, 1 cp = 0.01 gp).</p>
-    <p>Mark an item equipped and give it a slot to list it under Magic Items. Load: {d.load} (light up to {d.capacity.light} lb, medium up to {d.capacity.medium} lb, heavy up to {d.capacity.heavy} lb).</p>
+    <p>Tick Eqp for worn or wielded gear; equipped items with a slot (set in Edit) are listed under Magic Items. Load: {d.load} (light up to {d.capacity.light} lb, medium up to {d.capacity.medium} lb, heavy up to {d.capacity.heavy} lb).</p>
   {/snippet}
   <div class="grid grid-cols-3 gap-1 text-center text-sm sm:grid-cols-6">
     <div class="stat"><div class="font-bold">{d.capacity.light}</div><div class="field-label">Light load</div></div>
@@ -110,10 +110,11 @@
       <table class="dyn-table print:hidden">
         <thead>
           <tr>
+            <th class="text-center" title="Equipped (worn or wielded)">Eqp</th>
             <th class="text-center">Qty</th>
             <th>Item</th>
-            <th class="text-center">Wt</th>
-            <th class="text-center">Total</th>
+            {#if editing}<th class="text-center" title="Weight of one">Wt ea.</th>{/if}
+            <th class="text-center" title="Quantity × weight, plus contents">{editing ? 'Total' : 'Wt'}</th>
             <th class="text-center" title="Value of one, in gp">gp ea.</th>
             <th>Notes</th>
             {#if editing}
@@ -126,16 +127,18 @@
         <tbody>
           {#each tree as { item: it, depth } (it.id)}
             <tr class:opacity-50={!counted.has(it.id)}>
+              <td data-label="Eqp" class="w-8 text-center align-middle">
+                <input type="checkbox" bind:checked={it.equipped} aria-label="{it.name || 'Item'} equipped" title="Equipped{it.slot ? ` (${it.slot})` : ''}" />
+              </td>
               <td data-label="Qty" class="w-12 align-middle"><NumInput bind:value={it.quantity} aria-label="Quantity" /></td>
               <td data-label="Item" style:padding-left="{depth * 1.1 + 0.15}rem" class="min-w-36 align-middle">
                 <div class="flex items-center gap-1">
                   {#if depth}<span class="opacity-40">└</span>{/if}
                   <input class="w-full" class:font-semibold={it.isContainer} bind:value={it.name} aria-label="Item name" />
-                  {#if it.equipped}<span class="text-xs text-gold" title="Equipped{it.slot ? ` (${it.slot})` : ''}">◆</span>{/if}
                 </div>
               </td>
-              <td data-label="Wt" class="w-12 align-middle"><NumInput bind:value={it.weight} aria-label="Weight each" /></td>
-              <td data-label="Total" class="w-14 text-center align-middle text-xs whitespace-nowrap tabular-nums">
+              {#if editing}<td data-label="Wt ea." class="w-12 align-middle"><NumInput bind:value={it.weight} aria-label="Weight each" /></td>{/if}
+              <td data-label={editing ? 'Total' : 'Wt'} class="w-14 text-center align-middle text-xs whitespace-nowrap tabular-nums">
                 {Math.round(it.weight * it.quantity * 100) / 100}
                 {#if it.isContainer}<div class="opacity-60" title="Contents">+{Math.round(contentsWeight(it.id) * 100) / 100}</div>{/if}
               </td>
@@ -160,7 +163,6 @@
                       <label class="inline-flex items-center gap-1" title="Contents weigh nothing (bag of holding)"><input type="checkbox" bind:checked={it.weightless} />Weightless</label>
                     {/if}
                     <label class="inline-flex items-center gap-1" title="Not on the character (mount, camp, home)"><input type="checkbox" bind:checked={it.notCarried} />Away</label>
-                    <label class="inline-flex items-center gap-1" title="Worn or wielded"><input type="checkbox" bind:checked={it.equipped} />Equipped</label>
                     <Select class="h-6 w-24 text-xs" bind:value={it.slot} options={[{ value: '' as const, label: 'No slot' }, ...opts(MAGIC_SLOTS)]} aria-label="Magic item slot" />
                   </div>
                 </td>
@@ -173,7 +175,7 @@
               {/if}
             </tr>
           {:else}
-            <tr><td colspan="9" class="py-2 text-center text-sm italic opacity-60">No gear yet.</td></tr>
+            <tr><td colspan="10" class="py-2 text-center text-sm italic opacity-60">No gear yet.</td></tr>
           {/each}
         </tbody>
       </table>
@@ -182,7 +184,7 @@
       <ul class="hidden columns-2 gap-4 text-sm print:block">
         {#each tree as { item: it, depth } (it.id)}
           <li class="flex break-inside-avoid justify-between border-b border-ink/15 py-0.5" style:padding-left="{depth}rem" class:opacity-60={!counted.has(it.id)}>
-            <span>{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}</span>
+            <span>{it.equipped ? '✓ ' : ''}{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}</span>
             <span class="tabular-nums">{Math.round(it.weight * it.quantity * 100) / 100} lb</span>
           </li>
         {/each}
