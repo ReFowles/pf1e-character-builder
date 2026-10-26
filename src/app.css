@@ -393,6 +393,12 @@
   .select-chevron {
     display: none;
   }
+  /* Character Info reads like a filled-in form on paper. */
+  [data-section='info'] .section-body input:not([type='checkbox']),
+  [data-section='info'] .section-body .select-btn {
+    border-bottom-color: color-mix(in srgb, var(--color-ink) 60%, transparent);
+    border-radius: 0;
+  }
   /* Condensed skills on paper. */
   .skills-table {
     font-size: 0.9rem;
