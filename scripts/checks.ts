@@ -40,7 +40,7 @@ async function expectText(desc: string, loc: ReturnType<Page['locator']>, want: 
 }
 const hpMax = () => page.locator('[data-section=hp] span.text-5xl');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
-const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done)$/ }).click();
+const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
 const skillTotal = (name: string) =>
   page.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
 
@@ -62,7 +62,7 @@ await expectStat('Melee', '+6');
 await expectStat('Will', '+1');
 
 console.log('— Con 14 → 16');
-await page.locator('[data-section=abilities]').getByRole('button', { name: 'Edit' }).click();
+await toggleEdit('abilities');
 const con = page.getByLabel('con base');
 await con.fill('16');
 await con.blur();

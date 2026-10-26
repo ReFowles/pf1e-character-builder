@@ -48,7 +48,7 @@
     {style}
     class={['sheet-section', cls, { 'screen-hidden': ui.hidden, 'print:hidden': ui.printHidden, collapsed: ui.collapsed, editing }]}
   >
-    <header class="section-head" class:rounded-sm={ui.collapsed}>
+    <header class="section-head">
       <button
         type="button"
         class="flex min-w-0 flex-1 items-center gap-1.5 text-left"
@@ -61,14 +61,27 @@
       <div class="flex items-center gap-1 print:hidden">
         {#if actions}{@render actions()}{/if}
         {#if editable && !ui.collapsed}
-          <button type="button" class="head-btn" aria-pressed={editing} onclick={() => (editing = !editing)}>{editing ? 'Done' : 'Edit'}</button>
+          <button
+            type="button"
+            class="head-btn size-6 p-0"
+            aria-pressed={editing}
+            aria-label={editing ? `Done editing ${title}` : `Edit ${title}`}
+            title={editing ? 'Done editing' : 'Edit'}
+            onclick={() => (editing = !editing)}
+          >
+            {#if editing}
+              <svg viewBox="0 0 20 20" fill="currentColor" class="size-4" aria-hidden="true"><path fill-rule="evenodd" d="M16.7 5.3a1 1 0 0 1 0 1.4l-8 8a1 1 0 0 1-1.4 0l-4-4a1 1 0 1 1 1.4-1.4L8 12.6l7.3-7.3a1 1 0 0 1 1.4 0Z" clip-rule="evenodd" /></svg>
+            {:else}
+              <svg viewBox="0 0 20 20" fill="currentColor" class="size-3.5" aria-hidden="true"><path d="M13.6 2.6a2 2 0 0 1 2.8 0l1 1a2 2 0 0 1 0 2.8l-9.2 9.2a1 1 0 0 1-.47.26l-4 1a1 1 0 0 1-1.21-1.21l1-4a1 1 0 0 1 .26-.47l9.82-9.58ZM12 6.4l-7 7-.5 2.1 2.1-.5 7-7L12 6.4Z" /></svg>
+            {/if}
+          </button>
         {/if}
         {#if info}
           <button type="button" class="head-btn size-6 rounded-full p-0 font-serif italic" popovertarget={popoverId} aria-label="About {title}" title="Details">i</button>
         {/if}
       </div>
     </header>
-    <div class={['section-body', bodyClass, { 'screen-collapsed': ui.collapsed }]}>
+    <div class={['section-body @container', bodyClass, { 'screen-collapsed': ui.collapsed }]}>
       {@render children()}
     </div>
     {#if info}

@@ -65,13 +65,17 @@
 }
 
 @layer components {
+  /* Borderless rounded cards on screen; print adds the border back. */
   .sheet-section {
-    @apply flex min-w-0 flex-col rounded-sm border border-ink/70 bg-paper shadow-sm;
+    @apply flex min-w-0 flex-col rounded-md bg-paper;
   }
-  /* Collapsed (screen only): just the header bar on the page background. */
+  /* Collapsed (screen only): just the header bar, at full width but its own height. */
   @media screen {
     .sheet-section.collapsed {
-      @apply self-start border-transparent bg-transparent shadow-none;
+      @apply h-max bg-transparent;
+    }
+    .sheet-section.collapsed > .section-head {
+      @apply rounded-b-md;
     }
   }
   .section-head {
@@ -82,7 +86,7 @@
     break-inside: avoid;
   }
   .section-head {
-    @apply flex items-center gap-2 bg-ink px-2 py-1 text-paper;
+    @apply flex items-center gap-2 rounded-t-md bg-ink px-2 py-1 text-paper;
   }
   .head-btn {
     @apply inline-flex items-center justify-center rounded-sm px-1.5 text-xs transition-colors hover:bg-paper/20;
@@ -318,7 +322,7 @@
     background: white;
   }
   .sheet-section {
-    box-shadow: none;
+    border: 1px solid color-mix(in srgb, var(--color-ink) 70%, transparent);
   }
   .section-head {
     -webkit-print-color-adjust: exact;
