@@ -149,8 +149,11 @@
       }}>Rest</button
     >
   {/snippet}
+  {#snippet editActions()}
+    <button type="button" class="head-btn" title="Remove this spellcasting section" onclick={() => removeSpellBlock(c, b.id)}>Remove</button>
+  {/snippet}
   {#snippet info()}
-    <p>Linked spell tables fill in slots by class level; Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Config.</p>
+    <p>Linked spell tables fill in slots by class level (or by caster level for "Other"); Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Config.</p>
     <p><strong>Per day</strong> = base slots + bonus spells from a high ability score + misc. Cantrips and orisons (level 0) can be cast any number of times; Prepared shows how many you can prepare.</p>
     <p><strong>Domain slots</strong> (clerics) add one spell per level that must come from a domain; they're counted separately.</p>
     <p><strong>DC</strong> = 10 + spell level + {b.ability.toUpperCase()} modifier. <strong>Pen.</strong> (spell penetration) = caster level + bonuses, rolled against spell resistance. <strong>Conc.</strong> = caster level + {b.ability.toUpperCase()} modifier + bonuses.</p>
@@ -169,7 +172,8 @@
   {/snippet}
   <EditMode>
   {#snippet children(editing)}
-  <div class="grid items-start gap-2 lg:grid-cols-[minmax(0,1fr)_auto] print:grid-cols-[minmax(0,1fr)_auto]">
+  <!-- Slot table on the left on wide screens and paper; below the info on phones. -->
+  <div class="grid items-start gap-2 lg:grid-cols-[auto_minmax(0,1fr)] print:grid-cols-[auto_minmax(0,1fr)]">
     <div class="flex flex-col gap-2">
       {#if editing}
         <div class="flex flex-wrap items-end gap-2 print:hidden">
@@ -196,14 +200,14 @@
               <div class="stat-value">{d?.casterLevel ?? 0}</div>
               <div class="field-label">CL</div>
             </div>
-            <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.casterLevelMisc} signed aria-label="Caster level misc" /></Field>
           {:else}
-            <!-- No class: the caster level is entered directly. -->
-            <div class="stat" title="Caster level{d && d.casterLevel !== b.casterLevelMisc ? ` (${d.casterLevel} with bonuses)` : ''}">
-              <NumInput class="stat-value h-7 w-full border-transparent bg-transparent" bind:value={b.casterLevelMisc} aria-label="Caster level" />
+            <!-- No class: the base caster level is entered directly (it also picks the spell table row). -->
+            <div class="stat" title="Caster level{d && d.casterLevel !== b.casterLevel ? ` (${d.casterLevel} with misc and bonuses)` : ''}">
+              <NumInput class="stat-value h-7 w-full border-transparent bg-transparent" bind:value={b.casterLevel} aria-label="Caster level" />
               <div class="field-label">CL</div>
             </div>
           {/if}
+          <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.casterLevelMisc} signed aria-label="Caster level misc" /></Field>
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + {b.ability.toUpperCase()} modifier + misc + concentration bonuses">
@@ -246,12 +250,11 @@
         {/each}
         {#if editing}
           <button type="button" class="add-btn self-center print:hidden" onclick={addDetails}>+ {suggested.join(', ')}</button>
-          <button type="button" class="btn ml-auto text-accent print:hidden" onclick={() => removeSpellBlock(c, b.id)}>Remove section</button>
         {/if}
       </div>
     </div>
 
-    <div class="spell-table-box">
+    <div class="spell-table-box lg:order-first print:order-first">
   <table class="dyn-table keep-table w-auto text-sm">
     <thead>
       <tr>
