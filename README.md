@@ -8,6 +8,8 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 - **Live calculations.** Ability scores, size, class levels, armor, conditions and macros flow into AC, saves, attacks, CMB/CMD, skills, HP, carrying capacity and spell DCs. Hover a number to see its breakdown.
 - **Macros.** Toggle Power Attack, Flanking, Heroism, Haste and more from a built-in library, or write your own effects against any stat key. Values can be formulas such as `-1 - floor(@bab / 4)`.
 - **Rules database.** Search more than 3,000 spells, feats, weapons, armor, gear and magic items, then add them to the sheet. Picking an entry copies it into the character, so you can edit it freely.
+- **Wealth tracking.** Every item, weapon, armor piece and magic item has a gp value. Equipment totals carried weight and overall character wealth.
+- **Mythic (optional).** Turn on the Mythic tab in **Config** to track tier, path, mythic power and surge die. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
 - **Configurable.** Collapse any section, or hide it on screen or in print (see **Config**). Printed dynamic tables include one blank row for handwritten additions.
 - **Multiple characters.** Create, duplicate and switch between characters. Use **Export JSON** for backups.
 - **Offline.** It's a PWA: after the first visit it runs with no network connection.
