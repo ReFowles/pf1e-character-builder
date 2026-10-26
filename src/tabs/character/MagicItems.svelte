@@ -6,6 +6,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
+  import { parseGp } from '../../lib/model/migrate';
   import { MAGIC_SLOTS } from '../../lib/model/types';
 
   const toSlot = (s: string): MagicSlot => {
@@ -53,29 +54,36 @@
           <td class="w-10">
             {#if item}<NumInput bind:value={item.weight} aria-label="{s.label} item weight" />{/if}
           </td>
+          <td class="w-14">
+            {#if item}<NumInput bind:value={item.price} aria-label="{s.label} item value in gp" />{/if}
+          </td>
         </tr>
       {/each}
     </tbody>
   </table>
 
-  <DbPicker
-    kind="items"
-    label="Find magic item"
-    filter={(it) => it.category === 'magic'}
-    onpick={(it) => c.magicItems.push({ ...make.magicItem(), name: it.name, slot: toSlot(it.slot), weight: it.weight })}
-  >
-    {#snippet detail(it)}{it.slot || 'slotless'} · {it.price}{it.summary ? ` — ${it.summary}` : ''}{/snippet}
-  </DbPicker>
 
   <div class="subhead mt-1">Slotless</div>
-  <DynamicTable items={slotless} cols={2} reorder={false} onremove={(m) => c.magicItems.splice(c.magicItems.indexOf(m), 1)} onadd={() => c.magicItems.push(make.magicItem())} addLabel="Slotless item" empty="Ioun stones, wondrous items…">
+  <DynamicTable items={slotless} cols={3} reorder={false} onremove={(m) => c.magicItems.splice(c.magicItems.indexOf(m), 1)} onadd={() => c.magicItems.push(make.magicItem())} addLabel="Slotless item" empty="Ioun stones, wondrous items…">
     {#snippet head()}
       <th>Item</th>
       <th class="text-center">Wt</th>
+      <th class="text-center">gp</th>
     {/snippet}
     {#snippet row(m)}
       <td><input bind:value={m.name} aria-label="Item name" /></td>
       <td class="w-10"><NumInput bind:value={m.weight} aria-label="Weight" /></td>
+      <td class="w-14"><NumInput bind:value={m.price} aria-label="Value in gp" /></td>
+    {/snippet}
+    {#snippet tools()}
+      <DbPicker
+        kind="items"
+        label="Find magic item"
+        filter={(it) => it.category === 'magic'}
+        onpick={(it) => c.magicItems.push({ ...make.magicItem(), name: it.name, slot: toSlot(it.slot), weight: it.weight, price: parseGp(it.price) })}
+      >
+        {#snippet detail(it)}{it.slot || 'slotless'} · {it.price}{it.summary ? ` — ${it.summary}` : ''}{/snippet}
+      </DbPicker>
     {/snippet}
   </DynamicTable>
 </Section>
