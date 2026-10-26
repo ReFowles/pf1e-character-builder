@@ -46,7 +46,7 @@
 {#if !open}
   <button type="button" class="add-btn print:hidden" onclick={start}>⌕ {label}</button>
 {:else}
-  <div class="relative flex flex-col gap-1 print:hidden">
+  <div class="relative flex w-full basis-full flex-col gap-1 print:hidden">
     <div class="flex items-center gap-1">
       <!-- svelte-ignore a11y_autofocus -->
       <input

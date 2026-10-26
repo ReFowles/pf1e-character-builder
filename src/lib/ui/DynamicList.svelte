@@ -7,6 +7,8 @@
     /** Blank card for print, giving room to write one more entry. */
     blank?: Snippet;
     onadd?: () => void;
+    /** Extra controls beside the add button (e.g. a database search). */
+    tools?: Snippet;
     addLabel?: string;
     empty?: string;
     class?: string;
@@ -16,6 +18,7 @@
     item,
     blank,
     onadd,
+    tools,
     addLabel = 'Add',
     empty = 'Nothing yet.',
     class: cls = 'flex flex-col gap-2',
@@ -46,6 +49,9 @@
     {#if blank}{@render blank()}{:else}<div class="h-8"></div>{/if}
   </div>
 </div>
-{#if onadd}
-  <button type="button" class="add-btn print:hidden" onclick={onadd}>+ {addLabel}</button>
+{#if onadd || tools}
+  <div class="flex flex-wrap items-start gap-2 print:hidden">
+    {#if onadd}<button type="button" class="add-btn" onclick={onadd}>+ {addLabel}</button>{/if}
+    {#if tools}{@render tools()}{/if}
+  </div>
 {/if}

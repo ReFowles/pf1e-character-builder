@@ -8,6 +8,8 @@
     head: Snippet;
     row: Snippet<[T, number]>;
     onadd?: () => void;
+    /** Extra controls beside the add button (e.g. a database search). */
+    tools?: Snippet;
     /** Needed when `items` is a filtered view rather than the source array. */
     onremove?: (item: T) => void;
     reorder?: boolean;
@@ -21,6 +23,7 @@
     head,
     row,
     onadd,
+    tools,
     onremove,
     reorder = true,
     addLabel = 'Add',
@@ -68,6 +71,9 @@
     </tbody>
   </table>
 </div>
-{#if onadd}
-  <button type="button" class="add-btn print:hidden" onclick={onadd}>+ {addLabel}</button>
+{#if onadd || tools}
+  <div class="flex flex-wrap items-start gap-2 print:hidden">
+    {#if onadd}<button type="button" class="add-btn" onclick={onadd}>+ {addLabel}</button>{/if}
+    {#if tools}{@render tools()}{/if}
+  </div>
 {/if}
