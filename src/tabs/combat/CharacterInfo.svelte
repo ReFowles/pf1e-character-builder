@@ -5,7 +5,11 @@
   import Field from '../../lib/ui/Field.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
 
-  const ALIGNMENTS = ['LG', 'NG', 'CG', 'LN', 'N', 'CN', 'LE', 'NE', 'CE'];
+  const ALIGNMENTS: [string, string][] = [
+    ['LG', 'Lawful good'], ['NG', 'Neutral good'], ['CG', 'Chaotic good'],
+    ['LN', 'Lawful neutral'], ['N', 'Neutral'], ['CN', 'Chaotic neutral'],
+    ['LE', 'Lawful evil'], ['NE', 'Neutral evil'], ['CE', 'Chaotic evil'],
+  ];
   const LANGUAGES = [
     'Common', 'Abyssal', 'Aklo', 'Aquan', 'Auran', 'Celestial', 'Draconic', 'Druidic', 'Dwarven',
     'Elven', 'Giant', 'Gnome', 'Goblin', 'Gnoll', 'Halfling', 'Ignan', 'Infernal', 'Orc', 'Sylvan',
@@ -19,16 +23,22 @@
     <Field label="Character name"><input class="text-lg font-bold" bind:value={info.name} /></Field>
     <Field label="Player"><input bind:value={info.player} /></Field>
   </div>
-  <div class="grid grid-cols-2 gap-x-3 gap-y-1 sm:grid-cols-4">
-    <Field label="Alignment">
-      <input list="alignments" bind:value={info.alignment} />
-      <datalist id="alignments">{#each ALIGNMENTS as a (a)}<option value={a}></option>{/each}</datalist>
+  <div class="grid grid-cols-[4.25rem_minmax(0,1fr)_3.25rem_minmax(0,1fr)] gap-x-2 gap-y-1">
+    <Field label="Align.">
+      <select bind:value={info.alignment} aria-label="Alignment" title={ALIGNMENTS.find(([a]) => a === info.alignment)?.[1]}>
+        <option value=""></option>
+        {#each ALIGNMENTS as [a, name] (a)}<option value={a} title={name}>{a}</option>{/each}
+      </select>
     </Field>
     <Field label="Race"><input bind:value={info.race} /></Field>
     <Field label="Size">
-      <select class="capitalize" bind:value={info.size}>
-        {#each SIZES as s (s)}<option value={s}>{s}</option>{/each}
-      </select>
+      <!-- Closed, the select shows just the size letter; the open list keeps full names. -->
+      <div class="relative" title={info.size}>
+        <select class="w-full text-transparent capitalize" bind:value={info.size} aria-label="Size">
+          {#each SIZES as s (s)}<option value={s} class="text-ink">{s}</option>{/each}
+        </select>
+        <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2 font-semibold" aria-hidden="true">{info.size[0].toUpperCase()}</span>
+      </div>
     </Field>
     <Field label="Deity"><input bind:value={info.deity} /></Field>
   </div>
