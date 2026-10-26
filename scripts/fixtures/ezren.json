@@ -1,0 +1,306 @@
+{
+  "schemaVersion": 1,
+  "id": "fixture-ezren",
+  "info": {
+    "name": "Ezren",
+    "player": "Alex",
+    "alignment": "NG",
+    "race": "Human",
+    "size": "medium",
+    "languages": [
+      "Common",
+      "Draconic",
+      "Elven"
+    ]
+  },
+  "abilities": {
+    "str": {
+      "base": 10
+    },
+    "dex": {
+      "base": 12
+    },
+    "con": {
+      "base": 14
+    },
+    "int": {
+      "base": 17,
+      "racial": 2
+    },
+    "wis": {
+      "base": 12
+    },
+    "cha": {
+      "base": 10
+    }
+  },
+  "classes": [
+    {
+      "id": "c-wiz",
+      "name": "Wizard",
+      "presetId": "wizard",
+      "hd": 6,
+      "bab": "1/2",
+      "goodSaves": [
+        "will"
+      ],
+      "skillRanks": 2,
+      "castingAbility": "int",
+      "classSkills": [
+        "appraise",
+        "craft",
+        "fly",
+        "knowledge",
+        "linguistics",
+        "profession",
+        "spellcraft"
+      ]
+    }
+  ],
+  "favoredClassId": "c-wiz",
+  "levels": [
+    {
+      "id": "l0",
+      "classId": "c-wiz",
+      "hpRoll": 4,
+      "fcb": {
+        "kind": "hp",
+        "note": ""
+      }
+    },
+    {
+      "id": "l1",
+      "classId": "c-wiz",
+      "hpRoll": 4,
+      "fcb": {
+        "kind": "hp",
+        "note": ""
+      }
+    },
+    {
+      "id": "l2",
+      "classId": "c-wiz",
+      "hpRoll": 4,
+      "fcb": {
+        "kind": "hp",
+        "note": ""
+      }
+    },
+    {
+      "id": "l3",
+      "classId": "c-wiz",
+      "hpRoll": 4,
+      "fcb": {
+        "kind": "hp",
+        "note": ""
+      }
+    },
+    {
+      "id": "l4",
+      "classId": "c-wiz",
+      "hpRoll": 4,
+      "fcb": {
+        "kind": "hp",
+        "note": ""
+      }
+    }
+  ],
+  "spellcasting": [
+    {
+      "id": "b1",
+      "classId": "c-wiz",
+      "kind": "prepared",
+      "ability": "int",
+      "table": "wizard",
+      "slotsMisc": [
+        0,
+        1,
+        1,
+        1,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      "details": [
+        {
+          "id": "d1",
+          "label": "School",
+          "value": "Evocation (Admixture)"
+        },
+        {
+          "id": "d2",
+          "label": "Opposition school",
+          "value": "Enchantment"
+        },
+        {
+          "id": "d3",
+          "label": "Opposition school",
+          "value": "Necromancy"
+        },
+        {
+          "id": "d4",
+          "label": "Arcane bond",
+          "value": "Staff"
+        }
+      ],
+      "spells": [
+        {
+          "id": "sp1",
+          "name": "Detect Magic",
+          "level": 0,
+          "school": "div",
+          "duration": "conc., 1 min/lvl",
+          "range": "60 ft",
+          "save": "none",
+          "sr": "no",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp2",
+          "name": "Light",
+          "level": 0,
+          "school": "evo",
+          "duration": "10 min/lvl",
+          "range": "touch",
+          "save": "none",
+          "sr": "no",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp3",
+          "name": "Acid Splash",
+          "level": 0,
+          "school": "con",
+          "duration": "instant",
+          "range": "close",
+          "save": "none",
+          "sr": "no",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp4",
+          "name": "Prestidigitation",
+          "level": 0,
+          "school": "univ",
+          "duration": "1 hour",
+          "range": "10 ft",
+          "save": "see text",
+          "sr": "no",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp5",
+          "name": "Magic Missile",
+          "level": 1,
+          "school": "evo",
+          "duration": "instant",
+          "range": "medium",
+          "save": "none",
+          "sr": "yes",
+          "prepared": 3,
+          "used": 1
+        },
+        {
+          "id": "sp6",
+          "name": "Mage Armor",
+          "level": 1,
+          "school": "con",
+          "duration": "1 hour/lvl",
+          "range": "touch",
+          "save": "Will neg (harmless)",
+          "sr": "no",
+          "prepared": 1,
+          "used": 1
+        },
+        {
+          "id": "sp7",
+          "name": "Shield",
+          "level": 1,
+          "school": "abj",
+          "duration": "1 min/lvl",
+          "range": "personal",
+          "save": "\u2014",
+          "sr": "\u2014",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp8",
+          "name": "Scorching Ray",
+          "level": 2,
+          "school": "evo",
+          "duration": "instant",
+          "range": "close",
+          "save": "none",
+          "sr": "yes",
+          "prepared": 2,
+          "used": 0
+        },
+        {
+          "id": "sp9",
+          "name": "Glitterdust",
+          "level": 2,
+          "school": "con",
+          "duration": "1 rd/lvl",
+          "range": "medium",
+          "save": "Will neg (blind)",
+          "sr": "no",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp10",
+          "name": "Invisibility",
+          "level": 2,
+          "school": "ill",
+          "duration": "1 min/lvl",
+          "range": "personal/touch",
+          "save": "Will neg (harmless)",
+          "sr": "yes",
+          "prepared": 1,
+          "used": 0
+        },
+        {
+          "id": "sp11",
+          "name": "Fireball",
+          "level": 3,
+          "school": "evo",
+          "duration": "instant",
+          "range": "long",
+          "save": "Ref half",
+          "sr": "yes",
+          "prepared": 2,
+          "used": 0
+        },
+        {
+          "id": "sp12",
+          "name": "Haste",
+          "level": 3,
+          "school": "trans",
+          "duration": "1 rd/lvl",
+          "range": "close",
+          "save": "Fort neg (harmless)",
+          "sr": "yes",
+          "prepared": 1,
+          "used": 0
+        }
+      ]
+    }
+  ],
+  "ui": {
+    "sections": {
+      "macros": {
+        "hidden": false,
+        "collapsed": false,
+        "printHidden": true
+      }
+    }
+  }
+}
