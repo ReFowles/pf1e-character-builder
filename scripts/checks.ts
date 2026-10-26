@@ -38,6 +38,10 @@ async function expectText(desc: string, loc: ReturnType<Page['locator']>, want: 
   if (!ok) failed++;
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${desc}: ${got}${ok ? '' : ` (want ${want})`}`);
 }
+function check(desc: string, ok: boolean, detail = '') {
+  if (!ok) failed++;
+  console.log(`${ok ? 'ok  ' : 'FAIL'} ${desc}${detail ? `: ${detail}` : ''}`);
+}
 const hpMax = () => page.locator('[data-section=hp] span.text-5xl');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
@@ -73,11 +77,22 @@ await con.fill('16');
 await con.blur();
 await expectText('Max HP', hpMax(), /^59$/);
 
-console.log('— remove Shaken');
-await toggleEdit('hp');
+console.log('— conditions without edit mode');
 await page.getByLabel('Remove Shaken').click();
-await toggleEdit('hp');
 await expectStat('Melee', '+8');
+await page.getByLabel('Add condition').fill('Sickened');
+await page.getByLabel('Add condition').press('Enter');
+await expectStat('Melee', '+6');
+await page.getByLabel('Remove Sickened').click();
+await expectStat('Melee', '+8');
+
+console.log('— edit-only columns');
+const gpHead = page.locator('[data-section=defense] th', { hasText: /^gp$/ });
+check('armor gp hidden outside edit', (await gpHead.count()) === 0);
+await toggleEdit('defense');
+check('armor gp shown in edit', (await gpHead.count()) === 1);
+await toggleEdit('defense');
+check('skill grips hidden outside edit', (await page.locator('[data-section=skills] [data-sort-handle]').count()) === 0);
 
 console.log('— gear weight → load');
 await page.goto(`${args.url}/#character`);
@@ -161,6 +176,11 @@ await pick(page.getByLabel('Path', { exact: true }), 'Champion (5 hp/tier)');
 await page.getByRole('button', { name: 'Core' }).click();
 await expectText('Max HP (+15 mythic)', hpMax(), /^74$/);
 await expectStat('Initiative', '+5');
+await page.getByRole('button', { name: 'Mythic' }).click();
+await page.getByLabel('Mythic Paragon').check();
+await expectText('Mythic power with paragon', page.locator('[data-section=mythicOverview] .stat', { hasText: 'Mythic power' }).locator('.stat-value'), /^9\/9$/);
+await page.getByRole('button', { name: 'Core' }).click();
+await expectStat('Initiative', '+7');
 
 console.log('— collapse');
 const macros = page.locator('[data-section=macros]');
@@ -171,14 +191,17 @@ if (!collapsedOk) failed++;
 console.log(`${collapsedOk ? 'ok  ' : 'FAIL'} collapsed macros height: ${box?.height}`);
 
 console.log('— other favored class bonus');
+await toggleEdit('classes');
 await page.getByRole('button', { name: /Level history/ }).click();
 await pick(page.getByLabel('Favored class bonus at level 1'), 'Other…');
 await page.getByLabel('Amount per level').fill('1/3');
 await page.getByLabel('Alternate favored class bonus').pressSequentially('channel damage');
 await page.getByLabel('Alternate favored class bonus').press('Enter');
 await expectText('FCB summary', page.locator('[data-section=classes] ul'), /channel damage \+1\/3/);
+await toggleEdit('classes');
 
 console.log('— drag favorites');
+await toggleEdit('skills');
 const favRows = page.locator('[data-section=skills] table').first().locator('tbody tr');
 const handle = (i: number) => favRows.nth(i).locator('[data-sort-handle]');
 await favRows.first().scrollIntoViewIfNeeded();
@@ -189,6 +212,7 @@ await page.mouse.down();
 await page.mouse.move(target!.x + 40, target!.y + target!.height / 2, { steps: 8 });
 await page.mouse.up();
 await expectText('First favorite after drag', favRows.first().locator('td').nth(3), /^Perception/);
+await toggleEdit('skills');
 
 console.log('— summoner preset and other caster');
 await toggleEdit('classes');
@@ -197,24 +221,44 @@ const nameInput = page.getByLabel('Class name').last();
 await nameInput.fill('Summoner');
 await nameInput.blur();
 await toggleEdit('classes');
+const addSpellSection = async () => {
+  await page.getByRole('button', { name: 'Config' }).click();
+  await page.locator('aside').getByRole('button', { name: '+ Spellcasting section' }).click();
+  await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+};
 await page.getByRole('button', { name: 'Spells' }).click();
-await toggleEdit('spellcasting');
-await page.getByRole('button', { name: '+ Spellcasting class' }).click();
-const tableOk = (await page.locator('[data-section=spellcasting] select').nth(3).inputValue()) === 'bard';
-if (!tableOk) failed++;
-console.log(`${tableOk ? 'ok  ' : 'FAIL'} summoner uses the bard spell table`);
-await page.getByRole('button', { name: '+ Spellcasting class' }).click();
-const other = page.locator('[data-section=spellcasting] .section-body > div').last();
-await other.locator('select').first().selectOption({ label: 'Other' });
-await other.getByLabel('Spell table').selectOption('');
-const cl = other.locator('label', { hasText: 'Caster level' }).locator('input');
+await addSpellSection();
+const summoner = page.locator('[data-section^=spells-]').first();
+await expectText('Section title', summoner.locator('.section-head h2'), /^Summoner Spells$/i);
+await summoner.locator('.section-head').getByRole('button', { name: /^Edit / }).click();
+await expectText('Summoner spell table', summoner.getByLabel('Spell table'), /^Bard/);
+await addSpellSection();
+const other = page.locator('[data-section^=spells-]').last();
+await other.locator('.section-head').getByRole('button', { name: /^Edit / }).click();
+await pick(other.getByLabel('Class', { exact: true }), 'Other');
+await other.getByLabel('Label', { exact: true }).fill('Racial');
+await pick(other.getByLabel('Spell table'), 'Manual');
+await expectText('Other section title', other.locator('.section-head h2'), /^Racial Spells$/i);
+const cl = other.getByLabel('Caster level', { exact: true });
 await cl.fill('5');
 await cl.blur();
+await expectText('Other caster level', other.locator('.stat', { hasText: 'Conc.' }).locator('.stat-value'), /^\+6$/);
 const misc1 = other.getByLabel('Misc slots level 1');
 await misc1.fill('2');
 await misc1.blur();
 // Int 12 (+1) adds a bonus 1st-level spell: 0 base + 1 bonus + 2 misc.
 await expectText('Other caster 1st level', other.getByText(/^DC \d+ · \d+\/day$/), /3\/day/);
+
+console.log('— dark mode');
+await page.getByRole('button', { name: 'Config' }).click();
+await page.getByLabel('Dark mode').check();
+await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+const paperBg = () => page.evaluate(() => getComputedStyle(document.querySelector('.sheet-section')!).backgroundColor);
+const darkBg = await paperBg();
+check('dark mode on screen', (await page.evaluate(() => document.documentElement.classList.contains('dark'))) && darkBg !== 'rgb(255, 253, 248)', darkBg);
+await page.emulateMedia({ media: 'print' });
+check('print stays light', (await paperBg()) === 'rgb(255, 253, 248)', await paperBg());
+await page.emulateMedia({ media: 'screen' });
 
 if (errors.length) {
   failed += errors.length;
