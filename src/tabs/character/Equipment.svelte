@@ -110,8 +110,8 @@
       <table class="dyn-table print:hidden">
         <thead>
           <tr>
-            <th>Item</th>
             <th class="text-center">Qty</th>
+            <th>Item</th>
             <th class="text-center">Wt</th>
             <th class="text-center">Total</th>
             <th class="text-center" title="Value of one, in gp">gp ea.</th>
@@ -126,6 +126,7 @@
         <tbody>
           {#each tree as { item: it, depth } (it.id)}
             <tr class:opacity-50={!counted.has(it.id)}>
+              <td data-label="Qty" class="w-12 align-middle"><NumInput bind:value={it.quantity} aria-label="Quantity" /></td>
               <td data-label="Item" style:padding-left="{depth * 1.1 + 0.15}rem" class="min-w-36 align-middle">
                 <div class="flex items-center gap-1">
                   {#if depth}<span class="opacity-40">└</span>{/if}
@@ -133,7 +134,6 @@
                   {#if it.equipped}<span class="text-xs text-gold" title="Equipped{it.slot ? ` (${it.slot})` : ''}">◆</span>{/if}
                 </div>
               </td>
-              <td data-label="Qty" class="w-12 align-middle"><NumInput bind:value={it.quantity} aria-label="Quantity" /></td>
               <td data-label="Wt" class="w-12 align-middle"><NumInput bind:value={it.weight} aria-label="Weight each" /></td>
               <td data-label="Total" class="w-14 text-center align-middle text-xs whitespace-nowrap tabular-nums">
                 {Math.round(it.weight * it.quantity * 100) / 100}
@@ -182,7 +182,7 @@
       <ul class="hidden columns-2 gap-4 text-sm print:block">
         {#each tree as { item: it, depth } (it.id)}
           <li class="flex break-inside-avoid justify-between border-b border-ink/15 py-0.5" style:padding-left="{depth}rem" class:opacity-60={!counted.has(it.id)}>
-            <span>{it.name}{it.quantity !== 1 ? ` ×${it.quantity}` : ''}</span>
+            <span>{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}</span>
             <span class="tabular-nums">{Math.round(it.weight * it.quantity * 100) / 100} lb</span>
           </li>
         {/each}

@@ -13,10 +13,10 @@
     <p>Free-form details about your character. Nothing here affects the numbers on the sheet.</p>
   {/snippet}
   <div class="grid grid-cols-3 gap-x-2 gap-y-1 sm:grid-cols-9">
+    <Field label="Homeland" class="col-span-3 sm:col-span-1"><input bind:value={app.char.info.homeland} /></Field>
     {#each SHORT as k (k)}
       <Field label={k}><input bind:value={bio[k]} /></Field>
     {/each}
-    <Field label="Homeland" class="col-span-3 sm:col-span-1"><input bind:value={app.char.info.homeland} /></Field>
   </div>
   <div class="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-4">
     {#each LONG as k (k)}
