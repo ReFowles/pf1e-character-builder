@@ -12,6 +12,8 @@
   const c = $derived(app.char);
   let showRolls = $state(false);
   let showLog = $state(false);
+  let editing = $state(false);
+  const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
   let newLevelClass = $state('');
 
   function applyPreset(k: ClassDef, preset: ClassPreset) {
@@ -64,6 +66,11 @@
 </script>
 
 <Section id="classes">
+  {#snippet actions()}
+    <button type="button" class="rounded-sm px-1.5 text-xs hover:bg-paper/20" aria-pressed={editing} onclick={() => (editing = !editing)}>
+      {editing ? 'Done' : 'Edit'}
+    </button>
+  {/snippet}
   <datalist id="class-presets">
     {#each CLASS_PRESETS as p (p.id)}<option value={p.name}>{p.source}</option>{/each}
   </datalist>
@@ -75,11 +82,15 @@
           <th title="Favored class">Fav</th>
           <th>Class</th>
           <th class="text-center">Lvl</th>
-          <th class="text-center print:hidden">HD</th>
-          <th class="text-center print:hidden">BAB</th>
-          <th class="text-center print:hidden">Good saves</th>
-          <th class="text-center print:hidden" title="Skill ranks per level">Ranks</th>
-          <th class="print:hidden"></th>
+          {#if editing}
+            <th class="text-center">HD</th>
+            <th class="text-center">BAB</th>
+            <th class="text-center">Good saves</th>
+            <th class="text-center" title="Skill ranks per level">Ranks</th>
+            <th></th>
+          {:else}
+            <th>Progression</th>
+          {/if}
         </tr>
       </thead>
       <tbody>
@@ -90,19 +101,20 @@
             </td>
             <td><input list="class-presets" class="w-full font-semibold" bind:value={k.name} onchange={() => onName(k)} placeholder="Class name" aria-label="Class name" /></td>
             <td class="text-center font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
-            <td class="print:hidden">
-              <select bind:value={k.hd} aria-label="Hit die">
+            {#if editing}
+            <td>
+              <select class="w-14" bind:value={k.hd} aria-label="Hit die">
                 {#each [6, 8, 10, 12] as hd (hd)}<option value={hd}>d{hd}</option>{/each}
               </select>
             </td>
-            <td class="print:hidden">
-              <select bind:value={k.bab} aria-label="BAB progression">
+            <td>
+              <select class="w-16" bind:value={k.bab} aria-label="BAB progression">
                 <option value="full">Full</option>
                 <option value="3/4">¾</option>
                 <option value="1/2">½</option>
               </select>
             </td>
-            <td class="whitespace-nowrap text-center print:hidden">
+            <td class="whitespace-nowrap text-center">
               {#each ['fort', 'ref', 'will'] as const as s (s)}
                 <button
                   type="button"
@@ -114,8 +126,11 @@
                 >
               {/each}
             </td>
-            <td class="w-12 print:hidden"><NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" /></td>
-            <td class="print:hidden"><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
+            <td class="w-12"><NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" /></td>
+            <td><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
+            {:else}
+            <td class="text-xs whitespace-nowrap opacity-70">d{k.hd} · {BAB_LABEL[k.bab]} · {k.goodSaves.map((s) => s[0].toUpperCase()).join() || '—'} · {k.skillRanks}+Int</td>
+            {/if}
           </tr>
         {/each}
         <tr class="print-row hidden print:table-row"><td></td><td></td><td></td></tr>
@@ -124,9 +139,9 @@
   </div>
 
   <div class="flex flex-wrap items-center gap-2 print:hidden">
-    <button type="button" class="add-btn" onclick={addClass}>+ Class</button>
+    {#if editing || !c.classes.length}<button type="button" class="add-btn" onclick={addClass}>+ Class</button>{/if}
     {#if c.classes.length}
-      <select bind:value={newLevelClass} aria-label="Class for new level" class="border border-ink/30 text-sm">
+      <select bind:value={() => newLevelClass || c.favoredClassId || c.classes[0]?.id, (v) => (newLevelClass = v ?? "")} aria-label="Class for new level" class="border border-ink/30 text-sm">
         {#each c.classes as k (k.id)}<option value={k.id}>{k.name || 'Unnamed class'}</option>{/each}
       </select>
       <button type="button" class="btn-primary" onclick={addLevel}>+ Level</button>
