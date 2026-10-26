@@ -1,5 +1,7 @@
 <script lang="ts">
-  import { app } from '../state.svelte';
+  import { app, type Tab } from '../state.svelte';
+
+  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
 </script>
 
@@ -33,7 +35,7 @@
       <table class="w-full text-sm">
         <thead>
           <tr>
-            <th class="capitalize">{tab} tab</th>
+            <th>{LABELS[tab]} tab</th>
             <th class="w-14 text-center">Screen</th>
             <th class="w-14 text-center">Print</th>
           </tr>

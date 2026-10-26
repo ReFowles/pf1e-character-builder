@@ -8,7 +8,7 @@
   import MythicTab from './tabs/mythic/MythicTab.svelte';
   import SpellsTab from './tabs/spells/SpellsTab.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Combat', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
+  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', spells: 'Spells', mythic: 'Mythic' };
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
@@ -40,19 +40,21 @@
 
 <TopBar />
 
-<nav class="sticky top-0 z-10 flex gap-1 border-b border-ink/30 bg-parchment/95 px-2 pt-2 backdrop-blur print:hidden" aria-label="Sheet tabs">
-  {#each app.tabs as tab (tab)}
-    <button
-      type="button"
-      class="rounded-t-sm border border-b-0 px-4 py-1.5 font-display text-sm font-bold tracking-wider uppercase"
-      class:bg-ink={app.tab === tab}
-      class:text-paper={app.tab === tab}
-      class:border-ink={app.tab === tab}
-      class:border-transparent={app.tab !== tab}
-      aria-current={app.tab === tab ? 'page' : undefined}
-      onclick={() => app.setTab(tab)}>{LABELS[tab]}</button
-    >
-  {/each}
+<nav class="sticky top-0 z-10 border-b border-ink/30 bg-parchment/95 backdrop-blur print:hidden" aria-label="Sheet tabs">
+  <div class="mx-auto flex max-w-[1200px] gap-1 px-2 pt-2">
+    {#each app.tabs as tab (tab)}
+      <button
+        type="button"
+        class="rounded-t-sm border border-b-0 px-4 py-1.5 font-display text-sm font-bold tracking-wider uppercase"
+        class:bg-ink={app.tab === tab}
+        class:text-paper={app.tab === tab}
+        class:border-ink={app.tab === tab}
+        class:border-transparent={app.tab !== tab}
+        aria-current={app.tab === tab ? 'page' : undefined}
+        onclick={() => app.setTab(tab)}>{LABELS[tab]}</button
+      >
+    {/each}
+  </div>
 </nav>
 
 <main class="mx-auto max-w-[1200px] p-2 print:max-w-none print:p-0">
