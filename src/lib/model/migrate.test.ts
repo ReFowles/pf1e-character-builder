@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { parseFcbNote, parseGp } from './migrate';
 import { normalize } from './normalize';
+import { newCharacter } from './defaults';
 
 describe('migrate v1 -> v2', () => {
   const v1 = {
@@ -22,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(3);
+    expect(c.schemaVersion).toBe(4);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -61,5 +62,29 @@ describe('migrate v2 -> v3', () => {
     expect((c as unknown as Record<string, unknown>).magicItems).toBeUndefined();
     expect(c.favoriteOrder).toEqual(['b']);
     expect(c.spellcasting.map((b) => b.domainSlot)).toEqual([true, false]);
+  });
+});
+
+describe('migrate v3 -> v4', () => {
+  it('turns tier misc into paragon and splits spell section toggles per block', () => {
+    const c = normalize({
+      schemaVersion: 3,
+      mythic: { enabled: true, tier: 2, tierMisc: 2 },
+      spellcasting: [{ id: 'b1' }, { id: 'b2' }],
+      ui: { sections: { spellcasting: { hidden: false, collapsed: true, printHidden: true } } },
+    });
+    expect(c.mythic.paragon).toBe(true);
+    expect(c.mythic.surgeUpgrades).toBe(0);
+    expect((c.mythic as unknown as Record<string, unknown>).tierMisc).toBeUndefined();
+    expect(c.ui.sections['spells-b1']).toEqual({ hidden: false, collapsed: true, printHidden: true });
+    expect(c.ui.sections['spells-b2'].printHidden).toBe(true);
+    expect(c.ui.sections.spellcasting).toBeUndefined();
+  });
+
+  it('favorites Perception on new characters', () => {
+    const c = newCharacter();
+    const perception = c.skills.find((s) => s.skill === 'perception')!;
+    expect(perception.favorite).toBe(true);
+    expect(c.favoriteOrder).toEqual([perception.id]);
   });
 });

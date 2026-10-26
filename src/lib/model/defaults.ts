@@ -27,7 +27,7 @@ import type {
   Weapon,
 } from './types';
 
-export const SCHEMA_VERSION = 3;
+export const SCHEMA_VERSION = 4;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -186,7 +186,12 @@ export const make = {
 
 /** The starting skill list: one row per skill. Knowledge rows are added for class skills. */
 export function defaultSkills(): SkillEntry[] {
-  return SKILLS.map((d) => (d.multi ? make.skill(d.key, '') : make.skill(d.key)));
+  return SKILLS.map((d) => {
+    const e = d.multi ? make.skill(d.key, '') : make.skill(d.key);
+    // Perception is rolled constantly, so new characters start with it favorited.
+    if (d.key === 'perception') e.favorite = true;
+    return e;
+  });
 }
 
 /** Knowledge subtypes implied by a class skill list ("knowledge" = all). */
@@ -196,6 +201,7 @@ export function classKnowledges(classSkills: string[]): string[] {
 }
 
 export function newCharacter(): Character {
+  const skills = defaultSkills();
   return {
     schemaVersion: SCHEMA_VERSION,
     id: uid(),
@@ -242,8 +248,8 @@ export function newCharacter(): Character {
     conditions: [],
     speeds: { base: 30, armored: 0, other: [] },
     heroPoints: 1,
-    skills: defaultSkills(),
-    favoriteOrder: [],
+    skills,
+    favoriteOrder: skills.filter((s) => s.favorite).map((s) => s.id),
     bonuses: [],
     weapons: [],
     armor: [],
@@ -265,7 +271,8 @@ export function newCharacter(): Character {
       tier: 1,
       path: '',
       secondPath: '',
-      tierMisc: 0,
+      paragon: false,
+      surgeUpgrades: 0,
       powerUsed: 0,
       abilityIncreases: [null, null, null, null, null],
       feats: [],

@@ -95,6 +95,21 @@ STEPS[2] = (d) => {
   };
 };
 
+STEPS[3] = (d) => {
+  // Tier misc becomes the Mythic Paragon checkbox (+2 potency only).
+  const { tierMisc, ...mythic } = (d.mythic ?? {}) as Plain;
+  // Each spellcasting block is now its own section; carry over the old shared section's toggles.
+  const sections = { ...((d.ui as Plain | undefined)?.sections as Plain | undefined) };
+  const old = sections.spellcasting;
+  delete sections.spellcasting;
+  if (old) for (const b of arr(d.spellcasting)) sections[`spells-${b.id}`] ??= { ...old };
+  return {
+    ...d,
+    mythic: { ...mythic, paragon: (Number(tierMisc) || 0) >= 2, surgeUpgrades: 0 },
+    ui: { ...((d.ui as Plain | undefined) ?? {}), sections },
+  };
+};
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

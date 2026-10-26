@@ -332,8 +332,10 @@ export interface Mythic {
   path: MythicPath | '';
   /** Second path from the Dual Path feat. */
   secondPath: MythicPath | '';
-  /** Bonus to effective tier (e.g. Mythic Paragon). */
-  tierMisc: number;
+  /** Mythic Paragon: tier counts 2 higher for the potency of mythic abilities, feats and spells. */
+  paragon: boolean;
+  /** Steps the surge die has been raised by feats or abilities. */
+  surgeUpgrades: number;
   powerUsed: number;
   /** Ability raised by +2 at tiers 2, 4, 6, 8, 10. */
   abilityIncreases: (Ability | null)[];
