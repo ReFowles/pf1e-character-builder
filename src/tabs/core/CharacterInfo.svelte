@@ -17,11 +17,14 @@
     'Terran', 'Undercommon',
   ];
   const ci = $derived(app.char.info);
+  // Size-changing effects (Enlarge/Reduce Person) move the effective size; the select sets the base.
+  const effective = $derived(app.d.effectiveSize);
+  const shifted = $derived(effective !== ci.size);
 </script>
 
 <Section id="info" editable>
   {#snippet info()}
-    <p><strong>Size</strong> ({ci.size}) changes AC and attack rolls, CMB and CMD, Fly and Stealth, and carrying capacity.</p>
+    <p><strong>Size</strong> ({effective}{shifted ? `, base ${ci.size}` : ''}) changes AC and attack rolls, CMB and CMD, Fly and Stealth, and carrying capacity. Active size effects like Enlarge Person change the displayed size; set the base size here.</p>
     <p>Languages can be added, renamed or removed in Edit mode.</p>
   {/snippet}
   <div class="grid grid-cols-2 gap-x-3 gap-y-1">
@@ -38,9 +41,9 @@
     </Field>
     <Field label="Race"><input bind:value={ci.race} /></Field>
     <Field label="Size">
-      <!-- Closed, the select shows just the size letter; the open list keeps full names. -->
-      <Select bind:value={ci.size} options={opts(SIZES)} aria-label="Size" title={ci.size}>
-        {#snippet display()}<span class="font-semibold">{ci.size[0].toUpperCase()}</span>{/snippet}
+      <!-- Closed, the select shows just the effective size letter; the open list sets the base size. -->
+      <Select bind:value={ci.size} options={opts(SIZES)} aria-label="Size" title={shifted ? `${effective} (base ${ci.size})` : effective}>
+        {#snippet display()}<span class="font-semibold {shifted ? 'text-accent' : ''}">{effective[0].toUpperCase()}</span>{/snippet}
       </Select>
     </Field>
     <Field label="Deity"><input bind:value={ci.deity} /></Field>
