@@ -114,7 +114,7 @@
     {#snippet row(s)}
       {#if prepared}<td data-label="Prep" class="w-11 align-middle"><NumInput bind:value={s.prepared} aria-label="Times prepared" /></td>{/if}
       {#if tracksUses}
-        <td data-label="Used" class="w-16 pl-1 align-middle">{#if s.prepared > 0}<UsesTracker max={s.prepared} bind:used={s.used} label="{s.name} cast" />{/if}</td>
+        <td data-label="Used" class="pl-1 align-middle">{#if s.prepared > 0}<UsesTracker max={s.prepared} bind:used={s.used} label="{s.name} cast" perRow={5} />{/if}</td>
       {/if}
       <td data-label="Spell" class="w-36 align-middle"><input class="w-full font-semibold" bind:value={s.name} aria-label="Spell name" /></td>
       <td data-label="School" class="w-24 align-middle"><input class="w-full" bind:value={s.school} aria-label="School" /></td>
@@ -301,7 +301,7 @@
               <span class:text-accent={total != null && (d?.prepared[lvl] ?? 0) > total}>{d?.prepared[lvl] ?? 0}{total != null ? ` / ${total}` : ''}</span>
               {#if d?.domain[lvl]}<span class="ml-1 text-xs opacity-70" title="Domain slot">+{d.domainPrepared[lvl]}/{d.domain[lvl]}</span>{/if}
             {:else if lvl > 0 && total != null && total > 0}
-              <div class="flex justify-center"><UsesTracker max={total} bind:used={b.slotsUsed[lvl]} label="Level {lvl} slot" /></div>
+              <div class="flex justify-center"><UsesTracker max={total} bind:used={b.slotsUsed[lvl]} label="Level {lvl} slot" perRow={5} /></div>
             {/if}
           </td>
         </tr>

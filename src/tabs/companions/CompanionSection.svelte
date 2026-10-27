@@ -10,6 +10,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Stat from '../../lib/ui/Stat.svelte';
+  import CompanionPortrait from './CompanionPortrait.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
@@ -114,6 +115,8 @@
 
       <div class="grid items-start gap-3 lg:grid-cols-2 print:grid-cols-2">
         <div class="flex flex-col gap-2">
+          <div class="flex items-start gap-2">
+          <CompanionPortrait bind:portrait={x.portrait} name={x.name} />
           <table class="ability-table w-full max-w-sm text-center text-sm">
             <thead>
               <tr>
@@ -140,6 +143,7 @@
               {/each}
             </tbody>
           </table>
+          </div>
           {#if editing && x.kind === 'animal'}
             <div class="flex flex-wrap items-end gap-2 print:hidden">
               {#each ANIMAL_INCREASE_LEVELS as lvl, i (lvl)}
@@ -150,7 +154,7 @@
             </div>
           {/if}
 
-          <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border-2 border-ink p-1.5">
+          <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border border-ink p-1.5">
             <div class="flex min-w-14 flex-col items-center rounded-sm border border-ink/40 px-2 py-0.5" title={breakdown(cd.hp.max)}>
               <span class="text-xl leading-tight font-bold tabular-nums">{cd.hp.max.total}</span>
               <span class="field-label">Max HP</span>

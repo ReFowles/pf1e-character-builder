@@ -3,14 +3,22 @@
     max: number;
     used: number;
     label?: string;
+    /** Wrap the checkboxes after this many per row. */
+    perRow?: number;
   }
-  let { max, used = $bindable(), label = 'use' }: Props = $props();
+  let { max, used = $bindable(), label = 'use', perRow }: Props = $props();
   // Checkboxes for small pools; a counter for large ones.
   const boxes = $derived(max > 0 && max <= 20);
 </script>
 
 {#if boxes}
-  <div class="flex flex-wrap items-center gap-0.5 self-center" role="group" aria-label="{label} tracker">
+  <!-- 1rem boxes + 0.125rem gaps: the width cap makes a row hold exactly `perRow` boxes. -->
+  <div
+    class="flex flex-wrap items-center gap-0.5 self-center"
+    style:max-width={perRow ? `calc(${perRow} * 1rem + ${perRow - 1} * 0.125rem)` : undefined}
+    role="group"
+    aria-label="{label} tracker"
+  >
     {#each { length: max }, i (i)}
       <input
         type="checkbox"

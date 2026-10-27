@@ -62,7 +62,7 @@
   </div>
 
   <!-- Max HP in a small box on the left; current HP (tracked in play) fills the rest. -->
-  <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border-2 border-ink p-1.5">
+  <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border border-ink p-1.5">
     <div class="flex min-w-16 flex-col items-center rounded-sm border border-ink/40 px-2 py-1" title={breakdown(hp.max)}>
       <span class="text-2xl leading-tight font-bold tabular-nums" data-hp-max>{hp.max.total}</span>
       <span class="field-label">Max HP</span>

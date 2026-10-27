@@ -7,10 +7,10 @@ import { PRESET_SPELL_TABLE, SPELL_TABLE_BY_ID } from './rules/spellTables';
 
 export const spellSectionId = (b: Spellcasting) => `spells-${b.id}`;
 
-/** "Cleric Spells", or the label for blocks without a class ("Racial Spells"). */
+/** The class name, or the label for blocks without a class ("Racial"). */
 export function spellSectionTitle(c: Character, b: Spellcasting): string {
   const k = c.classes.find((x) => x.id === b.classId);
-  return `${k ? k.name || 'Unnamed' : b.label.trim() || 'Other'} Spells`;
+  return `${k ? k.name || 'Unnamed' : b.label.trim() || 'Other'}`;
 }
 
 export function addSpellBlock(c: Character): Spellcasting {

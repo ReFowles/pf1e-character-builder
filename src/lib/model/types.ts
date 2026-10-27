@@ -384,6 +384,8 @@ export interface Companion extends Identified {
   name: string;
   kind: CompanionKind;
   species: string;
+  /** Small 3:4 JPEG data URL. */
+  portrait: string | null;
   /** Class whose level drives the companion's progression. */
   masterClassId: string | null;
   /** Added to the master's class level (Boon Companion +4, ranger −3...). */

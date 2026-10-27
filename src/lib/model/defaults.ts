@@ -171,6 +171,7 @@ export const make = {
     name: '',
     kind,
     species: '',
+    portrait: null,
     masterClassId: null,
     levelMisc: 0,
     creatureType: kind === 'eidolon' ? 'outsider' : 'animal',

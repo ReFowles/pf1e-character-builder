@@ -33,9 +33,9 @@
           <th class="w-12 bg-head py-1 text-center text-sm text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
           <td class="text-xl font-bold tabular-nums">{s.score}</td>
           <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
-          <td class="tabular-nums">{s.hasTemp ? s.tempScore : ''}</td>
-          <td class="tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</td>
-          <td class="p-0.5"><NumInput class="border-transparent bg-transparent" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
+          <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
+          <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
+          <td class="px-1"><NumInput class="write-box h-7 bg-transparent" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
         </tr>
       {/each}
     </tbody>

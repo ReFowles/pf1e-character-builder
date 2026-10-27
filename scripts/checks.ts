@@ -229,7 +229,7 @@ const addSpellSection = async () => {
 await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 await addSpellSection();
 const summoner = page.locator('[data-section^=spells-]').first();
-await expectText('Section title', summoner.locator('.section-head h2'), /^Summoner Spells$/i);
+await expectText('Section title', summoner.locator('.section-head h2'), /^Summoner$/i);
 await summoner.locator('.section-head').getByRole('button', { name: /^Edit / }).click();
 await expectText('Summoner spell table', summoner.getByLabel('Spell table'), /^Bard/);
 await addSpellSection();
@@ -238,7 +238,7 @@ await other.locator('.section-head').getByRole('button', { name: /^Edit / }).cli
 await pick(other.getByLabel('Class', { exact: true }), 'Other');
 await other.getByLabel('Label', { exact: true }).fill('Racial');
 await pick(other.getByLabel('Spell table'), 'Manual');
-await expectText('Other section title', other.locator('.section-head h2'), /^Racial Spells$/i);
+await expectText('Other section title', other.locator('.section-head h2'), /^Racial$/i);
 const cl = other.getByLabel('Caster level', { exact: true });
 await cl.fill('5');
 await cl.blur();

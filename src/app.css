@@ -244,13 +244,9 @@
       grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);
     }
   }
-  /* Ability scores: a ruled grid (the temp cells double as write-in boxes on paper). */
+  /* Ability scores: no table rules; the temp cells are boxed write-in cells (see .write-box). */
   .ability-table {
-    @apply border-collapse;
-  }
-  .ability-table td,
-  .ability-table tbody th {
-    @apply border border-ink/25;
+    @apply border-separate border-spacing-y-0.5;
   }
   /* Class progression cells, joined by bullets. */
   .dyn-table td.progression {
