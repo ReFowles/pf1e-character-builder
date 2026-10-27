@@ -125,7 +125,7 @@
                 <th class="text-center">Mod</th>
                 <th class="text-center">Temp</th>
                 <th class="text-center">Temp mod</th>
-                <th class="w-14 text-center" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
+                <th class="text-center" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
               </tr>
             </thead>
             <tbody>

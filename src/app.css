@@ -264,16 +264,22 @@
   /* Companion abilities: tight rows so the portrait gets the room. */
   .ability-table.compact {
     @apply border-spacing-y-0;
+    /* Label column sized to its text; the five value columns share the remaining width equally. */
+    table-layout: fixed;
+  }
+  .ability-table.compact thead th:first-child,
+  .ability-table.compact tbody th {
+    width: 2.75rem;
   }
   .ability-table.compact th,
   .ability-table.compact td {
     @apply px-1 py-0;
   }
   .ability-table.compact tbody th {
-    @apply w-9 py-0.5 text-[0.7rem];
+    @apply py-0.5 text-[0.7rem];
   }
   .ability-table.compact td.text-lg {
-    @apply w-11 text-base leading-tight;
+    @apply text-base leading-tight;
   }
   .ability-table.compact td {
     @apply h-7;
