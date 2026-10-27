@@ -116,10 +116,10 @@
       <div class="grid items-start gap-3 lg:grid-cols-2 print:grid-cols-2">
         <div class="flex flex-col gap-2">
           <div class="flex items-stretch gap-2">
-          <PortraitEditor bind:portrait={x.portrait} name={x.name} class="w-32 shrink-0 self-start rounded-sm border border-ink/30" />
-          <table class="ability-table compact w-auto flex-1 text-center text-sm">
+          <PortraitEditor bind:portrait={x.portrait} name={x.name} class="h-[11.75rem] shrink-0 self-start rounded-sm border border-ink/30" />
+          <table class="ability-table compact w-auto text-center text-sm">
             <thead>
-              <tr>
+              <tr class="h-5">
                 <th></th>
                 <th class="text-center">Score</th>
                 <th class="text-center">Mod</th>
@@ -138,7 +138,7 @@
                     <td class="w-14 p-0.5"><NumInput bind:value={x.abilities[a].base} aria-label="{a} base" /></td>
                     <td class="w-14 p-0.5"><NumInput bind:value={x.abilities[a].misc} signed aria-label="{a} misc" /></td>
                   {/if}
-                  <td class="p-0.5"><NumInput class="border-transparent bg-transparent" bind:value={x.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
+                  <td class="p-0.5"><NumInput class="write-box h-6 w-11 bg-transparent" bind:value={x.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
                 </tr>
               {/each}
             </tbody>

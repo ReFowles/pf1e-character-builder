@@ -273,7 +273,10 @@
     @apply w-9 py-0.5 text-[0.7rem];
   }
   .ability-table.compact td.text-lg {
-    @apply text-base leading-tight;
+    @apply w-11 text-base leading-tight;
+  }
+  .ability-table.compact td {
+    @apply h-7;
   }
   /* Portrait crop dialog */
   .crop-dialog {

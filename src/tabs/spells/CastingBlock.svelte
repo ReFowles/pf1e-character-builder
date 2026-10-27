@@ -27,6 +27,15 @@
   const ranges = $derived(spellRanges(d?.casterLevel ?? 0));
   const manual = $derived(!b.table);
   let showAll = $state(false);
+  // Wide screens and print split the slot table into 0–4 and 5–9 (matches `print` too, so it follows printing).
+  let wide = $state(false);
+  $effect(() => {
+    const mq = matchMedia('(min-width: 1024px), print');
+    const update = () => (wide = mq.matches);
+    update();
+    mq.addEventListener('change', update);
+    return () => mq.removeEventListener('change', update);
+  });
   const ORD = ['0', '1st', '2nd', '3rd', '4th', '5th', '6th', '7th', '8th', '9th'];
 
   const DETAIL_PRESETS: Record<string, string[]> = {
@@ -48,6 +57,8 @@
   const castable = (lvl: number) => d?.slots[lvl] != null || d?.known[lvl] != null || b.spells.some((s) => s.level === lvl);
   // Manual blocks always show every level so slots can be entered anywhere.
   const levels = $derived(ORD.map((_, lvl) => lvl).filter((lvl) => manual || showAll || castable(lvl)));
+
+  const split = $derived(wide && levels.some((l) => l > 4) && levels.some((l) => l <= 4));
 
   // Offer the class's usual details (domains, school...) until any detail exists.
   const suggested = $derived(b.details.length ? ['Detail'] : (DETAIL_PRESETS[presetId] ?? ['Detail']));
@@ -87,6 +98,62 @@
   }
   const removeSpell = (s: SpellEntry) => b.spells.splice(b.spells.indexOf(s), 1);
 </script>
+
+{#snippet slotTable(rows: number[])}
+  <table class="dyn-table keep-table w-auto text-sm">
+    <thead>
+      <tr>
+        <th>Level</th>
+        <th class="text-center">DC</th>
+        <th class="text-center">Known</th>
+        <th class="text-center" title="Base + ability bonus + misc; cantrips are unlimited">Per day</th>
+        {#if b.domainSlot}<th class="text-center">Domain</th>{/if}
+        <th class="text-center print:hidden">Base</th>
+        <th class="text-center print:hidden">Misc</th>
+        <th class="w-px pl-3 text-center whitespace-nowrap">{b.kind === 'prepared' ? 'Prepared' : 'Used'}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {#each rows as lvl (lvl)}
+        {@const total = d?.slots[lvl]}
+        <tr>
+          <th class="w-12 align-middle font-display text-sm opacity-100">{ORD[lvl]}</th>
+          <td class="w-12 text-center align-middle font-bold">{d?.dcs[lvl]}</td>
+          <td class="w-14 align-middle">
+            {#if b.table && d?.known[lvl] != null && b.known.every((k) => k === null)}
+              <div class="text-center">{d.known[lvl]}</div>
+            {:else}
+              <input class="num" value={b.known[lvl] ?? d?.known[lvl] ?? ''} placeholder="—" onchange={(e) => (b.known[lvl] = parseSlot(e.currentTarget.value))} aria-label="Spells known level {lvl}" />
+            {/if}
+          </td>
+          <td
+            class="w-16 text-center align-middle font-bold"
+            title={lvl === 0 ? 'Cantrips and orisons can be cast any number of times' : total == null ? 'Not castable' : `${d?.base[lvl]} base + ${d?.bonus[lvl]} ability + ${(total ?? 0) - (d?.base[lvl] ?? 0) - (d?.bonus[lvl] ?? 0)} misc`}
+          >
+            {lvl === 0 && (total != null || d?.known[0] != null) ? '∞' : (total ?? '—')}
+          </td>
+          {#if b.domainSlot}<td class="w-16 text-center align-middle">{d?.domain[lvl] ? `+${d.domain[lvl]}` : ''}</td>{/if}
+          <td class="w-14 align-middle print:hidden">
+            {#if b.table}
+              <div class="text-center opacity-60">{d?.base[lvl] ?? '—'}</div>
+            {:else}
+              <input class="num" value={b.slots[lvl] ?? ''} placeholder="—" onchange={(e) => (b.slots[lvl] = parseSlot(e.currentTarget.value))} aria-label="Base slots level {lvl}" />
+            {/if}
+          </td>
+          <td class="w-14 align-middle print:hidden"><NumInput bind:value={b.slotsMisc[lvl]} signed aria-label="Misc slots level {lvl}" /></td>
+          <td class="w-px pl-3 text-center align-middle whitespace-nowrap">
+            {#if b.kind === 'prepared'}
+              <span class:text-accent={total != null && (d?.prepared[lvl] ?? 0) > total}>{d?.prepared[lvl] ?? 0}{total != null ? ` / ${total}` : ''}</span>
+              {#if d?.domain[lvl]}<span class="ml-1 text-xs opacity-70" title="Domain slot">+{d.domainPrepared[lvl]}/{d.domain[lvl]}</span>{/if}
+            {:else if lvl > 0 && total != null && total > 0}
+              <div class="flex justify-center"><UsesTracker max={total} bind:used={b.slotsUsed[lvl]} label="Level {lvl} slot" perRow={5} /></div>
+            {/if}
+          </td>
+        </tr>
+      {/each}
+    </tbody>
+  </table>
+{/snippet}
 
 {#snippet spellTable(lvl: number, domain: boolean)}
   {@const prepared = b.kind === 'prepared'}
@@ -255,59 +322,15 @@
     </div>
 
     <div class="spell-table-box lg:order-first print:order-first">
-  <table class="dyn-table keep-table w-auto text-sm">
-    <thead>
-      <tr>
-        <th>Level</th>
-        <th class="text-center">DC</th>
-        <th class="text-center">Known</th>
-        <th class="text-center" title="Base + ability bonus + misc; cantrips are unlimited">Per day</th>
-        {#if b.domainSlot}<th class="text-center">Domain</th>{/if}
-        <th class="text-center print:hidden">Base</th>
-        <th class="text-center print:hidden">Misc</th>
-        <th class="w-px pl-3 text-center whitespace-nowrap">{b.kind === 'prepared' ? 'Prepared' : 'Used'}</th>
-      </tr>
-    </thead>
-    <tbody>
-      {#each levels as lvl (lvl)}
-        {@const total = d?.slots[lvl]}
-        <tr>
-          <th class="w-12 align-middle font-display text-sm opacity-100">{ORD[lvl]}</th>
-          <td class="w-12 text-center align-middle font-bold">{d?.dcs[lvl]}</td>
-          <td class="w-14 align-middle">
-            {#if b.table && d?.known[lvl] != null && b.known.every((k) => k === null)}
-              <div class="text-center">{d.known[lvl]}</div>
-            {:else}
-              <input class="num" value={b.known[lvl] ?? d?.known[lvl] ?? ''} placeholder="—" onchange={(e) => (b.known[lvl] = parseSlot(e.currentTarget.value))} aria-label="Spells known level {lvl}" />
-            {/if}
-          </td>
-          <td
-            class="w-16 text-center align-middle font-bold"
-            title={lvl === 0 ? 'Cantrips and orisons can be cast any number of times' : total == null ? 'Not castable' : `${d?.base[lvl]} base + ${d?.bonus[lvl]} ability + ${(total ?? 0) - (d?.base[lvl] ?? 0) - (d?.bonus[lvl] ?? 0)} misc`}
-          >
-            {lvl === 0 && (total != null || d?.known[0] != null) ? '∞' : (total ?? '—')}
-          </td>
-          {#if b.domainSlot}<td class="w-16 text-center align-middle">{d?.domain[lvl] ? `+${d.domain[lvl]}` : ''}</td>{/if}
-          <td class="w-14 align-middle print:hidden">
-            {#if b.table}
-              <div class="text-center opacity-60">{d?.base[lvl] ?? '—'}</div>
-            {:else}
-              <input class="num" value={b.slots[lvl] ?? ''} placeholder="—" onchange={(e) => (b.slots[lvl] = parseSlot(e.currentTarget.value))} aria-label="Base slots level {lvl}" />
-            {/if}
-          </td>
-          <td class="w-14 align-middle print:hidden"><NumInput bind:value={b.slotsMisc[lvl]} signed aria-label="Misc slots level {lvl}" /></td>
-          <td class="w-px pl-3 text-center align-middle whitespace-nowrap">
-            {#if b.kind === 'prepared'}
-              <span class:text-accent={total != null && (d?.prepared[lvl] ?? 0) > total}>{d?.prepared[lvl] ?? 0}{total != null ? ` / ${total}` : ''}</span>
-              {#if d?.domain[lvl]}<span class="ml-1 text-xs opacity-70" title="Domain slot">+{d.domainPrepared[lvl]}/{d.domain[lvl]}</span>{/if}
-            {:else if lvl > 0 && total != null && total > 0}
-              <div class="flex justify-center"><UsesTracker max={total} bind:used={b.slotsUsed[lvl]} label="Level {lvl} slot" perRow={5} /></div>
-            {/if}
-          </td>
-        </tr>
-      {/each}
-    </tbody>
-  </table>
+  {#if split}
+    <!-- Wide screens and paper: levels 0–4 and 5–9 side by side. -->
+    <div class="flex items-start gap-3">
+      {@render slotTable(levels.filter((l) => l <= 4))}
+      {@render slotTable(levels.filter((l) => l > 4))}
+    </div>
+  {:else}
+    {@render slotTable(levels)}
+  {/if}
   {#if !manual}
     <button type="button" class="mt-1 text-xs underline opacity-70 hover:opacity-100 print:hidden" onclick={() => (showAll = !showAll)}>
       {showAll ? 'Hide uncastable levels' : 'Show all spell levels'}
