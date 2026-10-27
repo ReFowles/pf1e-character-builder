@@ -35,7 +35,7 @@
           <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
           <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
           <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
-          <td class="px-1"><NumInput class="write-box h-7 bg-transparent" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
+          <td class="px-1"><div class="write-box h-7"><NumInput class="h-full w-full bg-transparent print:invisible" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></div></td>
         </tr>
       {/each}
     </tbody>
