@@ -24,6 +24,7 @@ describe('companions', () => {
     const w = deriveCompanion(c, derive(c), wolf);
     expect([w.level, w.hd, w.bab]).toEqual([4, 4, 3]);
     expect(w.abilities.str.score).toBe(13 + 1 + 1);
+    expect(w.abilities.str.hasTemp).toBe(false);
     expect(w.abilities.dex.score).toBe(16);
     expect(w.saves.fort.total).toBe(4 + 2);
     expect(w.saves.will.total).toBe(1);
@@ -48,5 +49,17 @@ describe('companions', () => {
     expect(f.ac.normal.total).toBe(10 + 2 + 2 + 3); // Dex, tiny, natural +3
     expect(f.special).toContain('Speak with master');
     expect(f.skillRanks.available).toBeNull();
+  });
+});
+
+describe('companion temporary ability changes', () => {
+  it('keeps score and mod apart from the temp-adjusted values', () => {
+    const { c, k } = withClass('Druid', 4);
+    const wolf = { ...make.companion('animal'), masterClassId: k.id };
+    wolf.abilities.str.base = 14;
+    wolf.abilities.str.temp = -4;
+    const w = deriveCompanion(c, derive(c), wolf);
+    expect([w.abilities.str.score, w.abilities.str.mod]).toEqual([15, 2]);
+    expect([w.abilities.str.tempScore, w.abilities.str.tempMod, w.abilities.str.hasTemp]).toEqual([11, 0, true]);
   });
 });

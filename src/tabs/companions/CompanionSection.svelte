@@ -117,14 +117,15 @@
         <div class="flex flex-col gap-2">
           <div class="flex items-stretch gap-2">
           <PortraitEditor bind:portrait={x.portrait} name={x.name} class="h-[11.75rem] shrink-0 self-start rounded-sm border border-ink/30" />
-          <table class="ability-table compact w-auto text-center text-sm">
+          <table class="ability-table compact w-full min-w-0 flex-1 text-center text-sm">
             <thead>
               <tr class="h-5">
                 <th></th>
                 <th class="text-center">Score</th>
                 <th class="text-center">Mod</th>
-                {#if editing}<th class="text-center">Base</th><th class="text-center">Misc</th>{/if}
-                <th class="w-12 text-center" title="Temporary change">±</th>
+                <th class="text-center">Temp</th>
+                <th class="text-center">Temp mod</th>
+                <th class="w-14 text-center" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
               </tr>
             </thead>
             <tbody>
@@ -134,16 +135,24 @@
                   <th class="w-11 bg-head py-0.5 text-center text-xs text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
                   <td class="text-lg font-bold tabular-nums">{s.score}</td>
                   <td class="text-lg font-bold tabular-nums">{fmt(s.mod)}</td>
-                  {#if editing}
-                    <td class="w-14 p-0.5"><NumInput bind:value={x.abilities[a].base} aria-label="{a} base" /></td>
-                    <td class="w-14 p-0.5"><NumInput bind:value={x.abilities[a].misc} signed aria-label="{a} misc" /></td>
-                  {/if}
-                  <td class="p-0.5"><NumInput class="write-box h-6 w-11 bg-transparent" bind:value={x.abilities[a].temp} signed aria-label="{a} temporary change" /></td>
+                  <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
+                  <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
+                  <td class="px-1"><NumInput class="write-box h-6 w-full bg-transparent" bind:value={x.abilities[a].temp} signed aria-label="{x.name || 'Companion'} {a} temporary change" /></td>
                 </tr>
               {/each}
             </tbody>
           </table>
           </div>
+          {#if editing}
+            <div class="grid grid-cols-[auto_repeat(6,minmax(0,1fr))] items-center gap-x-1 gap-y-0.5 text-xs print:hidden">
+              <span></span>
+              {#each ABILITIES as a (a)}<span class="field-label text-center">{a}</span>{/each}
+              <span class="field-label">Base</span>
+              {#each ABILITIES as a (a)}<NumInput bind:value={x.abilities[a].base} aria-label="{a} base" />{/each}
+              <span class="field-label">Misc</span>
+              {#each ABILITIES as a (a)}<NumInput bind:value={x.abilities[a].misc} signed aria-label="{a} misc" />{/each}
+            </div>
+          {/if}
           {#if editing && x.kind === 'animal'}
             <div class="flex flex-wrap items-end gap-2 print:hidden">
               {#each ANIMAL_INCREASE_LEVELS as lvl, i (lvl)}

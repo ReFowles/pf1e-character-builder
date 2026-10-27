@@ -67,7 +67,8 @@ export interface CompanionDerived {
   level: number;
   hd: number;
   bab: number;
-  abilities: Record<Ability, { score: number; mod: number; breakdown: Total }>;
+  /** score/mod exclude temporary changes; tempScore/tempMod include them (like the character's table). */
+  abilities: Record<Ability, { score: number; mod: number; tempScore: number; tempMod: number; hasTemp: boolean; breakdown: Total }>;
   hp: { max: Total; current: number };
   ac: { normal: Total; touch: Total; flatFooted: Total };
   saves: Record<Save, Total>;
@@ -118,20 +119,30 @@ export function deriveCompanion(c: Character, d: Derived, comp: Companion): Comp
   const abilities = {} as CompanionDerived['abilities'];
   for (const a of ABILITIES) {
     const s = comp.abilities[a];
-    const parts = [part(a, s.base, 'Base'), part(a, s.misc, 'Misc'), part(a, s.temp, 'Temporary')];
+    const parts = [part(a, s.base, 'Base'), part(a, s.misc, 'Misc')];
     if ((a === 'str' || a === 'dex') && strDex) parts.push(part(a, strDex, 'Companion bonus'));
     if (animal)
       ANIMAL_INCREASE_LEVELS.forEach((lvl, i) => {
         if (level >= lvl && comp.abilityIncreases[i] === a) parts.push(part(a, 1, `Level ${lvl} increase`));
       });
-    let total = stack(parts);
     if (familiar && a === 'int') {
       const floor = 5 + Math.ceil(Math.max(1, level) / 2);
-      if (total.total < floor) total = stack([...parts, part(a, floor - total.total, `Familiar Int ${floor}`)]);
+      const have = stack(parts).total;
+      if (have < floor) parts.push(part(a, floor - have, `Familiar Int ${floor}`));
     }
-    abilities[a] = { score: total.total, mod: abilityMod(total.total), breakdown: total };
+    const perm = stack(parts);
+    const temp = stack([...parts, part(a, s.temp, 'Temporary')]);
+    abilities[a] = {
+      score: perm.total,
+      mod: abilityMod(perm.total),
+      tempScore: temp.total,
+      tempMod: abilityMod(temp.total),
+      hasTemp: temp.total !== perm.total,
+      breakdown: temp,
+    };
   }
-  const mod = (a: Ability) => abilities[a].mod;
+  // Everything below (AC, saves, attacks...) uses the temporary-adjusted modifiers.
+  const mod = (a: Ability) => abilities[a].tempMod;
 
   const bab = familiar ? d.bab : babFor(type.bab, hd);
 
