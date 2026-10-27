@@ -17,10 +17,13 @@
   <div class="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-0.5">
     {#each COINS as coin (coin)}
       <span class="field-label text-xs">{coin}</span>
-      <NumInput class="text-right" bind:value={carried[coin]} aria-label="{coin} carried" />
+      <!-- On paper the amount is blanked and the box stays, to be filled in by hand. -->
+      <div class="rounded-sm print:border print:border-ink/40">
+        <NumInput class="text-right print:invisible" bind:value={carried[coin]} aria-label="{coin} carried" />
+      </div>
     {/each}
   </div>
-  <div class="text-xs opacity-70" title="Coins weigh 50 to the pound. Stored coins live on the Character tab.">
+  <div class="text-xs opacity-70 print:hidden" title="Coins weigh 50 to the pound. Stored coins live on the Character tab.">
     ≈ {Math.round(gpValue * 100) / 100} gp on hand
   </div>
 </Section>

@@ -53,7 +53,7 @@ const pick = async (combo: Locator, option: string) => {
 const skillTotal = (name: string) =>
   page.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
 
-await page.goto(`${args.url}/#combat`);
+await page.goto(`${args.url}/#core`);
 console.log('— baseline');
 await expectStat('AC', '20');
 await expectStat('Melee', '+3');
@@ -111,7 +111,7 @@ await expectText('Wealth', totals.locator('td').nth(2), /^765\.2 gp$/);
 console.log('— persistence after reload');
 await page.waitForTimeout(500);
 await page.reload();
-await page.goto(`${args.url}/#combat`);
+await page.goto(`${args.url}/#core`);
 await expectStat('AC', '21');
 await expectText('Max HP', hpMax(), /^59$/);
 
@@ -148,7 +148,7 @@ const feats = await page.locator('[data-section=feats] input[aria-label="Feat na
 const hasCleave = feats.filter((f) => f === 'Cleave').length === 2;
 if (!hasCleave) failed++;
 console.log(`${hasCleave ? 'ok  ' : 'FAIL'} feat picked: ${feats.at(-1)}`);
-await page.goto(`${args.url}/#combat`);
+await page.goto(`${args.url}/#core`);
 await toggleEdit('defense');
 await page.getByRole('button', { name: '⌕ Find armor or shield' }).click();
 await page.getByLabel('Find armor or shield').fill('breastplate');

@@ -2,7 +2,7 @@
   import { app, type Tab } from '../state.svelte';
   import { theme } from '../theme.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
+  const LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
   import { SECTIONS } from '../sections';
   import { addSpellBlock, removeSpellBlock, spellSectionId, spellSectionTitle } from '../spellBlocks';
   import { addCompanion, companionSectionId, companionTitle, removeCompanion } from '../companions';

@@ -118,6 +118,17 @@ STEPS[4] = (d) => ({
   ),
 });
 
+STEPS[5] = (d) => {
+  // The Core tab's id is now "core" (it was "combat"); carry over its print toggle.
+  const ui = (d.ui ?? {}) as Plain;
+  const sections = { ...((ui.sections as Plain | undefined) ?? {}) };
+  if (sections['tab:combat']) {
+    sections['tab:core'] ??= sections['tab:combat'];
+    delete sections['tab:combat'];
+  }
+  return { ...d, ui: { ...ui, sections } };
+};
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

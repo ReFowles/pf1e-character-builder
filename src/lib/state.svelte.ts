@@ -15,12 +15,13 @@ import {
   type RosterEntry,
 } from './storage/local';
 
-export const TABS = ['combat', 'character', 'companions', 'spells', 'mythic'] as const;
+export const TABS = ['core', 'character', 'companions', 'spells', 'mythic'] as const;
 export type Tab = (typeof TABS)[number];
 
 const tabFromHash = (): Tab => {
-  const h = location.hash.slice(1) as Tab;
-  return TABS.includes(h) ? h : 'combat';
+  const raw = location.hash.slice(1);
+  const h = (raw === 'combat' ? 'core' : raw) as Tab; // #combat was the Core tab's old name
+  return TABS.includes(h) ? h : 'core';
 };
 
 const DEFAULT_SECTION: SectionUi = { hidden: false, collapsed: false, printHidden: false };
@@ -43,6 +44,8 @@ class AppState {
     const loaded = (active && loadCharacter(active)) || (this.roster[0] && loadCharacter(this.roster[0].id));
     if (loaded) this.char = loaded;
     else this.persist(this.char);
+    // Old bookmarks use #combat; rewrite them to #core without adding a history entry.
+    if (location.hash === '#combat') history.replaceState(null, '', '#core');
     addEventListener('hashchange', () => (this.tab = tabFromHash()));
   }
 

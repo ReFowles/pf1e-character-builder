@@ -18,7 +18,7 @@ Offline-first Pathfinder 1e character sheet. A single-page app built with Svelte
 - `src/lib/db/` lazy-loads the bundled rules data. `DbPicker` copies a picked entry into the character; characters never reference the database.
 - `src/lib/state.svelte.ts` holds the app state: `app.char` is the character and `app.d` is `derive(app.char)`.
 - `src/lib/ui/` holds shared components. `DynamicTable` renders one extra blank row when printing.
-- `src/tabs/{combat,character,spells}/` holds one component per section.
+- `src/tabs/{core,character,companions,spells,mythic}/` holds one component per section.
 - Print and PDF use `@media print` (the Tailwind `print:` variant). There is no PDF library.
 
 ## Conventions

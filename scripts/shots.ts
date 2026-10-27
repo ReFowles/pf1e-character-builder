@@ -1,6 +1,6 @@
 // Screenshot the app for agentic review.
 // Usage: node scripts/shots.ts [--url http://localhost:5173] [--fixture scripts/fixtures/x.json]
-//        [--tabs combat,character] [--widths 1280,390] [--pdf] [--full] [--dark]
+//        [--tabs core,character] [--widths 1280,390] [--pdf] [--full] [--dark]
 import { mkdirSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { chromium } from 'playwright';
@@ -9,7 +9,7 @@ const { values: args } = parseArgs({
   options: {
     url: { type: 'string', default: 'http://localhost:5173' },
     fixture: { type: 'string' },
-    tabs: { type: 'string', default: 'combat,character,spells' },
+    tabs: { type: 'string', default: 'core,character,spells' },
     widths: { type: 'string', default: '1280,390' },
     pdf: { type: 'boolean', default: false },
     // Emulate an OS dark preference (the app follows it until toggled).

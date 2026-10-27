@@ -23,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(5);
+    expect(c.schemaVersion).toBe(6);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -62,6 +62,14 @@ describe('migrate v2 -> v3', () => {
     expect((c as unknown as Record<string, unknown>).magicItems).toBeUndefined();
     expect(c.favoriteOrder).toEqual(['b']);
     expect(c.spellcasting.map((b) => b.domainSlot)).toEqual([true, false]);
+  });
+});
+
+describe('migrate v5 -> v6', () => {
+  it('renames the combat tab toggle to core', () => {
+    const c = normalize({ schemaVersion: 5, ui: { sections: { 'tab:combat': { hidden: false, collapsed: false, printHidden: true } } } });
+    expect(c.ui.sections['tab:core'].printHidden).toBe(true);
+    expect(c.ui.sections['tab:combat']).toBeUndefined();
   });
 });
 

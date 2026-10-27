@@ -3,17 +3,17 @@
   import { saveCharacter } from './lib/storage/local';
   import TopBar from './lib/ui/TopBar.svelte';
   import ConfigDrawer from './lib/ui/ConfigDrawer.svelte';
-  import CombatTab from './tabs/combat/CombatTab.svelte';
+  import CoreTab from './tabs/core/CoreTab.svelte';
   import CharacterTab from './tabs/character/CharacterTab.svelte';
   import MythicTab from './tabs/mythic/MythicTab.svelte';
   import SpellsTab from './tabs/spells/SpellsTab.svelte';
   import CompanionsTab from './tabs/companions/CompanionsTab.svelte';
 
-  const LABELS: Record<Tab, string> = { combat: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
+  const LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic' };
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
-    if (!app.tabs.includes(app.tab)) app.setTab('combat');
+    if (!app.tabs.includes(app.tab)) app.setTab('core');
   });
 
   // Autosave: serialize (which tracks every field), then write after a pause.
@@ -78,7 +78,7 @@
         },
       ]}
     >
-      {#if tab === 'combat'}<CombatTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'companions'}<CompanionsTab />{:else if tab === 'spells'}<SpellsTab />{:else}<MythicTab />{/if}
+      {#if tab === 'core'}<CoreTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'companions'}<CompanionsTab />{:else if tab === 'spells'}<SpellsTab />{:else}<MythicTab />{/if}
     </div>
   {/each}
 </main>
