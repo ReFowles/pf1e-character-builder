@@ -161,6 +161,13 @@
   .app-menu:popover-open {
     @apply flex;
   }
+  /* Tab strip: scrolls sideways on narrow screens without a visible bar. */
+  .tab-strip {
+    scrollbar-width: none;
+  }
+  .tab-strip::-webkit-scrollbar {
+    display: none;
+  }
   .field-label {
     @apply text-[0.6rem] font-semibold tracking-wider uppercase opacity-60;
   }
@@ -230,6 +237,12 @@
   .skills-table td {
     @apply align-middle;
   }
+  /* Narrow screens: scroll the skills table inside its card rather than the whole page. */
+  @media screen and (max-width: 639px) {
+    .skills-table {
+      @apply block max-w-full overflow-x-auto;
+    }
+  }
   /* Weapon card top line: name, attack, damage, critical, range, type, ammo. */
   .weapon-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -261,7 +274,7 @@
   }
   /* Spell slots table, boxed beside the casting stats. */
   .spell-table-box {
-    @apply m-1 flex flex-col items-start rounded-md border border-ink/40 p-1.5;
+    @apply m-1 flex max-w-full min-w-0 flex-col items-start overflow-x-auto rounded-md border border-ink/40 p-1.5;
   }
   .subhead {
     @apply border-b border-ink/30 font-display text-xs font-bold tracking-widest uppercase;

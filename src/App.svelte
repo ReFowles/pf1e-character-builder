@@ -37,21 +37,29 @@
     addEventListener('pagehide', flush);
     return () => removeEventListener('pagehide', flush);
   });
+
+  // Keep the active tab on screen when the strip scrolls sideways.
+  function keepVisible(node: HTMLElement, active: boolean) {
+    const show = (on: boolean) => on && node.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    show(active);
+    return { update: show };
+  }
 </script>
 
 <TopBar />
 
 <nav class="sticky top-0 z-10 border-b border-ink/30 bg-parchment/95 backdrop-blur print:hidden" aria-label="Sheet tabs">
-  <div class="mx-auto flex max-w-[1200px] gap-1 px-2 pt-2">
+  <div class="tab-strip mx-auto flex max-w-[1200px] gap-1 overflow-x-auto px-2 pt-2">
     {#each app.tabs as tab (tab)}
       <button
         type="button"
-        class="rounded-t-sm border border-b-0 px-4 py-1.5 font-display text-sm font-bold tracking-wider uppercase"
+        class="shrink-0 rounded-t-sm border border-b-0 px-4 py-1.5 font-display text-sm font-bold tracking-wider whitespace-nowrap uppercase"
         class:bg-ink={app.tab === tab}
         class:text-paper={app.tab === tab}
         class:border-ink={app.tab === tab}
         class:border-transparent={app.tab !== tab}
         aria-current={app.tab === tab ? 'page' : undefined}
+        use:keepVisible={app.tab === tab}
         onclick={() => app.setTab(tab)}>{LABELS[tab]}</button
       >
     {/each}

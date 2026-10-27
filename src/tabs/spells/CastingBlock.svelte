@@ -174,7 +174,7 @@
   {#snippet children(editing)}
   <!-- Slot table on the left on wide screens and paper; below the info on phones. -->
   <div class="grid items-start gap-2 lg:grid-cols-[auto_minmax(0,1fr)] print:grid-cols-[auto_minmax(0,1fr)]">
-    <div class="flex flex-col gap-2">
+    <div class="flex min-w-0 flex-col gap-2">
       {#if editing}
         <div class="flex flex-wrap items-end gap-2 print:hidden">
           <Field label="Class" class="w-36">
