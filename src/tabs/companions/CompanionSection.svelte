@@ -10,7 +10,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Stat from '../../lib/ui/Stat.svelte';
-  import CompanionPortrait from './CompanionPortrait.svelte';
+  import PortraitEditor from '../../lib/ui/PortraitEditor.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
@@ -115,9 +115,9 @@
 
       <div class="grid items-start gap-3 lg:grid-cols-2 print:grid-cols-2">
         <div class="flex flex-col gap-2">
-          <div class="flex items-start gap-2">
-          <CompanionPortrait bind:portrait={x.portrait} name={x.name} />
-          <table class="ability-table w-full max-w-sm text-center text-sm">
+          <div class="flex items-stretch gap-2">
+          <PortraitEditor bind:portrait={x.portrait} name={x.name} class="w-32 shrink-0 self-start rounded-sm border border-ink/30" />
+          <table class="ability-table compact w-auto flex-1 text-center text-sm">
             <thead>
               <tr>
                 <th></th>
@@ -271,16 +271,16 @@
             {/snippet}
             {#snippet row(sk)}
               {@const sd = cd.skills[sk.id]}
-              <td data-label="CS" class="w-6 text-center align-middle"><input type="checkbox" bind:checked={sk.classSkill} aria-label="{sk.name} is a class skill" /></td>
-              <td data-label="Skill" class="align-middle"><input class="w-full" bind:value={sk.name} aria-label="Skill name" /></td>
-              <td data-label="Abil" class="w-16 text-center align-middle text-xs uppercase">
+              <td data-label="CS" class="cell-fit w-6 text-center align-middle"><input type="checkbox" bind:checked={sk.classSkill} aria-label="{sk.name} is a class skill" /></td>
+              <td data-label="Skill" class="cell-grow align-middle"><input class="w-full" bind:value={sk.name} aria-label="Skill name" /></td>
+              <td data-label="Abil" class="cell-fit w-16 text-center align-middle text-xs uppercase">
                 {#if editing}<Select class="h-6 w-full text-xs" bind:value={sk.ability} options={opts(ABILITIES, (a) => a.toUpperCase())} aria-label="{sk.name} ability" />{:else}<span class="opacity-60">{sk.ability}</span>{/if}
               </td>
-              <td data-label="Total" class="w-12 text-center align-middle font-bold tabular-nums" title={sd ? breakdown(sd.total) : ''}>{sd ? fmt(sd.total.total) : ''}</td>
-              <td data-label="Ranks" class="w-12 align-middle">
+              <td data-label="Total" class="cell-fit w-12 text-center align-middle font-bold tabular-nums" title={sd ? breakdown(sd.total) : ''}>{sd ? fmt(sd.total.total) : ''}</td>
+              <td data-label="Ranks" class="cell-fit w-14 align-middle">
                 <NumInput class="h-6" bind:value={sk.ranks} aria-label="{sk.name} ranks" title={sd && sd.ranks > sk.ranks ? `Using the master's ${sd.ranks} ranks` : undefined} />
               </td>
-              {#if editing}<td data-label="Misc" class="w-12 align-middle"><NumInput class="h-6" bind:value={sk.misc} signed aria-label="{sk.name} misc" /></td>{/if}
+              {#if editing}<td data-label="Misc" class="cell-fit w-14 align-middle"><NumInput class="h-6" bind:value={sk.misc} signed aria-label="{sk.name} misc" /></td>{/if}
             {/snippet}
           </DynamicTable>
 

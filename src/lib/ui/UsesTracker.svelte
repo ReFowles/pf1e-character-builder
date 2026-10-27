@@ -12,10 +12,10 @@
 </script>
 
 {#if boxes}
-  <!-- 1rem boxes + 0.125rem gaps: the width cap makes a row hold exactly `perRow` boxes. -->
+  <!-- 1rem boxes + 0.125rem gaps: a fixed width makes a row hold exactly `perRow` boxes, even in a shrink-to-fit table cell. -->
   <div
     class="flex flex-wrap items-center gap-0.5 self-center"
-    style:max-width={perRow ? `calc(${perRow} * 1rem + ${perRow - 1} * 0.125rem)` : undefined}
+    style:width={perRow ? `calc(${Math.min(max, perRow)} * 1rem + ${Math.min(max, perRow) - 1} * 0.125rem)` : undefined}
     role="group"
     aria-label="{label} tracker"
   >

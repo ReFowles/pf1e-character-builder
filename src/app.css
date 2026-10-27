@@ -261,6 +261,27 @@
   .ability-table {
     @apply border-separate border-spacing-y-0.5;
   }
+  /* Companion abilities: tight rows so the portrait gets the room. */
+  .ability-table.compact {
+    @apply border-spacing-y-0;
+  }
+  .ability-table.compact th,
+  .ability-table.compact td {
+    @apply px-1 py-0;
+  }
+  .ability-table.compact tbody th {
+    @apply w-9 py-0.5 text-[0.7rem];
+  }
+  .ability-table.compact td.text-lg {
+    @apply text-base leading-tight;
+  }
+  /* Portrait crop dialog */
+  .crop-dialog {
+    @apply m-auto rounded-md border border-ink/40 bg-paper p-4 text-ink shadow-xl;
+  }
+  .crop-dialog::backdrop {
+    @apply bg-ink/40;
+  }
   /* Class progression cells, joined by bullets. */
   .dyn-table td.progression {
     @apply px-0 align-middle text-xs whitespace-nowrap opacity-70;
@@ -395,6 +416,13 @@
     letter-spacing: 0.05em;
     text-transform: uppercase;
     opacity: 0.6;
+  }
+  /* Narrow cells (checkbox, totals, ranks) stay on the row instead of each claiming a line. */
+  .dyn-table:not(.keep-table) tbody td.cell-fit {
+    flex: 0 0 auto;
+  }
+  .dyn-table:not(.keep-table) tbody td.cell-grow {
+    flex: 1 1 7rem;
   }
   .dyn-table:not(.keep-table) tbody td.row-actions {
     flex: 0 0 auto;
