@@ -1,7 +1,9 @@
 <script lang="ts">
   import { classKnowledges, make } from '../../lib/model/defaults';
   import type { ClassDef, LevelEntry, Save } from '../../lib/model/types';
-  import { CLASS_PRESETS, findPreset, type ClassPreset } from '../../lib/rules/classPresets';
+  import { CLASS_PRESETS, findPreset, presetFromDb, type ClassPreset } from '../../lib/rules/classPresets';
+  import { defaultSpellAdvance, eligibleCastingClasses, prestigeLevelOf } from '../../lib/rules/prestige';
+  import { loadDb } from '../../lib/db';
   import { subtypeKey } from '../../lib/rules/skills';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -11,7 +13,23 @@
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Combobox from '../../lib/ui/Combobox.svelte';
 
-  const CLASS_OPTIONS = CLASS_PRESETS.map((p) => ({ value: p.name, group: p.source }));
+  // Base and unchained presets are built in; prestige (and any extra base) classes come from the bundled database on first open.
+  let dbPresets = $state<ClassPreset[]>([]);
+  let dbLoading = false;
+  function loadClassDb() {
+    if (dbLoading || dbPresets.length) return;
+    dbLoading = true;
+    loadDb('classes')
+      .then((rows) => (dbPresets = rows.map(presetFromDb).filter((p) => !CLASS_PRESETS.some((x) => x.id === p.id || x.name.toLowerCase() === p.name.toLowerCase()))))
+      .catch(() => (dbLoading = false));
+  }
+  const GROUPS = ['Base', 'Unchained', 'Prestige'];
+  const groupOf = (p: ClassPreset) => (p.prestige ? 'Prestige' : /unchained/i.test(p.id) ? 'Unchained' : 'Base');
+  const CLASS_OPTIONS = $derived(
+    [...CLASS_PRESETS, ...dbPresets]
+      .map((p) => ({ value: p.name, group: groupOf(p), title: p.source }))
+      .sort((a, b) => GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group) || a.value.localeCompare(b.value)),
+  );
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -44,14 +62,31 @@
       skillRanks: preset.skillRanks,
       classSkills: [...preset.classSkills],
       castingAbility: preset.castingAbility,
+      prestige: !!preset.prestige,
+      spellType: preset.spellType,
+      castingAdvance: preset.castingAdvance ? { which: preset.castingAdvance.which, levels: [...preset.castingAdvance.levels] } : undefined,
     });
     ensureKnowledgeRows(preset.classSkills);
+    // Prestige levels already taken pick up the class's spellcasting advancement.
+    c.levels.forEach((l, i) => {
+      if (l.classId === k.id) l.spellAdvance = defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, i));
+    });
   }
 
   function onName(k: ClassDef) {
-    const preset = findPreset(k.name);
+    const preset = findPreset(k.name, dbPresets);
     if (preset && preset.id !== k.presetId) applyPreset(k, preset);
   }
+
+  /** Casting classes a level can advance, with the table's suggestion marked. */
+  function advanceOptions(l: LevelEntry, i: number) {
+    const k = c.classes.find((x) => x.id === l.classId);
+    if (!k?.castingAdvance) return null;
+    const eligible = eligibleCastingClasses(c, k.castingAdvance);
+    return { eligible, byTable: k.castingAdvance.levels.includes(prestigeLevelOf(c.levels, i)), k };
+  }
+  const toggleAdvance = (l: LevelEntry, id: string) => (l.spellAdvance = l.spellAdvance.includes(id) ? l.spellAdvance.filter((x) => x !== id) : [...l.spellAdvance, id]);
+  const hasPrestigeCasting = $derived(c.classes.some((k) => k.castingAdvance) && c.spellcasting.some((b) => b.classId));
 
   function addClass() {
     const k = make.classDef();
@@ -72,7 +107,14 @@
   function addLevel() {
     const id = newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id;
     if (!id) return;
-    c.levels.push(make.level(id));
+    const l = make.level(id);
+    c.levels.push(l);
+    const k = c.classes.find((x) => x.id === id);
+    if (k) l.spellAdvance = defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, c.levels.length - 1));
+  }
+  function onLevelClass(l: LevelEntry, i: number) {
+    const k = c.classes.find((x) => x.id === l.classId);
+    l.spellAdvance = k ? defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, i)) : [];
   }
 
   function toggleSave(k: ClassDef, s: Save) {
@@ -125,6 +167,7 @@
     <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Settings say so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
+    <p><strong>Prestige classes</strong> are in the class list under Prestige. Levels that grant "+1 level of existing spellcasting class" are ticked in Level history by the class table; tick an extra level for the Prestigious Spellcaster feat. Each tick adds one caster level (and spells per day) to that class's spells section.</p>
   {/snippet}
   <EditMode>
   {#snippet children(editing)}
@@ -174,12 +217,17 @@
                 class={['text-lg leading-none', fav ? 'text-gold' : 'opacity-25 hover:opacity-60 print:invisible']}
                 aria-pressed={fav}
                 aria-label="Favored class: {k.name || 'unnamed'}"
-                title="Favored class"
+                title={k.prestige ? 'Favored prestige class (needs the Favored Prestige Class feat)' : 'Favored class'}
                 onclick={() => toggleFavored(k.id)}>★</button
               >
             </td>
-            <td class="w-8 text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
-            <td><Combobox class="w-full font-semibold" bind:value={k.name} options={CLASS_OPTIONS} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" /></td>
+            <td class="w-8 text-center align-middle font-bold tabular-nums" title={app.d.castingLevels[k.id] !== app.d.classLevels[k.id] ? `Caster level ${app.d.castingLevels[k.id]} with prestige advancement` : undefined}>{app.d.classLevels[k.id] ?? 0}</td>
+            <td>
+              <div class="flex items-center gap-1">
+                <Combobox class="w-full font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
+                {#if k.prestige}<span class="rounded-sm bg-ink/10 px-1 text-[0.6rem] uppercase" title="Prestige class">PrC</span>{/if}
+              </div>
+            </td>
             {#if editing}
               <td>
                 <Select class="w-16" bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />
@@ -251,6 +299,7 @@
             <th>Class</th>
             <th class="text-center">HP roll</th>
             <th>Favored class bonus</th>
+            {#if hasPrestigeCasting}<th title="Casting classes this level advances by one caster level">Spellcasting</th>{/if}
             <th></th>
           </tr>
         </thead>
@@ -259,7 +308,7 @@
             <tr>
               <td data-label="#" class="align-middle tabular-nums">{i + 1}</td>
               <td data-label="Class" class="w-28">
-                <Select class="w-full" bind:value={l.classId} options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))} aria-label="Class for level {i + 1}" />
+                <Select class="w-full" bind:value={l.classId} onchange={() => onLevelClass(l, i)} options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))} aria-label="Class for level {i + 1}" />
               </td>
               <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
@@ -299,6 +348,26 @@
                   <span class="text-xs opacity-50">not favored class</span>
                 {/if}
               </td>
+              {#if hasPrestigeCasting}
+                {@const adv = advanceOptions(l, i)}
+                <td data-label="Spellcasting" class="align-middle whitespace-nowrap">
+                  {#if adv}
+                    {#if adv.eligible.length}
+                      <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
+                        {#each adv.eligible as k (k.id)}
+                          <label class="inline-flex items-center gap-1 whitespace-nowrap">
+                            <input type="checkbox" checked={l.spellAdvance.includes(k.id)} onchange={() => toggleAdvance(l, k.id)} aria-label="Level {i + 1} advances {k.name} spellcasting" />
+                            {k.name}
+                          </label>
+                        {/each}
+                        <span class="opacity-50" title={adv.byTable ? 'Advances by the class table' : l.spellAdvance.length ? 'Extra advancement (Prestigious Spellcaster)' : 'No spellcasting advancement at this level'}>{adv.byTable ? 'table' : l.spellAdvance.length ? 'feat' : '—'}</span>
+                      </div>
+                    {:else}
+                      <span class="text-xs opacity-50">{adv.k.castingAdvance?.which === 'both' ? 'needs an arcane and a divine casting class' : 'no matching casting class'}</span>
+                    {/if}
+                  {/if}
+                </td>
+              {/if}
               <td><button type="button" class="icon-btn text-accent" aria-label="Remove level {i + 1}" onclick={() => c.levels.splice(i, 1)}>✕</button></td>
             </tr>
           {/each}

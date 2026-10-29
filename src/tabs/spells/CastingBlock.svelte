@@ -265,7 +265,7 @@
       <div class="flex flex-wrap items-start gap-2">
         <div class="flex w-16 flex-col gap-0.5">
           {#if b.classId}
-            <div class="stat" title="Class level + misc + caster level bonuses">
+            <div class="stat" title="Class level{b.classId && app.d.castingLevels[b.classId] !== app.d.classLevels[b.classId] ? ` ${app.d.classLevels[b.classId]} + ${app.d.castingLevels[b.classId] - app.d.classLevels[b.classId]} prestige` : ''} + misc + caster level bonuses">
               <div class="stat-value" use:rollable={{ title: 'Caster level check', subtitle: spellSectionTitle(c, b), bonus: d?.casterLevel ?? 0, parts: [{ source: 'Caster level', value: d?.casterLevel ?? 0 }] }}>{d?.casterLevel ?? 0}</div>
               <div class="field-label">CL</div>
             </div>

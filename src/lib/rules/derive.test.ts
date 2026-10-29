@@ -160,4 +160,26 @@ describe('derive round 2', () => {
     expect(d.abilities.str.score).toBe(17);
     expect(d.abilityIncreases).toEqual({ expected: 1, used: 1 });
   });
+
+  it('advances a casting class through prestige levels', () => {
+    const c = newCharacter();
+    const wiz = { ...make.classDef(), name: 'Wizard', presetId: 'wizard', hd: 6, bab: '1/2' as const, goodSaves: ['will' as const], castingAbility: 'int' as const };
+    const ek = { ...make.classDef(), name: 'Eldritch Knight', presetId: 'eldritch-knight', hd: 10, bab: 'full' as const, goodSaves: ['fort' as const], prestige: true, castingAdvance: { which: 'arcane' as const, levels: [2, 3, 4, 5, 6, 7, 8, 9, 10] } };
+    c.classes = [wiz, ek];
+    c.levels = [
+      ...Array.from({ length: 5 }, () => ({ ...make.level(wiz.id), hpRoll: 4 })),
+      ...Array.from({ length: 3 }, () => ({ ...make.level(ek.id), hpRoll: 6 })),
+    ];
+    c.levels[6].spellAdvance = [wiz.id];
+    c.levels[7].spellAdvance = [wiz.id];
+    c.spellcasting = [{ ...make.spellcasting(), classId: wiz.id, ability: 'int', table: 'wizard' }];
+    const d = derive(c);
+    expect(d.classLevels[wiz.id]).toBe(5);
+    expect(d.castingLevels[wiz.id]).toBe(7);
+    expect(d.bab).toBe(2 + 3);
+    const sc = d.spellcasting[c.spellcasting[0].id];
+    expect(sc.casterLevel).toBe(7);
+    expect(sc.base[4]).toBe(1); // 4th-level slot at wizard table row 7
+    expect(d.vars['class.wizard.casterLevel']).toBe(7);
+  });
 });

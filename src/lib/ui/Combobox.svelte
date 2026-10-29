@@ -10,7 +10,7 @@
 </script>
 
 <script lang="ts">
-  import { placeList } from './popoverList';
+  import { placeList, revealInList } from './popoverList';
 
   interface Props {
     value: string;
@@ -34,6 +34,7 @@
   let open = $state(false);
   let active = $state(-1);
   let committed = value;
+  let openedAt = 0;
 
   const all: ComboOption[] = $derived(options ?? suggestions.map((s) => ({ value: s })));
   /** Prefix matches first, then anything containing the text; everything while the field is empty. */
@@ -50,11 +51,12 @@
   });
 
   function show() {
-    if (open || !all.length) return;
+    if (open || !matches.length) return;
     onopen?.();
     list.showPopover();
     open = true;
     active = -1;
+    openedAt = Date.now();
     placeList(input, list);
   }
   function hide() {
@@ -73,20 +75,23 @@
     if (!o) return;
     value = o.value;
     hide();
+    dismissed = true;
     commit(true);
   }
   function moveTo(i: number) {
     if (!matches.length) return;
     active = (i + matches.length) % matches.length;
-    list.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' });
+    revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
   }
   function onKey(e: KeyboardEvent) {
     if (e.key === 'ArrowDown') {
       e.preventDefault();
+      dismissed = false;
       if (!open) show();
       moveTo(active + 1);
     } else if (e.key === 'ArrowUp') {
       e.preventDefault();
+      dismissed = false;
       if (!open) show();
       moveTo(active - 1);
     } else if (e.key === 'Enter') {
@@ -94,24 +99,38 @@
       if (open && active >= 0) choose(active);
       else {
         hide();
+        dismissed = true;
         commit(false);
       }
     } else if (e.key === 'Escape') {
       if (open) {
         e.preventDefault();
         hide();
+        dismissed = true;
       }
     } else if (e.key === 'Tab') hide();
   }
+  let focused = $state(false);
+  // After a pick, Enter or Escape the list stays closed until the user types or presses an arrow again.
+  let dismissed = $state(false);
   function onInput() {
+    dismissed = false;
     if (!open) show();
     else placeList(input, list);
     active = -1;
-    if (open && !matches.length) hide();
   }
-  // The list is fixed-position: close it instead of letting it drift when the page scrolls.
+  // Options can arrive after typing (lazy-loaded lists): open once there is something to show, close when there isn't.
+  $effect(() => {
+    const any = matches.length > 0;
+    if (focused && any && !open && !dismissed) show();
+    else if (open && !any) hide();
+  });
+  // The list is fixed-position: close it instead of letting it drift when the page (or a container holding the input) scrolls.
   function onScroll(e: Event) {
-    if (open && !list.contains(e.target as Node)) hide();
+    const t = e.target as Node;
+    if (!open || list.contains(t) || !(t === document || t.contains(input))) return;
+    if (Date.now() - openedAt < 250) placeList(input, list);
+    else hide();
   }
 </script>
 
@@ -130,18 +149,27 @@
   aria-controls={id}
   aria-activedescendant={open && active >= 0 ? `${id}-${active}` : undefined}
   autocomplete="off"
-  onfocus={show}
-  onclick={show}
+  onfocus={() => {
+    focused = true;
+    dismissed = false;
+    show();
+  }}
+  onclick={() => {
+    dismissed = false;
+    show();
+  }}
   oninput={onInput}
   onkeydown={onKey}
   onblur={() => {
+    focused = false;
     hide();
     commit(false);
+    input.scrollLeft = 0; // show the start of a long value, not its tail
   }}
 />
 <!-- pointerdown is cancelled so picking an option doesn't blur the input first. -->
 <div bind:this={list} {id} popover="manual" role="listbox" tabindex="-1" class="select-list" onpointerdown={(e) => e.preventDefault()}>
-  {#each matches as o, i (o.value)}
+  {#each matches as o, i (i)}
     {#if o.group && o.group !== matches[i - 1]?.group}<div class="select-group" role="presentation">{o.group}</div>{/if}
     <div
       id="{id}-{i}"

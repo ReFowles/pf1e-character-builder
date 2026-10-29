@@ -65,6 +65,7 @@ export const make = {
   classDef: (): ClassDef => ({
     id: uid(),
     name: '',
+    prestige: false,
     hd: 8,
     bab: '3/4',
     goodSaves: [],
@@ -75,6 +76,7 @@ export const make = {
     id: uid(),
     classId,
     hpRoll: 0,
+    spellAdvance: [],
     fcb: { kind: 'hp', label: '', amount: '' },
   }),
   bonus: (): ManualBonus => ({ id: uid(), key: '', value: 0, type: 'untyped', source: '' }),
@@ -166,6 +168,7 @@ export const make = {
     price: 0,
     equipped: false,
     slot: '',
+    charges: 0,
     notes: '',
   }),
   otherSpeed: (mode = 'fly'): OtherSpeed => ({ id: uid(), mode, value: 0, maneuverability: '' }),

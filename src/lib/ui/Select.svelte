@@ -17,7 +17,7 @@
 
 <script lang="ts" generics="T">
   import type { Snippet } from 'svelte';
-  import { placeList } from './popoverList';
+  import { placeList, revealInList } from './popoverList';
 
   interface Props {
     value: T;
@@ -38,6 +38,7 @@
   let list: HTMLDivElement;
   let open = $state(false);
   let active = $state(-1);
+  let openedAt = 0;
   let typed = '';
   let typedAt = 0;
 
@@ -57,24 +58,32 @@
   // beforetoggle is synchronous, so keys pressed right after opening see the right state.
   function onBeforeToggle(e: ToggleEvent) {
     open = e.newState === 'open';
-    if (open) active = selected;
+    if (open) {
+      active = selected;
+      openedAt = Date.now();
+    }
   }
 
   // toggle fires once the list is showing and measurable.
   function onToggle(e: ToggleEvent) {
     if (e.newState !== 'open') return;
     placeList(button, list);
-    list.querySelector<HTMLElement>(`[data-index="${Math.max(0, selected)}"]`)?.scrollIntoView({ block: 'nearest' });
+    revealInList(list, list.querySelector<HTMLElement>(`[data-index="${Math.max(0, selected)}"]`));
   }
 
-  // The list is fixed-position, so close it rather than let it drift when the page scrolls.
+  // The list is fixed-position, so close it rather than let it drift when the page (or a
+  // container holding the trigger) scrolls. Scrolls elsewhere, such as inside the list, are ignored.
   function onScroll(e: Event) {
-    if (open && !list.contains(e.target as Node)) list.hidePopover();
+    const t = e.target as Node;
+    if (!open || list.contains(t) || !(t === document || t.contains(button))) return;
+    // A scroll right after opening is the trigger being scrolled into view: follow it instead.
+    if (Date.now() - openedAt < 250) placeList(button, list);
+    else list.hidePopover();
   }
 
   function moveTo(i: number) {
     active = Math.max(0, Math.min(options.length - 1, i));
-    list.querySelector<HTMLElement>(`[data-index="${active}"]`)?.scrollIntoView({ block: 'nearest' });
+    revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
   }
 
   function onKey(e: KeyboardEvent) {

@@ -73,6 +73,11 @@ export interface ClassDef extends Identified {
   classSkills: string[];
   /** Ability used for spellcasting, if any. */
   castingAbility?: Ability;
+  /** Prestige classes can't be favored without the Favored Prestige Class feat. */
+  prestige: boolean;
+  spellType?: 'arcane' | 'divine' | 'psychic';
+  /** Prestige levels (1–10) that grant "+1 level of existing spellcasting class". */
+  castingAdvance?: { which: 'arcane' | 'divine' | 'psychic' | 'any' | 'both'; levels: number[] };
 }
 
 export type FcbKind = 'hp' | 'skill' | 'other';
@@ -83,6 +88,8 @@ export interface LevelEntry extends Identified {
   hpRoll: number;
   /** 'other' FCBs are named bonuses with a fractional amount, e.g. 1/3 channel damage. */
   fcb: { kind: FcbKind; label: string; amount: string };
+  /** Ids of casting classes this (prestige) level advances by one caster level. */
+  spellAdvance: string[];
 }
 
 /** A manual modifier entered by the user against a stat key. */
@@ -245,6 +252,8 @@ export interface Item extends Identified {
   equipped: boolean;
   /** Magic item body slot ('' = not a slotted item). */
   slot: MagicSlot | '';
+  /** Charges left (wands, staves); 0 = not charged. */
+  charges: number;
   notes: string;
 }
 

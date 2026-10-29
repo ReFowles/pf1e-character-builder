@@ -7,3 +7,12 @@ export function placeList(anchor: HTMLElement, list: HTMLElement) {
   const below = innerHeight - r.bottom;
   list.style.top = below < list.offsetHeight + 8 && r.top > below ? `${r.top - list.offsetHeight - 2}px` : `${r.bottom + 2}px`;
 }
+
+/** Scroll an option into view within its list only (scrollIntoView would also scroll the page, which closes the list). */
+export function revealInList(list: HTMLElement, el: HTMLElement | null) {
+  if (!el) return;
+  const l = list.getBoundingClientRect();
+  const r = el.getBoundingClientRect();
+  if (r.top < l.top) list.scrollTop -= l.top - r.top;
+  else if (r.bottom > l.bottom) list.scrollTop += r.bottom - l.bottom;
+}

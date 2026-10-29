@@ -10,10 +10,16 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import { gp, lb } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import { CONSUMABLE_CHARGES, CONSUMABLE_MAX_LEVEL, consumableName, consumablePrice, consumableSpec, type ConsumableKind } from '../../lib/rules/consumables';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
   const COINS = ['pp', 'gp', 'sp', 'cp'] as const;
+
+  // The database picker finds gear, or builds potions, scrolls and wands from the spell list.
+  let pickerMode = $state<'gear' | ConsumableKind>('gear');
+  let spellLevel = $state<number | null>(null);
+  const anyCharges = $derived(c.items.some((it) => it.charges > 0));
 
   const parentOf = (it: Item) => (it.containerId && c.items.some((x) => x.id === it.containerId) ? it.containerId : null);
 
@@ -94,7 +100,7 @@
   {#snippet info()}
     <p>Carried weight counts weapons, armor, gear and coins. Items in a weightless container (bag of holding) or marked away (on a mount, at home) don't count, nor do their contents.</p>
     <p>Value counts everything you own, carried or not, including stashed coins (1 pp = 10 gp, 1 sp = 0.1 gp, 1 cp = 0.01 gp).</p>
-    <p>Tick Eqp for worn or wielded gear; equipped items with a slot (set in Edit) are listed under Magic Items. Load: {d.load} (light up to {d.capacity.light} lb, medium up to {d.capacity.medium} lb, heavy up to {d.capacity.heavy} lb).</p>
+    <p>In Edit, the search can build potions, scrolls and wands from any spell at the standard price (level × caster level × 50, 25 or 750 gp; wands start with 50 charges, tracked in Ch.). Tick Eqp for worn or wielded gear; equipped items with a slot (set in Edit) are listed under Magic Items. Load: {d.load} (light up to {d.capacity.light} lb, medium up to {d.capacity.medium} lb, heavy up to {d.capacity.heavy} lb).</p>
   {/snippet}
   <div class="grid grid-cols-3 gap-1 text-center text-sm sm:grid-cols-6">
     <div class="stat"><div class="font-bold">{d.capacity.light}</div><div class="field-label">Light load</div></div>
@@ -116,6 +122,7 @@
             {#if editing}<th class="text-center" title="Weight of one">Wt ea.</th>{/if}
             <th class="text-center" title="Quantity × weight, plus contents">{editing ? 'Total' : 'Wt'}</th>
             <th class="text-center" title="Value of one, in gp">gp ea.</th>
+            {#if anyCharges || editing}<th class="text-center" title="Charges left (wands)">Ch.</th>{/if}
             <th>Notes</th>
             {#if editing}
               <th>In</th>
@@ -143,6 +150,7 @@
                 {#if it.isContainer}<div class="opacity-60" title="Contents">+{Math.round(contentsWeight(it.id) * 100) / 100}</div>{/if}
               </td>
               <td data-label="gp ea." class="w-16 align-middle"><NumInput bind:value={it.price} aria-label="Value each in gp" /></td>
+              {#if anyCharges || editing}<td data-label="Ch." class="w-12 align-middle"><NumInput bind:value={it.charges} aria-label="{it.name || 'Item'} charges" /></td>{/if}
               <td data-label="Notes" class="align-middle"><input class="w-full" bind:value={it.notes} aria-label="Notes" /></td>
               {#if editing}
                 <td data-label="In" class="w-28 align-middle">
@@ -184,7 +192,7 @@
       <ul class="hidden columns-2 gap-4 text-sm print:block">
         {#each tree as { item: it, depth } (it.id)}
           <li class="flex break-inside-avoid justify-between border-b border-ink/15 py-0.5" style:padding-left="{depth}rem" class:opacity-60={!counted.has(it.id)}>
-            <span>{it.equipped ? '✓ ' : ''}{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}</span>
+            <span>{it.equipped ? '✓ ' : ''}{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}{it.charges ? ` (${it.charges} ch.)` : ''}</span>
             <span class="tabular-nums">{Math.round(it.weight * it.quantity * 100) / 100} lb</span>
           </li>
         {/each}
@@ -194,17 +202,61 @@
       {#if editing}
         <div class="flex flex-wrap items-start gap-2 print:hidden">
           <button type="button" class="add-btn" onclick={() => addItem()}>+ Item</button>
-          <DbPicker
-            kind="items"
-            label="Find gear or magic item"
-            filter={(it) => !it.weapon && !it.armor}
-            onpick={(it) => {
-              const slot = it.category === 'magic' ? toSlot(it.slot) || 'slotless' : '';
-              c.items.push({ ...make.item(), name: it.name, weight: it.weight, price: parseGp(it.price), isContainer: it.category === 'container', slot, equipped: !!slot });
-            }}
-          >
-            {#snippet detail(it)}{it.category}{it.slot ? ` · ${it.slot}` : ''} · {it.weight} lb · {it.price}{/snippet}
-          </DbPicker>
+          <Select
+            class="w-40 text-sm"
+            bind:value={pickerMode}
+            options={[
+              { value: 'gear' as const, label: 'Gear & magic items' },
+              { value: 'potion' as const, label: 'Potions (by spell)' },
+              { value: 'scroll' as const, label: 'Scrolls (by spell)' },
+              { value: 'wand' as const, label: 'Wands (by spell)' },
+            ]}
+            aria-label="What to search for"
+          />
+          {#if pickerMode === 'gear'}
+            <DbPicker
+              kind="items"
+              label="Find gear or magic item"
+              filter={(it) => !it.weapon && !it.armor}
+              onpick={(it) => {
+                const slot = it.category === 'magic' ? toSlot(it.slot) || 'slotless' : '';
+                c.items.push({ ...make.item(), name: it.name, weight: it.weight, price: parseGp(it.price), isContainer: it.category === 'container', slot, equipped: !!slot });
+              }}
+            >
+              {#snippet detail(it)}{it.category}{it.slot ? ` · ${it.slot}` : ''} · {it.weight} lb · {it.price}{/snippet}
+            </DbPicker>
+          {:else}
+            {@const kind = pickerMode}
+            <Select
+              class="w-24 text-sm"
+              bind:value={spellLevel}
+              options={[{ value: null, label: 'Any level' }, ...Array.from({ length: CONSUMABLE_MAX_LEVEL[kind] + 1 }, (_, i) => ({ value: i, label: `Level ${i}` }))]}
+              aria-label="Spell level"
+            />
+            <DbPicker
+              kind="spells"
+              label="Find {kind} spell"
+              filter={(sp) => {
+                const spec = consumableSpec(sp, kind);
+                return !!spec && (spellLevel === null || spec.level === spellLevel);
+              }}
+              onpick={(sp) => {
+                const spec = consumableSpec(sp, kind)!;
+                c.items.push({
+                  ...make.item(),
+                  name: consumableName(kind, sp.name, spec),
+                  price: consumablePrice(kind, spec.level, spec.casterLevel),
+                  charges: CONSUMABLE_CHARGES[kind],
+                  notes: sp.summary,
+                });
+              }}
+            >
+              {#snippet detail(sp)}
+                {@const spec = consumableSpec(sp, kind)}
+                {#if spec}level {spec.level} · CL {spec.casterLevel} · {consumablePrice(kind, spec.level, spec.casterLevel).toLocaleString()} gp{kind === 'wand' ? ' · 50 charges' : ''}{/if}
+              {/snippet}
+            </DbPicker>
+          {/if}
         </div>
       {/if}
 

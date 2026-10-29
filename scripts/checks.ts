@@ -45,6 +45,11 @@ function check(desc: string, ok: boolean, detail = '') {
 const hpMax = () => page.locator('[data-section=hp] [data-hp-max]');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
 const openSettings = () => page.locator('nav').getByRole('button', { name: 'Settings', exact: true }).click();
+/** Open the classes section's Level history table (a toggle, so only click when it's closed). */
+const openLevelHistory = async () => {
+  const btn = page.getByRole('button', { name: /^Level history/ });
+  if ((await btn.getAttribute('aria-expanded')) !== 'true') await btn.click();
+};
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
 /** Choose an option from a custom Select (combobox button + popover listbox). */
 const pick = async (combo: Locator, option: string) => {
@@ -300,6 +305,48 @@ const eqp = page.locator('[data-section=equipment] tbody tr').first().getByRole(
 const wasEquipped = await eqp.isChecked();
 await eqp.click();
 check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
+
+console.log('— prestige class advancing spellcasting');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await toggleEdit('classes');
+await page.getByRole('button', { name: '+ Class' }).click();
+const prestigeName = page.getByLabel('Class name').last();
+await prestigeName.fill('Eldritch');
+await page.locator('.select-list:popover-open').getByRole('option', { name: 'Eldritch Knight' }).waitFor();
+await prestigeName.press('ArrowDown');
+await prestigeName.press('Enter');
+check('prestige badge', (await page.locator('[data-section=classes]').getByText('PrC', { exact: true }).count()) === 1);
+await pick(page.getByLabel('Class for new level'), 'Eldritch Knight');
+await page.getByRole('button', { name: '+ Level' }).click();
+await page.getByRole('button', { name: '+ Level' }).click();
+await openLevelHistory();
+const advance = page.getByLabel(/^Level \d+ advances Summoner spellcasting/);
+check('first EK level does not advance casting', !(await advance.first().isChecked()));
+check('second EK level advances casting', await advance.last().isChecked());
+await toggleEdit('classes');
+await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await expectText('Summoner CL (no class levels) with one prestige advancement', summoner.locator('.stat', { hasText: 'CL' }).locator('.stat-value').first(), /^1$/);
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await toggleEdit('classes');
+await openLevelHistory();
+await page.getByLabel(/^Remove level \d+$/).last().click();
+await page.getByLabel(/^Remove level \d+$/).last().click();
+await page.getByLabel('Remove class').last().click();
+await toggleEdit('classes');
+
+console.log('— wand built from a spell');
+await page.locator('nav').getByRole('button', { name: 'Character', exact: true }).click();
+await toggleEdit('equipment');
+await pick(page.getByLabel('What to search for'), 'Wands (by spell)');
+await page.getByRole('button', { name: '⌕ Find wand spell' }).click();
+await page.getByLabel('Find wand spell').fill('cure light wounds');
+await page.locator('[role=listbox]:not(.select-list) [role=option]', { hasText: /^Cure Light Wounds/ }).first().click();
+const wandRow = page.locator('[data-section=equipment] tbody tr', { has: page.locator('input[aria-label="Item name"]') }).last();
+check('wand name', (await wandRow.locator('input[aria-label="Item name"]').inputValue()) === 'Wand of Cure Light Wounds (CL 1)', await wandRow.locator('input[aria-label="Item name"]').inputValue());
+check('wand price 750', (await wandRow.locator('input[aria-label="Value each in gp"]').inputValue()) === '750');
+check('wand charges 50', (await wandRow.locator('input[aria-label*="charges"]').inputValue()) === '50');
+await wandRow.getByLabel(/^Remove /).click();
+await toggleEdit('equipment');
 
 console.log('— dice');
 await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();

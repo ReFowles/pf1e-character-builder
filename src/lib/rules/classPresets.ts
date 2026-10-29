@@ -1,4 +1,6 @@
 import type { Ability, BabProgression, Save } from '../model/types';
+import type { DbClass } from '../db/types';
+import { CASTING_ADVANCE, PRESET_SPELL_TYPE, type CastingAdvance } from './prestige';
 
 export interface ClassPreset {
   id: string;
@@ -11,6 +13,9 @@ export interface ClassPreset {
   classSkills: string[];
   castingAbility?: Ability;
   source: string;
+  prestige?: boolean;
+  spellType?: 'arcane' | 'divine' | 'psychic';
+  castingAdvance?: CastingAdvance;
 }
 
 const k = (...subs: string[]) => subs.map((s) => `knowledge:${s}`);
@@ -109,7 +114,25 @@ export const CLASS_PRESETS: ClassPreset[] = [
 
 export const PRESET_BY_ID = Object.fromEntries(CLASS_PRESETS.map((c) => [c.id, c]));
 
-export function findPreset(name: string): ClassPreset | undefined {
+export function findPreset(name: string, extra: ClassPreset[] = []): ClassPreset | undefined {
   const n = name.trim().toLowerCase();
-  return CLASS_PRESETS.find((c) => c.name.toLowerCase() === n || c.id === n);
+  return [...CLASS_PRESETS, ...extra].find((c) => c.name.toLowerCase() === n || c.id === n);
+}
+
+/** A preset from the bundled classes database (prestige classes and any base class not hard-coded). */
+export function presetFromDb(e: DbClass): ClassPreset {
+  return {
+    id: e.id,
+    name: e.name,
+    hd: e.hd,
+    bab: e.bab,
+    goodSaves: [...e.goodSaves],
+    skillRanks: e.skillRanks,
+    classSkills: [...e.classSkills],
+    castingAbility: e.castingAbility,
+    source: e.source,
+    prestige: e.kind === 'prestige',
+    spellType: PRESET_SPELL_TYPE[e.id] ?? (e.casting?.spells === 'arcane' || e.casting?.spells === 'divine' || e.casting?.spells === 'psychic' ? e.casting.spells : undefined),
+    castingAdvance: CASTING_ADVANCE[e.id],
+  };
 }

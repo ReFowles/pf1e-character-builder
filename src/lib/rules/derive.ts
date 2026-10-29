@@ -110,6 +110,8 @@ export interface FcbSummary {
 }
 
 export interface Derived {
+  /** Class levels plus prestige levels advancing each class's spellcasting. */
+  castingLevels: Record<string, number>;
   level: number;
   classLevels: Record<string, number>;
   xpNext: number | null;
@@ -197,6 +199,9 @@ export function derive(c: Character): Derived {
   const classById = new Map<string, ClassDef>(c.classes.map((k) => [k.id, k]));
   const classLevels: Record<string, number> = Object.fromEntries(c.classes.map((k) => [k.id, 0]));
   for (const l of c.levels) if (l.classId in classLevels) classLevels[l.classId]++;
+  // Caster levels: class levels plus prestige levels that advance that class's spellcasting.
+  const castingLevels: Record<string, number> = { ...classLevels };
+  for (const l of c.levels) for (const id of l.spellAdvance ?? []) if (id in castingLevels && id !== l.classId) castingLevels[id]++;
   const level = c.levels.length;
   const bab = c.classes.reduce((s, k) => s + babFor(k.bab, classLevels[k.id]), 0);
   const favored = new Set(c.favoredClassIds);
@@ -275,7 +280,10 @@ export function derive(c: Character): Derived {
   const classVars: Vars = {};
   for (const k of c.classes) {
     const name = slug(k.name);
-    if (name) classVars[`class.${name}.level`] = classLevels[k.id];
+    if (name) {
+      classVars[`class.${name}.level`] = classLevels[k.id];
+      classVars[`class.${name}.casterLevel`] = castingLevels[k.id];
+    }
   }
   const makeVars = (): Vars => {
     const v: Vars = { level, bab, hd: level, ...classVars };
@@ -538,7 +546,7 @@ export function derive(c: Character): Derived {
   const spellcasting: Record<string, SpellcastingDerived> = {};
   for (const b of c.spellcasting) {
     const mod = mods[b.ability];
-    const classLevel = b.classId ? (classLevels[b.classId] ?? 0) : 0;
+    const classLevel = b.classId ? (castingLevels[b.classId] ?? 0) : 0;
     const casterLevel = (b.classId ? classLevel : b.casterLevel) + b.casterLevelMisc + set.total(['cl']).total;
     // Spell tables are read by class level, or by caster level for blocks without a class.
     const tableLevel = b.classId ? classLevel : casterLevel;
@@ -593,6 +601,7 @@ export function derive(c: Character): Derived {
   return {
     level,
     classLevels,
+    castingLevels,
     xpNext: xpForNextLevel(c.xp.track, level),
     abilities,
     mods,

@@ -17,7 +17,8 @@ export function addSpellBlock(c: Character): Spellcasting {
   const used = new Set(c.spellcasting.map((b) => b.classId));
   // Prefer a casting class that doesn't have a block yet.
   const k =
-    c.classes.find((x) => !used.has(x.id) && (x.castingAbility || PRESET_SPELL_TABLE[x.presetId ?? ''])) ??
+    c.classes.find((x) => !used.has(x.id) && !x.prestige && (x.castingAbility || PRESET_SPELL_TABLE[x.presetId ?? ''])) ??
+    c.classes.find((x) => !used.has(x.id) && !x.prestige) ??
     c.classes.find((x) => !used.has(x.id));
   const block = make.spellcasting();
   if (k) {
