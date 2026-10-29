@@ -9,12 +9,17 @@
   let counts = $state<Record<number, number>>({});
   let list: HTMLOListElement | undefined = $state();
 
-  const notation = $derived(
-    DICE.filter((d) => counts[d] > 0)
-      .map((d) => `${counts[d]}d${d}`)
-      .join('+'),
-  );
-  const total = $derived(DICE.reduce((n, d) => n + (counts[d] ?? 0), 0));
+  /** The custom die: its own count and sides (typed in). */
+  let customCount = $state(0);
+  let customSides = $state(10);
+  const customOk = $derived(Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
+
+  const terms = $derived([
+    ...DICE.filter((d) => counts[d] > 0).map((d) => `${counts[d]}d${d}`),
+    ...(customCount > 0 && customOk ? [`${customCount}d${customSides}`] : []),
+  ]);
+  const notation = $derived(terms.join('+'));
+  const total = $derived(DICE.reduce((n, d) => n + (counts[d] ?? 0), 0) + (customOk ? customCount : 0));
 
   function bump(sides: number, by: number) {
     counts[sides] = Math.max(0, Math.min(MAX_COUNT, (counts[sides] ?? 0) + by));
@@ -22,7 +27,11 @@
   function rollTray() {
     if (!notation) return;
     void roll({ title: notation, notation });
+    resetTray();
+  }
+  function resetTray() {
     counts = {};
+    customCount = 0;
   }
 
   // Newest at the bottom, like a chat: keep it scrolled to the end.
@@ -78,21 +87,42 @@
 
     <!-- Tray at the bottom: pick dice, then roll them together (2d6+3d4). -->
     <div class="flex flex-col gap-2 border-t border-ink/20 px-4 py-3" role="group" aria-label="Dice tray">
-      <div class="flex flex-wrap justify-end gap-1.5">
+      <div class="grid grid-cols-3 gap-2">
         {#each DICE as sides (sides)}
-          <div class="flex items-center overflow-hidden rounded-sm border border-ink/30">
-            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a d{sides}" disabled={!counts[sides]} onclick={() => bump(sides, -1)}>−</button>
-            <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{counts[sides] ?? 0} d{sides}">{counts[sides] ?? 0}</span>
-            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a d{sides}" disabled={(counts[sides] ?? 0) >= MAX_COUNT} onclick={() => bump(sides, 1)}>+</button>
-            <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">d{sides}</span>
-          </div>
+          {@render stepper(counts[sides] ?? 0, `d${sides}`, `d${sides}`, () => bump(sides, -1), () => bump(sides, 1))}
         {/each}
+        <div class="flex items-center overflow-hidden rounded-sm border border-ink/30" role="group" aria-label="Custom die">
+          {@render stepperButtons(customCount, `custom die`, () => (customCount = Math.max(0, customCount - 1)), () => (customCount = Math.min(MAX_COUNT, customCount + 1)))}
+          <span class="border-l border-ink/30 px-1 py-0.5 text-sm font-bold">d</span>
+          <input
+            class="w-12 min-w-0 border-0 bg-transparent px-1 py-0.5 text-sm font-bold tabular-nums"
+            type="number"
+            min="2"
+            max="1000"
+            bind:value={customSides}
+            aria-label="Custom die sides"
+            title="Sides of the custom die (rolled instantly, no 3D)"
+          />
+        </div>
+        <div class="flex items-center justify-end gap-1">
+          <button type="button" class="btn text-xs" disabled={!total} onclick={() => resetTray()}>Reset</button>
+          <button type="button" class="btn-primary text-sm" disabled={!total || rolls.busy} onclick={rollTray}>Roll</button>
+        </div>
       </div>
-      <div class="flex items-center gap-2">
-        <span class="min-w-0 flex-1 truncate font-mono text-xs opacity-70" title={notation}>{notation || 'Choose dice above'}</span>
-        <button type="button" class="btn text-xs" disabled={!total} onclick={() => (counts = {})}>Reset</button>
-        <button type="button" class="btn-primary text-sm" disabled={!total || rolls.busy} onclick={rollTray}>Roll</button>
-      </div>
+      <span class="truncate font-mono text-xs opacity-70" title={notation}>{notation || 'Choose dice above'}</span>
     </div>
   </aside>
 {/if}
+
+{#snippet stepperButtons(count: number, name: string, dec: () => void, inc: () => void)}
+  <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a {name}" disabled={count <= 0} onclick={dec}>−</button>
+  <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{count} {name}">{count}</span>
+  <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a {name}" disabled={count >= MAX_COUNT} onclick={inc}>+</button>
+{/snippet}
+
+{#snippet stepper(count: number, label: string, name: string, dec: () => void, inc: () => void)}
+  <div class="flex items-center overflow-hidden rounded-sm border border-ink/30">
+    {@render stepperButtons(count, name, dec, inc)}
+    <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">{label}</span>
+  </div>
+{/snippet}

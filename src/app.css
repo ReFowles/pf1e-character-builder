@@ -595,8 +595,10 @@
   .roll-badge {
     @apply absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-bold text-paper;
   }
+  /* Above the roll log drawer (z-50) so the dice land over it. */
   .dice-layer {
-    @apply pointer-events-none fixed inset-0 z-45;
+    @apply pointer-events-none fixed inset-0;
+    z-index: 60;
   }
   .dice-layer canvas {
     @apply h-full w-full;

@@ -5,6 +5,7 @@ import { parseNotation } from './notation';
 import { buildResult, capLog, rollDice, type RollResult, type RollSpec } from './roll';
 
 const KEY = 'pf1e:rolls';
+const THREE_D_SIDES = new Set([4, 6, 8, 10, 12, 20, 100]);
 
 function load(): RollResult[] {
   try {
@@ -51,7 +52,8 @@ export async function roll(spec: RollSpec): Promise<RollResult | null> {
     return null;
   }
   let result: RollResult | null = null;
-  if (prefs.dice.threeD && !rolls.busy) {
+  // The 3D set has the standard dice only; anything else (custom-sided dice) rolls instantly.
+  if (prefs.dice.threeD && !rolls.busy && n.dice.every((t) => THREE_D_SIDES.has(t.sides))) {
     rolls.busy = true;
     try {
       const { roll3d } = await import('./three-d');
