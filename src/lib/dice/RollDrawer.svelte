@@ -15,13 +15,14 @@
   /** Dice picked in the tray right now (not yet added as a group). */
   let counts = $state<Record<number, number>>({});
   let customCount = $state(0);
-  let customSides = $state(10);
+  /** Sides of the custom die; blank until the user types them. */
+  let customSides = $state<number | null>(null);
   let modifierInput = $state(0);
   /** Committed groups, in the order they were added with Add. */
   let groups = $state<Group[]>([]);
   let list: HTMLOListElement | undefined = $state();
 
-  const customOk = $derived(Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
+  const customOk = $derived(customSides !== null && Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
   const pendingTerms = $derived([
     ...DICE.filter((d) => counts[d] > 0).map((d) => `${counts[d]}d${d}`),
     ...(customCount > 0 && customOk ? [`${customCount}d${customSides}`] : []),
@@ -137,13 +138,14 @@
           <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a custom die" disabled={customCount >= MAX_COUNT} onclick={() => (customCount = Math.min(MAX_COUNT, customCount + 1))}>+</button>
           <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">d</span>
           <input
-            class="w-14 min-w-0 border-0 bg-transparent px-1 py-0.5 text-sm font-bold tabular-nums"
+            class="w-0 min-w-0 flex-1 border-0 border-l border-ink/30 bg-field px-1 py-0.5 text-sm font-bold tabular-nums placeholder:text-[0.65rem] placeholder:font-normal placeholder:opacity-60"
             type="number"
             min="2"
             max="1000"
+            placeholder="sides"
             bind:value={customSides}
             aria-label="Custom die sides"
-            title="Sides of the custom die (rolled instantly, no 3D)"
+            title="Type the number of sides (rolled instantly, no 3D)"
           />
         </div>
       </div>
