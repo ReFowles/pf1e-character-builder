@@ -37,6 +37,6 @@
   {#if editing}
     <Combobox class="w-36 print:hidden" {placeholder} aria-label={label ?? placeholder} suggestions={suggestions.filter((s) => !items.includes(s))} bind:value={draft} oncommit={add} />
   {:else if !items.length}
-    <span class="text-sm italic opacity-40 print:hidden">None</span>
+    <span class="text-sm italic opacity-40 print:hidden">None{#if section.editable} · ✎ to add{/if}</span>
   {/if}
 </div>

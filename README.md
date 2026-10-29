@@ -14,6 +14,7 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 - **Spells.** Each casting class gets its own "[Class] Spells" section; add more (including "Other" for racial or item spells) from **Settings**.
 - **Dice.** Click initiative, saves, attacks, skills, ability modifiers or caster level to roll d20 plus the sheet's bonus; weapons roll damage and criticals. A roll log (chat-style drawer with a quick tray for the seven standard dice) keeps the history with each roll's breakdown. Optional 3D physics dice via dice-box in Settings.
 - **Campaign Notes.** A rich text page (headings, lists, task lists, tables, links) saved with the character; left out of print unless you turn it on in Settings.
+- **First visit.** A two-step walkthrough points at the Edit and ℹ buttons once per device; replay it from Settings → Help.
 - **Edit mode and info.** Each section's pencil button reveals its add, reorder, remove and database-search controls; values are always editable. The **ℹ** button collects every breakdown and rule note that's otherwise only in hover tooltips, so it works on phones too.
 - **Configurable.** Collapse any section, or hide it on screen or in print (the gear tab, **Settings**). Dark mode follows your system until you toggle it in Settings; printing always uses the light theme. Printed dynamic tables include one blank row for handwritten additions.
 - **Multiple characters.** Create, duplicate and switch between characters. Use **Export JSON** for backups.

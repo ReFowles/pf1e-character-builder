@@ -40,6 +40,9 @@
     get editing() {
       return editable && editing;
     },
+    get editable() {
+      return editable;
+    },
   });
   const popoverId = $derived(`info-${id}`);
 </script>
@@ -71,6 +74,7 @@
             aria-pressed={editing}
             aria-label={editing ? `Done editing ${title}` : `Edit ${title}`}
             title={editing ? 'Done editing' : 'Edit'}
+            data-tour="edit"
             onclick={() => (editing = !editing)}
           >
             {#if editing}
@@ -81,7 +85,7 @@
           </button>
         {/if}
         {#if info}
-          <button type="button" class="head-btn size-6 rounded-full p-0 font-serif italic" popovertarget={popoverId} aria-label="About {title}" title="Details">i</button>
+          <button type="button" class="head-btn size-6 rounded-full p-0 font-serif italic" popovertarget={popoverId} aria-label="About {title}" title="Details" data-tour="info">i</button>
         {/if}
       </div>
     </header>

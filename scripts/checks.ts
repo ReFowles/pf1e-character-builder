@@ -18,6 +18,7 @@ await page.addInitScript((c) => {
   localStorage.setItem(`pf1e:char:${c.id}`, JSON.stringify(c));
   localStorage.setItem('pf1e:roster', JSON.stringify([{ id: c.id, name: c.info.name, updatedAt: 0 }]));
   localStorage.setItem('pf1e:active', c.id);
+  localStorage.setItem('pf1e:prefs', JSON.stringify({ tourSeen: true }));
 }, fixture);
 
 let failed = 0;
@@ -391,6 +392,16 @@ await expectText('Companion title', comp.locator('.section-head h2'), /animal co
 // Linked to Fighter 4: animal companion level 4 = 4 HD, BAB +3.
 await expectText('Companion summary', comp.locator('p.text-sm').first(), /4 HD · level 4/);
 await expectText('Companion BAB', comp.locator('.stat', { has: page.locator('.field-label', { hasText: /^BAB$/ }) }).locator('.stat-value'), /^\+3$/);
+
+console.log('— first-run walkthrough');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await page.evaluate(() => localStorage.removeItem('pf1e:prefs'));
+await page.reload();
+const tourDialog = page.getByRole('dialog', { name: 'Edit mode' });
+await tourDialog.waitFor();
+await tourDialog.getByRole('button', { name: 'Next' }).click();
+await page.getByRole('dialog', { name: 'Info' }).getByRole('button', { name: 'Done' }).click();
+check('walkthrough dismissed and remembered', (await page.getByRole('dialog').count()) === 0 && (await page.evaluate(() => JSON.parse(localStorage.getItem('pf1e:prefs') ?? '{}').tourSeen)) === true);
 
 console.log('— small-screen menu');
 await page.setViewportSize({ width: 390, height: 800 });

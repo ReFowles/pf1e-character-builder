@@ -10,6 +10,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import { prefs } from '../../lib/prefs.svelte';
   import { roll } from '../../lib/dice/rolls.svelte';
+  import { tour } from '../../lib/tour.svelte';
 
   let about: AboutDialog;
   const c = $derived(app.char);
@@ -164,6 +165,7 @@
       <button type="button" class="btn" onclick={() => app.exportJson()}>Export JSON</button>
       <button type="button" class="btn" onclick={() => app.importJson()}>Import JSON</button>
       <button type="button" class="btn" onclick={() => about.open()}>About & licenses</button>
+      <button type="button" class="btn" onclick={() => tour.start()}>Show the walkthrough again</button>
     </div>
     <p class="text-sm opacity-70">Characters are saved in this browser. Export a JSON backup before clearing site data or switching devices.</p>
   </Section>

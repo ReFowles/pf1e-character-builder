@@ -45,6 +45,7 @@ async function open(width: number) {
       localStorage.setItem(`pf1e:char:${c.id}`, JSON.stringify(c));
       localStorage.setItem('pf1e:roster', JSON.stringify([{ id: c.id, name: c.info.name, updatedAt: 0 }]));
       localStorage.setItem('pf1e:active', c.id);
+      localStorage.setItem('pf1e:prefs', JSON.stringify({ tourSeen: true }));
     }, c);
   }
   return page;
