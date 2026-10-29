@@ -77,6 +77,18 @@ await con.fill('16');
 await con.blur();
 await expectText('Max HP', hpMax(), /^59$/);
 
+console.log('— language combobox');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await toggleEdit('info');
+const addLang = page.getByLabel('Add language');
+await addLang.fill('Elv');
+await expectText('Elven suggested', page.locator('.select-list:popover-open').getByRole('option'), /^Elven$/);
+await addLang.press('ArrowDown');
+await addLang.press('Enter');
+check('Elven chip added', (await page.getByLabel('Remove Elven').count()) === 1);
+await page.getByLabel('Remove Elven').click();
+await toggleEdit('info');
+
 console.log('— conditions without edit mode');
 await page.getByLabel('Remove Shaken').click();
 await expectStat('Melee', '+8');

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import Combobox from './Combobox.svelte';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -13,7 +14,6 @@
   const section = useSection();
   const editing = $derived(always || section.editing);
   let draft = $state('');
-  const listId = `chips-${Math.random().toString(36).slice(2, 8)}`;
 
   function add() {
     const v = draft.trim();
@@ -35,25 +35,7 @@
     {/if}
   {/each}
   {#if editing}
-    <input
-      class="w-36 print:hidden"
-      {placeholder}
-      aria-label={label ?? placeholder}
-      list={suggestions.length ? listId : undefined}
-      bind:value={draft}
-      onkeydown={(e) => {
-        if (e.key === 'Enter' || e.key === ',') {
-          e.preventDefault();
-          add();
-        }
-      }}
-      onblur={add}
-    />
-    {#if suggestions.length}
-      <datalist id={listId}>
-        {#each suggestions as s (s)}<option value={s}></option>{/each}
-      </datalist>
-    {/if}
+    <Combobox class="w-36 print:hidden" {placeholder} aria-label={label ?? placeholder} suggestions={suggestions.filter((s) => !items.includes(s))} bind:value={draft} oncommit={add} />
   {:else if !items.length}
     <span class="text-sm italic opacity-40 print:hidden">None</span>
   {/if}

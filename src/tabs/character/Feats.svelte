@@ -6,8 +6,10 @@
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
+  import Combobox from '../../lib/ui/Combobox.svelte';
 
   const c = $derived(app.char);
+  const SOURCES = ['Level', 'Human bonus', 'Fighter bonus', 'Class bonus', 'Racial', 'Item'];
   // One feat at 1st level and every odd level after.
   const expected = $derived(Math.ceil(app.d.level / 2));
   const general = $derived(c.feats.filter((f) => !/bonus/i.test(f.source)).length);
@@ -36,7 +38,7 @@
     {#snippet row(f)}
       <td data-label="Lvl" class="w-10"><NumInput bind:value={f.level} aria-label="Level gained" /></td>
       <td data-label="Feat" class="w-2/5"><input class="font-semibold" bind:value={f.name} aria-label="Feat name" /></td>
-      <td data-label="Source" class="w-24"><input list="feat-sources" bind:value={f.source} aria-label="Source" /></td>
+      <td data-label="Source" class="w-24"><Combobox class="w-full" bind:value={f.source} suggestions={SOURCES} aria-label="Source" /></td>
       <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={f.description} aria-label="Notes"></textarea></td>
     {/snippet}
     {#snippet tools()}
@@ -49,8 +51,4 @@
       </DbPicker>
     {/snippet}
   </DynamicTable>
-  <datalist id="feat-sources">
-    <option value="Level"></option><option value="Human bonus"></option><option value="Fighter bonus"></option>
-    <option value="Class bonus"></option><option value="Racial"></option><option value="Item"></option>
-  </datalist>
 </Section>

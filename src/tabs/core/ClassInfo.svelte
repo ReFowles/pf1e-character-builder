@@ -9,6 +9,9 @@
   import Chevron from '../../lib/ui/Chevron.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import Combobox from '../../lib/ui/Combobox.svelte';
+
+  const CLASS_OPTIONS = CLASS_PRESETS.map((p) => ({ value: p.name, group: p.source }));
 
   const c = $derived(app.char);
   const d = $derived(app.d);
@@ -141,9 +144,6 @@
       </span>
     </div>
   </div>
-  <datalist id="class-presets">
-    {#each CLASS_PRESETS as p (p.id)}<option value={p.name}>{p.source}</option>{/each}
-  </datalist>
 
   <div class="overflow-x-auto">
     <table class="dyn-table keep-table">
@@ -178,7 +178,7 @@
               >
             </td>
             <td class="w-8 text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
-            <td><input list="class-presets" class="w-full font-semibold" bind:value={k.name} onchange={() => onName(k)} placeholder="Class name" aria-label="Class name" /></td>
+            <td><Combobox class="w-full font-semibold" bind:value={k.name} options={CLASS_OPTIONS} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" /></td>
             {#if editing}
               <td>
                 <Select class="w-16" bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />

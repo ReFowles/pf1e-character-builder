@@ -17,6 +17,7 @@
 
 <script lang="ts" generics="T">
   import type { Snippet } from 'svelte';
+  import { placeList } from './popoverList';
 
   interface Props {
     value: T;
@@ -44,15 +45,6 @@
   const selected = $derived(options.findIndex((o) => same(o.value, value)));
   const current = $derived(options[selected]);
 
-  function place() {
-    const r = button.getBoundingClientRect();
-    list.style.minWidth = `${r.width}px`;
-    list.style.left = `${Math.max(4, Math.min(r.left, innerWidth - list.offsetWidth - 4))}px`;
-    // Below the trigger, or above it when there isn't room.
-    const below = innerHeight - r.bottom;
-    list.style.top = below < list.offsetHeight + 8 && r.top > below ? `${r.top - list.offsetHeight - 2}px` : `${r.bottom + 2}px`;
-  }
-
   function choose(i: number) {
     const o = options[i];
     if (!o) return;
@@ -71,7 +63,7 @@
   // toggle fires once the list is showing and measurable.
   function onToggle(e: ToggleEvent) {
     if (e.newState !== 'open') return;
-    place();
+    placeList(button, list);
     list.querySelector<HTMLElement>(`[data-index="${Math.max(0, selected)}"]`)?.scrollIntoView({ block: 'nearest' });
   }
 
