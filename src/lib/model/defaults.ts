@@ -30,6 +30,10 @@ import type {
   Trait,
   UseCounter,
   Weapon,
+  CreatureType,
+  Save,
+  Size,
+  EidolonEvolution,
 } from './types';
 
 export const SCHEMA_VERSION = 7;
@@ -47,6 +51,16 @@ const ability = (): AbilityScore => ({
 export const coins = (): Coins => ({ pp: 0, gp: 0, sp: 0, cp: 0 });
 
 // Item factories: one per collection so new rows and imported rows share a shape.
+/** Starting statistics per companion kind (phantom and drake from their rules; the rest are blank slates). */
+const COMPANION_SEEDS: Record<CompanionKind, { type: CreatureType; goodSaves: Save[]; size: Size; speed: string; scores: number[]; natural: number; attacks: Partial<CompanionAttack>[] }> = {
+  animal: { type: 'animal', goodSaves: ['fort', 'ref'], size: 'medium', speed: '30 ft', scores: [10, 10, 10, 2, 10, 6], natural: 0, attacks: [] },
+  familiar: { type: 'animal', goodSaves: ['fort', 'ref'], size: 'tiny', speed: '30 ft', scores: [10, 10, 10, 2, 10, 6], natural: 0, attacks: [] },
+  eidolon: { type: 'outsider', goodSaves: ['fort', 'will'], size: 'medium', speed: '30 ft', scores: [16, 12, 13, 7, 10, 11], natural: 2, attacks: [{ name: '2 claws', damage: '1d4' }] },
+  phantom: { type: 'outsider', goodSaves: ['fort', 'will'], size: 'medium', speed: '30 ft', scores: [12, 14, 13, 7, 10, 13], natural: 0, attacks: [{ name: 'Slam', damage: '1d6' }, { name: 'Slam', damage: '1d6' }] },
+  drake: { type: 'dragon', goodSaves: ['fort', 'ref', 'will'], size: 'tiny', speed: '20 ft', scores: [8, 17, 11, 4, 10, 7], natural: 0, attacks: [{ name: 'Bite', damage: '1d3' }, { name: 'Tail', damage: '1d3', primary: false }] },
+  other: { type: 'other', goodSaves: ['fort', 'ref'], size: 'medium', speed: '30 ft', scores: [10, 10, 10, 10, 10, 10], natural: 0, attacks: [] },
+};
+
 export const make = {
   classDef: (): ClassDef => ({
     id: uid(),
@@ -166,48 +180,57 @@ export const make = {
     damageMisc: 0,
     notes: '',
   }),
+  evolution: (): EidolonEvolution => ({ id: uid(), name: '', cost: 1, notes: '' }),
   companionSkill: (name = '', ability: Ability = 'dex'): CompanionSkill => ({ id: uid(), name, ability, ranks: 0, classSkill: true, misc: 0 }),
-  companion: (kind: CompanionKind = 'animal'): Companion => ({
-    id: uid(),
-    name: '',
-    kind,
-    species: '',
-    portrait: null,
-    masterClassId: null,
-    levelMisc: 0,
-    creatureType: kind === 'eidolon' ? 'outsider' : 'animal',
-    goodSaves: ['fort', 'ref'],
-    hd: 0,
-    size: kind === 'familiar' ? 'tiny' : 'medium',
-    speed: '30 ft',
-    abilities: {
-      str: { base: 10, misc: 0, temp: 0 },
-      dex: { base: 10, misc: 0, temp: 0 },
-      con: { base: 10, misc: 0, temp: 0 },
-      int: { base: 2, misc: 0, temp: 0 },
-      wis: { base: 10, misc: 0, temp: 0 },
-      cha: { base: 6, misc: 0, temp: 0 },
-    },
-    abilityIncreases: [null, null, null],
-    naturalArmor: 0,
-    armorBonus: 0,
-    acMisc: 0,
-    saveMisc: { fort: 0, ref: 0, will: 0 },
-    hpMisc: 0,
-    hp: { damage: 0, temp: 0 },
-    attacks: [],
-    skills: [
-      make.companionSkill('Acrobatics', 'dex'),
-      make.companionSkill('Climb', 'str'),
-      make.companionSkill('Perception', 'wis'),
-      make.companionSkill('Stealth', 'dex'),
-      make.companionSkill('Swim', 'str'),
-    ],
-    feats: [],
-    tricks: [],
-    special: [],
-    notes: '',
-  }),
+  companion: (kind: CompanionKind = 'animal'): Companion => {
+    const seed = COMPANION_SEEDS[kind] ?? COMPANION_SEEDS.animal;
+    const score = (n: number) => ({ base: n, misc: 0, temp: 0 });
+    return {
+      id: uid(),
+      name: '',
+      kind,
+      label: '',
+      species: '',
+      portrait: null,
+      masterClassId: null,
+      levelMisc: 0,
+      creatureType: seed.type,
+      goodSaves: [...seed.goodSaves],
+      hd: 0,
+      size: seed.size,
+      speed: seed.speed,
+      abilities: {
+        str: score(seed.scores[0]),
+        dex: score(seed.scores[1]),
+        con: score(seed.scores[2]),
+        int: score(seed.scores[3]),
+        wis: score(seed.scores[4]),
+        cha: score(seed.scores[5]),
+      },
+      abilityIncreases: [null, null, null, null],
+      eidolon: { unchained: false, baseForm: '', subtype: '', evolutions: [], poolMisc: 0 },
+      phantom: { focus: '', form: 'ectoplasmic' },
+      drake: { subtype: '', powers: [] },
+      attacks: seed.attacks.map((a) => ({ ...make.companionAttack(), ...a })),
+      naturalArmor: seed.natural,
+      armorBonus: 0,
+      acMisc: 0,
+      saveMisc: { fort: 0, ref: 0, will: 0 },
+      hpMisc: 0,
+      hp: { damage: 0, temp: 0 },
+      skills: [
+        make.companionSkill('Acrobatics', 'dex'),
+        make.companionSkill('Climb', 'str'),
+        make.companionSkill('Perception', 'wis'),
+        make.companionSkill('Stealth', 'dex'),
+        make.companionSkill('Swim', 'str'),
+      ],
+      feats: [],
+      tricks: [],
+      special: [],
+      notes: '',
+    };
+  },
   coinLocation: (): CoinLocation => ({ id: uid(), name: '', weightless: true, coins: coins() }),
   spell: (level = 0): SpellEntry => ({
     id: uid(),

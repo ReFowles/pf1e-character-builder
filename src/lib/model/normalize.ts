@@ -36,6 +36,7 @@ const ITEM_FACTORIES: Record<string, () => unknown> = {
   companions: () => make.companion(),
   'companions.attacks': make.companionAttack,
   'companions.skills': () => make.companionSkill(),
+  'companions.eidolon.evolutions': make.evolution,
 };
 
 function merge(def: unknown, val: unknown, path: string): unknown {

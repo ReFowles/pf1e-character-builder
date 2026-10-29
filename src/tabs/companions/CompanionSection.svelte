@@ -4,8 +4,12 @@
   import { roll } from '../../lib/dice/rolls.svelte';
   import { damageNotation } from '../../lib/dice/notation';
   import { make } from '../../lib/model/defaults';
-  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
-  import { ANIMAL_INCREASE_LEVELS, CREATURE_PROGRESSION, KIND_LABELS, deriveCompanion } from '../../lib/rules/companions';
+  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, EIDOLON_BASE_FORMS, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
+  import { CREATURE_PROGRESSION, KIND_LABELS, deriveCompanion } from '../../lib/rules/companions';
+  import { COMPANION_LABELS, DRAKE_POWERS, DRAKE_SUBTYPES, EIDOLON_BASE_FORMS as BASE_FORMS, EIDOLON_SUBTYPES, PHANTOM_FOCI } from '../../lib/rules/companionTables';
+  import type { DbCompanion } from '../../lib/db/types';
+  import Combobox from '../../lib/ui/Combobox.svelte';
+  import DbPicker from '../../lib/ui/DbPicker.svelte';
   import { companionSectionId, companionTitle, removeCompanion } from '../../lib/companions';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -40,6 +44,35 @@
     x.goodSaves = [...CREATURE_PROGRESSION[t].goodSaves];
   }
   const toggleSave = (s: Save) => (x.goodSaves = x.goodSaves.includes(s) ? x.goodSaves.filter((g) => g !== s) : [...x.goodSaves, s]);
+  /** A phantom's emotional focus fixes its good saves. */
+  function setFocus(f: string) {
+    x.phantom.focus = f;
+    const focus = PHANTOM_FOCI[f];
+    if (focus) x.goodSaves = [...focus.goodSaves];
+  }
+  /** Copy an eidolon base form's starting statistics (one-shot, like picking from the database). */
+  function applyBaseForm() {
+    const f = x.eidolon.baseForm ? BASE_FORMS[x.eidolon.baseForm] : undefined;
+    if (!f) return;
+    x.size = f.size;
+    x.speed = f.speed;
+    x.naturalArmor = f.natural;
+    x.goodSaves = [...f.goodSaves];
+    for (const a of ABILITIES) x.abilities[a].base = f.abilities[a];
+    x.attacks = f.attacks.map((a) => ({ ...make.companionAttack(), ...a }));
+  }
+  /** Fill the companion from a bundled species stat block. */
+  function applySpecies(e: DbCompanion) {
+    x.species = e.name;
+    x.size = (SIZES as readonly string[]).includes(e.size) ? (e.size as Companion['size']) : x.size;
+    if (e.speed) x.speed = e.speed;
+    x.naturalArmor = e.naturalArmor;
+    for (const a of ABILITIES) x.abilities[a].base = e.abilities[a];
+    x.attacks = e.attacks.map((a) => ({ ...make.companionAttack(), name: a.name, damage: a.damage, primary: !a.secondary }));
+    x.special = [...new Set([...x.special, ...e.special])];
+    if (e.advancement && !x.notes.includes(e.advancement)) x.notes = [x.notes.trim(), e.advancement].filter(Boolean).join('\n');
+  }
+  const sizeText = $derived(cd.size === x.size ? x.size : `${cd.size} (grown from ${x.size})`);
   // Special abilities from the progression table (the user's own are edited as chips).
   const tableSpecial = $derived(cd.special.filter((s) => !x.special.includes(s)));
 </script>
@@ -51,11 +84,17 @@
   {#snippet info()}
     <p>{cd.source}.</p>
     {#if x.kind === 'animal'}
-      <p>Animal companions use the druid table: hit dice, natural armor, Str/Dex bonus, bonus tricks and specials follow the effective level (master class level {x.levelMisc ? `${fmt(x.levelMisc)} ` : ''}= {cd.level}). Pick the +1 ability increases at levels 4, 9 and 14 in Edit. Species advancement at 4th or 7th level (size, abilities, attacks) is entered by hand.</p>
+      <p>Animal companions use the druid table: hit dice, natural armor, Str/Dex bonus, bonus tricks and specials follow the effective level (master class level {x.levelMisc ? `${fmt(x.levelMisc)} ` : ''}= {cd.level}). The same table serves mounts (cavalier, samurai, paladin divine bond), plant, vermin and monstrous companions; set Level ± for Boon Companion (+4) or a ranger's −3. Pick the +1 ability increases at levels 4, 9 and 14 in Edit. Species advancement at 4th or 7th level (size, abilities, attacks) is entered by hand; the species picker adds it to the notes.</p>
     {:else if x.kind === 'familiar'}
-      <p>Familiars have half the master's hit points, the master's BAB, the better of their own and the master's base saves, and the master's skill ranks where higher. Natural armor and Intelligence improve with the master's level.</p>
+      <p>Familiars (and shaman spirit animals) have half the master's hit points, the master's BAB, the better of their own and the master's base saves, and the master's skill ranks where higher. Natural armor and Intelligence improve with the master's level.</p>
+    {:else if x.kind === 'eidolon'}
+      <p>Eidolons follow the summoner's table: hit dice, BAB (= HD), good saves (two, by base form), 4 skill ranks per HD, feats, armor bonus (natural), Str/Dex bonus, evolution pool and maximum natural attacks. Unchained eidolons get the smaller pool and a subtype. Apply a base form once, then spend the pool on evolutions.</p>
+    {:else if x.kind === 'phantom'}
+      <p>Phantoms follow the spiritualist's table: hit dice, BAB (= HD), 2 skill ranks per HD, feats, armor bonus and Dex/Cha bonus. The emotional focus sets the good saves and two skills. Ectoplasmic form turns the armor bonus into natural armor with damage reduction; incorporeal form makes it a deflection bonus plus the Charisma modifier and lets the phantom fly from 9th level. Slams: {cd.naturalDamage}.</p>
+    {:else if x.kind === 'drake'}
+      <p>Drakes follow the charge's level (ranger drake warden: level −3): d12 hit dice, BAB (= HD), all saves good, 3 skill ranks per HD, natural armor +2 at 3rd and every three levels, one size larger at 5th, 9th, 13th and 17th (+4 Str, −2 Dex, +2 Con, +2 natural armor each), +1 to an ability at 5th, 10th, 15th and 20th, and a drake power at 3rd, 7th, 11th, 15th and 19th plus the subtype's free power.</p>
     {:else}
-      <p>Hit dice come from the HD field (or the master's level when it's 0). BAB, saves, skill ranks and feats follow the creature type ({CREATURE_PROGRESSION[x.creatureType].label}). Record evolutions and other extras as specials or notes.</p>
+      <p>Hit dice come from the HD field (or the master's level when it's 0). BAB, saves, skill ranks and feats follow the creature type ({CREATURE_PROGRESSION[x.creatureType].label}). Cohorts from Leadership are full characters: build them as a separate character in the roster.</p>
     {/if}
     <p>Secondary natural attacks take −5 and add half Str to damage. Hit points use the average roll per hit die.</p>
     <BreakdownList
@@ -77,6 +116,7 @@
         <div class="flex flex-wrap items-end gap-2 print:hidden">
           <Field label="Name" class="w-36"><input class="font-semibold" bind:value={x.name} aria-label="Companion name" /></Field>
           <Field label="Kind" class="w-40"><Select bind:value={x.kind} options={COMPANION_KINDS.map((k) => ({ value: k, label: KIND_LABELS[k] }))} aria-label="Kind" /></Field>
+          <Field label="Label" class="w-32"><Combobox bind:value={x.label} suggestions={COMPANION_LABELS[x.kind] ?? []} placeholder="Mount…" aria-label="Companion label" /></Field>
           <Field label="Master class" class="w-36">
             <Select
               bind:value={x.masterClassId}
@@ -104,18 +144,59 @@
             </div>
             <span class="field-label">Good saves</span>
           </div>
-          {#if x.kind === 'eidolon' || x.kind === 'other'}
-            <Field label="HD (0 = level)" class="w-24"><NumInput bind:value={x.hd} aria-label="Hit dice" /></Field>
+          {#if x.kind !== 'familiar'}
+            <Field label="HD (0 = table)" class="w-24"><NumInput bind:value={x.hd} aria-label="Hit dice" /></Field>
           {/if}
           <Field label="Size" class="w-28"><Select bind:value={x.size} options={opts(SIZES)} aria-label="Companion size" /></Field>
           <Field label="Species" class="w-32"><input bind:value={x.species} placeholder="Wolf, cat…" aria-label="Species" /></Field>
           <Field label="Speed" class="w-32"><input bind:value={x.speed} aria-label="Speed" /></Field>
+          {#if x.kind === 'animal' || x.kind === 'familiar'}
+            <DbPicker kind="companions" label="Find species" filter={(e) => e.kind === x.kind} onpick={applySpecies}>
+              {#snippet detail(e)}{e.size} · {e.speed || '—'} · Str {e.abilities.str} Dex {e.abilities.dex} Con {e.abilities.con} · {e.attacks.map((a) => `${a.name} ${a.damage}`).join(', ') || 'no attacks'}{/snippet}
+            </DbPicker>
+          {/if}
         </div>
+        {#if x.kind === 'eidolon'}
+          <div class="flex flex-wrap items-end gap-2 print:hidden">
+            <label class="flex h-7 items-center gap-1 text-sm"><input type="checkbox" bind:checked={x.eidolon.unchained} /> Unchained</label>
+            {#if x.eidolon.unchained}
+              <Field label="Subtype" class="w-32"><Combobox bind:value={x.eidolon.subtype} suggestions={EIDOLON_SUBTYPES} placeholder="Angel…" aria-label="Eidolon subtype" /></Field>
+            {/if}
+            <Field label="Base form" class="w-32">
+              <Select bind:value={x.eidolon.baseForm} options={[{ value: '' as const, label: '—' }, ...opts(EIDOLON_BASE_FORMS)]} aria-label="Base form" />
+            </Field>
+            <button type="button" class="btn" disabled={!x.eidolon.baseForm} title="Copy the base form's size, speed, saves, attacks and ability scores" onclick={applyBaseForm}>Apply base form</button>
+            <Field label="Pool ±" class="w-16"><NumInput bind:value={x.eidolon.poolMisc} signed aria-label="Evolution pool adjustment" title="Extra Evolution feat…" /></Field>
+          </div>
+        {:else if x.kind === 'phantom'}
+          <div class="flex flex-wrap items-end gap-2 print:hidden">
+            <Field label="Emotional focus" class="w-36">
+              <Select value={x.phantom.focus} onchange={setFocus} options={[{ value: '', label: '—' }, ...opts(Object.keys(PHANTOM_FOCI))]} aria-label="Emotional focus" />
+            </Field>
+            <Field label="Form" class="w-32">
+              <Select bind:value={x.phantom.form} options={opts(['ectoplasmic', 'incorporeal'] as const)} aria-label="Manifested form" />
+            </Field>
+          </div>
+        {:else if x.kind === 'drake'}
+          <div class="flex flex-wrap items-end gap-2 print:hidden">
+            <Field label="Subtype" class="w-32"><Select bind:value={x.drake.subtype} options={[{ value: '', label: '—' }, ...opts(DRAKE_SUBTYPES)]} aria-label="Drake subtype" /></Field>
+          </div>
+        {/if}
       {/if}
       <p class="text-sm">
         <span class="font-semibold capitalize">{x.species || KIND_LABELS[x.kind]}</span>
-        <span class="opacity-70">· {x.size} {CREATURE_PROGRESSION[x.creatureType].label.toLowerCase()} · {cd.hd} HD{x.kind === 'animal' || x.kind === 'familiar' ? ` · level ${cd.level}` : ''} · speed {x.speed || '—'}</span>
+        <span class="opacity-70">· {sizeText} {CREATURE_PROGRESSION[x.creatureType].label.toLowerCase()} · {cd.hd} HD{x.kind !== 'other' ? ` · level ${cd.level}` : ''} · speed {x.speed || '—'}{cd.naturalDamage ? ` · slam ${cd.naturalDamage}` : ''}{x.kind === 'phantom' ? ` · ${x.phantom.form}` : ''}</span>
       </p>
+      {#if cd.pool}
+        <div class="flex flex-wrap items-center gap-x-3 text-sm">
+          <span><span class="field-label">Evolution pool</span> <strong class:text-accent={cd.pool.spent > cd.pool.total}>{cd.pool.spent}/{cd.pool.total}</strong></span>
+          <span><span class="field-label">Max attacks</span> <strong class:text-accent={x.attacks.length > (cd.maxAttacks ?? 99)}>{x.attacks.length}/{cd.maxAttacks}</strong></span>
+          {#if cd.freeEvolutions.length}<span class="opacity-70">free: {cd.freeEvolutions.join(', ')}</span>{/if}
+        </div>
+      {/if}
+      {#if cd.powers !== null}
+        <div class="text-sm"><span class="field-label">Drake powers</span> <strong class:text-accent={x.drake.powers.length > cd.powers}>{x.drake.powers.length}/{cd.powers}</strong></div>
+      {/if}
 
       <div class="grid items-start gap-3 lg:grid-cols-2 print:grid-cols-2">
         <div class="flex flex-col gap-2">
@@ -157,9 +238,9 @@
               {#each ABILITIES as a (a)}<NumInput bind:value={x.abilities[a].misc} signed aria-label="{a} misc" />{/each}
             </div>
           {/if}
-          {#if editing && x.kind === 'animal'}
+          {#if editing && cd.increaseLevels.length}
             <div class="flex flex-wrap items-end gap-2 print:hidden">
-              {#each ANIMAL_INCREASE_LEVELS as lvl, i (lvl)}
+              {#each cd.increaseLevels as lvl, i (lvl)}
                 <Field label="Level {lvl} +1" class="w-20">
                   <Select bind:value={x.abilityIncreases[i]} options={[{ value: null, label: '—' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} aria-label="Ability increase at level {lvl}" />
                 </Field>
@@ -312,6 +393,31 @@
             {/snippet}
           </DynamicTable>
 
+          {#if x.kind === 'eidolon'}
+            <div class="subhead">Evolutions</div>
+            <DynamicTable bind:items={x.eidolon.evolutions} cols={3} onadd={() => x.eidolon.evolutions.push(make.evolution())} addLabel="Evolution" empty="Spend the pool on evolutions.">
+              {#snippet head()}
+                <th>Evolution</th>
+                <th class="text-center" title="Evolution points">EP</th>
+                <th>Notes</th>
+              {/snippet}
+              {#snippet row(ev)}
+                <td data-label="Evolution" class="cell-grow align-middle"><input class="w-full font-semibold" bind:value={ev.name} aria-label="Evolution name" /></td>
+                <td data-label="EP" class="cell-fit w-12 align-middle"><NumInput class="h-6" bind:value={ev.cost} aria-label="{ev.name} cost" /></td>
+                <td data-label="Notes" class="align-middle"><input class="w-full" bind:value={ev.notes} placeholder="claws, +2 Str…" aria-label="Notes" /></td>
+              {/snippet}
+              {#snippet tools()}
+                <DbPicker kind="evolutions" label="Find evolution" onpick={(e) => x.eidolon.evolutions.push({ ...make.evolution(), name: e.name, cost: e.cost })}>
+                  {#snippet detail(e)}{e.cost} EP · {e.summary}{/snippet}
+                </DbPicker>
+              {/snippet}
+            </DynamicTable>
+          {:else if x.kind === 'drake'}
+            <div class="flex flex-col">
+              <span class="field-label">Drake powers</span>
+              <Chips bind:items={x.drake.powers} suggestions={DRAKE_POWERS} placeholder="Add power…" label="Add drake power" />
+            </div>
+          {/if}
           <div class="flex flex-col">
             <span class="field-label">Feats{cd.feats !== null ? ` (${x.feats.length}/${cd.feats})` : ''}</span>
             <Chips bind:items={x.feats} placeholder="Add feat…" label="Add feat" />

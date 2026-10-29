@@ -356,7 +356,15 @@ export interface SectionUi {
   printHidden: boolean;
 }
 
-export const COMPANION_KINDS = ['animal', 'familiar', 'eidolon', 'other'] as const;
+export const COMPANION_KINDS = ['animal', 'familiar', 'eidolon', 'phantom', 'drake', 'other'] as const;
+export const EIDOLON_BASE_FORMS = ['biped', 'quadruped', 'serpentine', 'aquatic', 'avian', 'tauric'] as const;
+export type EidolonBaseForm = (typeof EIDOLON_BASE_FORMS)[number];
+
+export interface EidolonEvolution extends Identified {
+  name: string;
+  cost: number;
+  notes: string;
+}
 export type CompanionKind = (typeof COMPANION_KINDS)[number];
 export const CREATURE_TYPES = ['animal', 'magicalBeast', 'outsider', 'dragon', 'vermin', 'other'] as const;
 export type CreatureType = (typeof CREATURE_TYPES)[number];
@@ -385,6 +393,8 @@ export interface CompanionSkill extends Identified {
 export interface Companion extends Identified {
   name: string;
   kind: CompanionKind;
+  /** Shown after the kind in the title: "Mount", "Divine bond", "Plant companion"… */
+  label: string;
   species: string;
   /** Small 3:4 JPEG data URL. */
   portrait: string | null;
@@ -395,13 +405,16 @@ export interface Companion extends Identified {
   creatureType: CreatureType;
   /** Good saves for the creature type (editable for outsiders etc.). */
   goodSaves: Save[];
-  /** Hit dice for eidolons and other companions (0 = follow the master's level). */
+  /** Hit dice override (0 = the progression table, or the master's level for other creatures). */
   hd: number;
   size: Size;
   speed: string;
   abilities: Record<Ability, { base: number; misc: number; temp: number }>;
-  /** Animal companion ability score increases at levels 4, 9 and 14. */
+  /** +1 ability score increases at the table's levels (animal 4/9/14, phantom 5/10/15, drake 5/10/15/20). */
   abilityIncreases: (Ability | null)[];
+  eidolon: { unchained: boolean; baseForm: EidolonBaseForm | ''; subtype: string; evolutions: EidolonEvolution[]; poolMisc: number };
+  phantom: { focus: string; form: 'ectoplasmic' | 'incorporeal' };
+  drake: { subtype: string; powers: string[] };
   naturalArmor: number;
   armorBonus: number;
   acMisc: number;

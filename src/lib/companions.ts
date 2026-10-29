@@ -6,26 +6,34 @@ import { KIND_LABELS } from './rules/companions';
 
 export const companionSectionId = (comp: Companion) => `companion-${comp.id}`;
 
-/** "Hati (Animal companion)". */
-export const companionTitle = (comp: Companion) => `${comp.name.trim() || 'Unnamed'} (${KIND_LABELS[comp.kind]})`;
+/** "Hati (Animal companion · Mount)". */
+export const companionTitle = (comp: Companion) => `${comp.name.trim() || 'Unnamed'} (${KIND_LABELS[comp.kind]}${comp.label.trim() ? ` · ${comp.label.trim()}` : ''})`;
 
-/** Kinds the character's classes suggest: druids and rangers get animals, wizards familiars, summoners eidolons. */
-function guessKind(c: Character): { kind: CompanionKind; classId: string | null } {
+/** What the character's classes suggest: druids get animals, cavaliers mounts, wizards familiars, summoners eidolons… */
+export function guessKind(c: Character): { kind: CompanionKind; classId: string | null; label: string; unchained: boolean } {
   // Only classes the character has levels in.
   const has = (re: RegExp) =>
     c.classes.find((k) => c.levels.some((l) => l.classId === k.id) && re.test(k.presetId ?? k.name.toLowerCase()));
-  const animal = has(/druid|ranger|hunter|cavalier|paladin/);
-  if (animal) return { kind: 'animal', classId: animal.id };
+  const pick = (kind: CompanionKind, k: { id: string } | undefined, label = '', unchained = false) => ({ kind, classId: k?.id ?? null, label, unchained });
+  const drake = has(/drake/);
+  if (drake) return pick('drake', drake);
+  const phantom = has(/spiritualist/);
+  if (phantom) return pick('phantom', phantom);
+  const summoner = has(/summoner/);
+  if (summoner) return pick('eidolon', summoner, '', /unchained/.test(summoner.presetId ?? summoner.name.toLowerCase()));
+  const mount = has(/cavalier|samurai|paladin/);
+  if (mount) return pick('animal', mount, 'Mount');
+  const animal = has(/druid|ranger|hunter/);
+  if (animal) return pick('animal', animal);
   const familiar = has(/wizard|witch|arcanist|sorcerer|magus|shaman/);
-  if (familiar) return { kind: 'familiar', classId: familiar.id };
-  const eidolon = has(/summoner/);
-  if (eidolon) return { kind: 'eidolon', classId: eidolon.id };
-  return { kind: 'animal', classId: c.classes[0]?.id ?? null };
+  if (familiar) return pick('familiar', familiar, /shaman/.test(familiar.presetId ?? familiar.name.toLowerCase()) ? 'Spirit animal' : '');
+  return pick('animal', c.classes[0]);
 }
 
 export function addCompanion(c: Character): Companion {
-  const { kind, classId } = guessKind(c);
-  const comp = { ...make.companion(kind), masterClassId: classId };
+  const { kind, classId, label, unchained } = guessKind(c);
+  const comp = { ...make.companion(kind), masterClassId: classId, label };
+  comp.eidolon.unchained = unchained;
   c.companions.push(comp);
   return comp;
 }
