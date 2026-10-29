@@ -15,8 +15,12 @@
   });
 
   const time = (t: number) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-  const partsText = (r: { parts: { source: string; value: number }[]; modifier: number }) =>
-    r.parts.length ? r.parts.map((p) => `${fmt(p.value)} ${p.source}`).join(' · ') : r.modifier ? `${fmt(r.modifier)} modifier` : '';
+  // Everything a critical multiplies sits in brackets, followed by the multiplier.
+  const partsText = (r: { parts: { source: string; value: number }[]; modifier: number; multiplier?: number }) => {
+    const list = r.parts.length ? r.parts.map((p) => `${fmt(p.value)} ${p.source}`).join(' · ') : r.modifier ? `${fmt(r.modifier)} modifier` : '';
+    if (!list) return '';
+    return r.multiplier && r.multiplier !== 1 ? `(${list}) ×${r.multiplier}` : list;
+  };
 </script>
 
 {#if rolls.open}
@@ -60,7 +64,7 @@
                 title="d{d.sides}">{d.sign < 0 ? '-' : ''}{d.value}</span
               >
             {/each}
-            <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}{#if r.multiplier && r.multiplier !== 1}<span class="ml-1 text-sm opacity-70">×{r.multiplier}</span>{/if}</span>
+            <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}</span>
           </div>
           {#if partsText(r)}<div class="text-xs opacity-70">{partsText(r)}</div>{/if}
         </li>

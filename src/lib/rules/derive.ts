@@ -477,7 +477,7 @@ export function derive(c: Character): Derived {
     const offset = attackBreakdown.total - bab;
     const dmgMod = w.damageAbility === 'none' ? 0 : Math.floor(mods[w.damageAbility] * w.damageMultiplier);
     const damageBreakdown = sumTotal([
-      base('damage', dmgMod, w.damageAbility === 'none' ? 'No ability' : `${w.damageAbility.toUpperCase()}${w.damageMultiplier !== 1 ? ` ×${w.damageMultiplier}` : ''}`),
+      base('damage', dmgMod, w.damageAbility === 'none' ? 'No ability' : `${w.damageAbility.toUpperCase()}${w.damageMultiplier !== 1 ? ` (×${w.damageMultiplier})` : ''}`),
       { key: 'damage', value: w.enhancement, type: 'enhancement', source: 'Enhancement' },
       base('damage', w.damageMisc, 'Misc'),
       ...set.list(['damage', `damage.${w.kind}`]),
