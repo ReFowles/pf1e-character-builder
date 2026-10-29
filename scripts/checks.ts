@@ -135,11 +135,13 @@ await expectStat('AC', '21');
 await expectText('Max HP', hpMax(), /^59$/);
 
 console.log('— export and re-import');
+await page.locator('nav').getByRole('button', { name: 'Settings' }).click();
 const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export JSON' }).click()]);
 const path = await download.path();
 const chooser = page.waitForEvent('filechooser');
 await page.getByRole('button', { name: 'Import JSON' }).click();
 await (await chooser).setFiles(path!);
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
 await page.waitForTimeout(300);
 const options = await page.locator('#app > header .select-list').first().locator('[role=option]').allTextContents().then((t) => t.map((x) => x.trim()));
 const twoValeros = options.filter((o) => o === 'Valeros').length === 2;
@@ -404,12 +406,11 @@ await page.getByRole('dialog', { name: 'Info' }).getByRole('button', { name: 'Ne
 await page.getByRole('dialog', { name: 'Dice log' }).getByRole('button', { name: 'Done' }).click();
 check('walkthrough dismissed and remembered', (await page.getByRole('dialog').count()) === 0 && (await page.evaluate(() => JSON.parse(localStorage.getItem('pf1e:prefs') ?? '{}').tourSeen)) === true);
 
-console.log('— small-screen menu');
+console.log('— small-screen header');
 await page.setViewportSize({ width: 390, height: 800 });
-check('header buttons hidden on small screens', !(await page.locator('#app > header').getByRole('button', { name: 'Export JSON' }).first().isVisible()));
-await page.getByRole('button', { name: 'Menu' }).click();
-check('menu holds Export JSON', await page.getByRole('menuitem', { name: 'Export JSON' }).isVisible());
-await page.keyboard.press('Escape');
+check('import and export are not in the header', (await page.locator('#app > header').getByRole('button', { name: /JSON/ }).count()) === 0);
+check('no hamburger menu', (await page.getByRole('button', { name: 'Menu', exact: true }).count()) === 0);
+check('print and about stay in the header', await page.locator('#app > header').getByRole('button', { name: 'Print / PDF' }).isVisible());
 await page.setViewportSize({ width: 1280, height: 900 });
 
 if (errors.length) {

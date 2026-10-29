@@ -5,11 +5,8 @@
 
   let about: AboutDialog;
 
-  let menu: HTMLDivElement;
-  // Shared by the wide button row and the small-screen ☰ menu.
+  // Import and export live in Settings → Help & data.
   const ACTIONS: { label: string; title?: string; run: () => void }[] = [
-    { label: 'Import JSON', run: () => app.importJson() },
-    { label: 'Export JSON', run: () => app.exportJson() },
     { label: 'Print / PDF', title: 'Print, or choose “Save as PDF” in the print dialog', run: () => print() },
     { label: 'About', run: () => about.open() },
   ];
@@ -39,24 +36,7 @@
   </button>
   <div class="ml-auto flex flex-wrap gap-2">
     {#each ACTIONS as a (a.label)}
-      <button type="button" class="btn hidden sm:inline-block" title={a.title} onclick={a.run}>{a.label}</button>
-    {/each}
-    <button type="button" class="btn p-1.5 sm:hidden" aria-label="Menu" title="Menu" popovertarget="app-menu">
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M3.5 6h13M3.5 10h13M3.5 14h13" /></svg>
-    </button>
-  </div>
-  <div bind:this={menu} id="app-menu" popover="auto" role="menu" class="app-menu">
-    {#each ACTIONS as a (a.label)}
-      <button
-        type="button"
-        role="menuitem"
-        class="rounded-sm px-3 py-1.5 text-left text-sm hover:bg-ink/10"
-        title={a.title}
-        onclick={() => {
-          menu.hidePopover();
-          a.run();
-        }}>{a.label}</button
-      >
+      <button type="button" class="btn" title={a.title} onclick={a.run}>{a.label}</button>
     {/each}
   </div>
 </header>

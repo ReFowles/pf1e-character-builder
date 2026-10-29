@@ -155,13 +155,6 @@
   .dyn-table td > .select-btn {
     @apply w-full;
   }
-  /* Small-screen header menu (TopBar ☰). */
-  .app-menu {
-    @apply fixed top-12 right-3 left-auto m-0 flex-col rounded-md border border-ink/30 bg-paper p-1 text-ink shadow-lg;
-  }
-  .app-menu:popover-open {
-    @apply flex;
-  }
   /* Tab strip: scrolls sideways on narrow screens without a visible bar. */
   .tab-strip {
     scrollbar-width: none;
