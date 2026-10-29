@@ -4,21 +4,25 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 
 ## Features
 
-- **Tabs: Core, Character and Spells** (plus optional Mythic). The layout follows `character-sheet-mockup.pdf`. On narrow screens the sections stack in the mockup's numbered order.
+- **Tabs: Core and Character** (plus optional Spells, Companions and Mythic). The layout follows `character-sheet-mockup.pdf`. On narrow screens the sections stack in one column; drag them into your own order under **Settings → Layout & print**.
 - **Live calculations.** Ability scores, size (including Enlarge/Reduce Person, which also scale weapon dice), class levels, armor, conditions and macros flow into AC, saves, attacks, CMB/CMD, skills, HP, carrying capacity and spell DCs. Hover a number to see its breakdown.
 - **Macros.** Toggle Power Attack, Flanking, Heroism, Haste and more from a built-in library, or write your own effects against any stat key. Values can be formulas such as `-1 - floor(@bab / 4)`. Always-on feats (Improved Initiative, Iron Will, Toughness…) aren't macros: picking the feat adds its bonus to the right section.
 - **Rules database.** Search more than 3,000 spells, feats, weapons, armor, gear and magic items, then add them to the sheet. Picking an entry copies it into the character, so you can edit it freely.
 - **Wealth tracking.** Every item, weapon, armor piece and magic item has a gp value. Equipment totals carried weight and overall character wealth.
 - **Mythic (optional).** Turn on the Mythic tab in **Settings** to track tier, path, mythic power, surge die (with feat upgrades) and Mythic Paragon. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
 - **Companions (optional).** Turn on the Companions tab in **Settings** for familiars, animal companions (and mounts, plant or vermin companions), eidolons (chained and unchained, with base forms and an evolution pool), phantoms (emotional focus, ectoplasmic or incorporeal), drakes and other creatures. Each follows its progression table from the master's class level; a species picker fills in animal companion and familiar stat blocks.
-- **Spells.** Each casting class gets its own "[Class] Spells" section; add more (including "Other" for racial or item spells) from **Settings**.
+- **Spells (optional).** Turn on the Spells tab in **Settings**. Each casting class gets its own "[Class] Spells" section; add more (including "Other" for racial or item spells) from **Settings**.
 - **Dice.** Click initiative, saves, attacks, skills, ability modifiers or caster level to roll d20 plus the sheet's bonus; weapons roll damage and criticals. A roll log (chat-style drawer with a quick tray for the seven standard dice) keeps the history with each roll's breakdown. Optional 3D physics dice via dice-box in Settings.
 - **Campaign Notes.** A rich text page (headings, lists, task lists, tables, links) saved with the character; left out of print unless you turn it on in Settings.
-- **First visit.** A two-step walkthrough points at the Edit and ℹ buttons once per device; replay it from Settings → Help.
+- **First visit.** A short walkthrough points at the Edit and ℹ buttons, the dice log and the Settings tab once per device; replay it from Settings → Help.
 - **Edit mode and info.** Each section's pencil button reveals its add, reorder, remove and database-search controls; values are always editable. The **ℹ** button collects every breakdown and rule note that's otherwise only in hover tooltips, so it works on phones too.
 - **Configurable.** Collapse any section, or hide it on screen or in print (the gear tab, **Settings**). Dark mode follows your system until you toggle it in Settings; printing always uses the light theme. Printed dynamic tables include one blank row for handwritten additions.
 - **Multiple characters.** Create, duplicate and switch between characters. Use **Export JSON** for backups.
 - **Offline.** It's a PWA: after the first visit it runs with no network connection.
+
+## TODO
+
+- **Desktop section layout.** Let users place each section in the left column, right column or full width, and order them, on desktop (and so in print). Keep the paired rows (Character Info with Currency, Hit Points with Ability Scores, Bio and Traits beside Portrait) as locked groups. Core's spillover layout (`src/lib/ui/spillover.ts`) already works on this left/right/wide model; Character and Mythic would move off their fixed `grid-template-areas`. Print breaks need checking with `pnpm shots --pdf`.
 
 ## Development
 

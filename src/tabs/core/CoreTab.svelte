@@ -16,8 +16,8 @@
 <!--
   Two columns on large screens and in print: the left sections stack beside
   .core-right, and once it ends the remaining ones span both columns
-  (lib/ui/spillover.ts). On small screens everything flows in the mockup's
-  numbered order (see .core in app.css).
+  (lib/ui/spillover.ts). On small screens everything flows in one column in
+  the order set under Settings → Layout & print (see .core in app.css).
 -->
 <div class="core" use:spillover={{ keepNarrow: 2 }}>
   <div class="core-row core-row-info">

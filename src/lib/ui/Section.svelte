@@ -34,6 +34,11 @@
     style = '',
   }: Props = $props();
   const ui = $derived(app.section(id));
+  // Position on small screens (the .core and .sheet-grid layouts read --m-order).
+  const mobileOrder = $derived.by(() => {
+    const tab = SECTION_BY_ID[id]?.tab;
+    return tab ? app.mobileOrder(tab).indexOf(id) + 1 : undefined;
+  });
 
   let editing = $state(false);
   setSectionContext({
@@ -51,6 +56,7 @@
   <section
     data-section={id}
     style:--area={id}
+    style:--m-order={mobileOrder}
     {style}
     class={['sheet-section', cls, { 'screen-hidden': ui.hidden, 'print:hidden': ui.printHidden, collapsed: ui.collapsed, editing }]}
   >

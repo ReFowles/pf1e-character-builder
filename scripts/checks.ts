@@ -445,6 +445,19 @@ await page.setViewportSize({ width: 390, height: 800 });
 check('import and export are not in the header', (await page.locator('#app > header').getByRole('button', { name: /JSON/ }).count()) === 0);
 check('no hamburger menu', (await page.getByRole('button', { name: 'Menu', exact: true }).count()) === 0);
 check('print stays in the header', await page.locator('#app > header').getByRole('button', { name: 'Print / PDF' }).isVisible());
+
+console.log('— small-screen section order');
+const top = async (id: string) => (await page.locator(`[data-section="${id}"]`).boundingBox())!.y;
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+check('currency comes last on small screens', (await top('currency')) > (await top('special')));
+await openSettings();
+await page.getByRole('button', { name: 'Move Special Abilities (small-screen order)' }).press('ArrowUp');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+check('reordered section moves up', (await top('special')) < (await top('defense')));
+await openSettings();
+await page.getByRole('button', { name: 'Reset layout' }).click();
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+check('reset restores the default order', (await top('special')) > (await top('defense')));
 await page.setViewportSize({ width: 1280, height: 900 });
 
 console.log('— gestalt');

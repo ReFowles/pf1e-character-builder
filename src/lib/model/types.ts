@@ -554,5 +554,7 @@ export interface Character {
   mythic: Mythic;
   ui: {
     sections: Record<string, SectionUi>;
+    /** Section ids per tab in their small-screen order; missing ids follow in default order. */
+    mobileOrder: Record<string, string[]>;
   };
 }

@@ -8,10 +8,9 @@ export interface SectionDef {
   tab: Tab;
 }
 
-/** Every fixed section, in mobile (mockup-numbered) order per tab. Spell sections are per block (lib/spellBlocks.ts). */
+/** Every fixed section, in default mobile order per tab (users can reorder; see app.mobileOrder). Spell sections are per block (lib/spellBlocks.ts). */
 export const SECTIONS: SectionDef[] = [
   { id: 'info', title: 'Character Info', tab: 'core' },
-  { id: 'currency', title: 'Currency', tab: 'core' },
   { id: 'abilities', title: 'Ability Scores', tab: 'core' },
   { id: 'classes', title: 'Class Info', tab: 'core' },
   { id: 'skills', title: 'Skills', tab: 'core' },
@@ -21,6 +20,7 @@ export const SECTIONS: SectionDef[] = [
   { id: 'offense', title: 'Offense', tab: 'core' },
   { id: 'defense', title: 'Defense', tab: 'core' },
   { id: 'special', title: 'Special Abilities', tab: 'core' },
+  { id: 'currency', title: 'Currency', tab: 'core' },
   { id: 'bio', title: 'Character Bio', tab: 'character' },
   { id: 'portrait', title: 'Portrait', tab: 'character' },
   { id: 'traits', title: 'Traits', tab: 'character' },

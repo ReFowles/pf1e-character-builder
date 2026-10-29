@@ -1,7 +1,8 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { app, type Tab } from '../../lib/state.svelte';
   import { theme } from '../../lib/theme.svelte';
-  import { SECTIONS, TAB_LABELS } from '../../lib/sections';
+  import { SECTION_BY_ID, SECTIONS, TAB_LABELS } from '../../lib/sections';
   import { addSpellBlock, removeSpellBlock, spellSectionId, spellSectionTitle } from '../../lib/spellBlocks';
   import { addCompanion, companionSectionId, companionTitle, removeCompanion } from '../../lib/companions';
   import Section from '../../lib/ui/Section.svelte';
@@ -22,7 +23,10 @@
       ? c.spellcasting.map((b) => ({ id: spellSectionId(b), title: spellSectionTitle(c, b) }))
       : tab === 'companions'
         ? c.companions.map((x) => ({ id: companionSectionId(x), title: companionTitle(x) }))
-        : SECTIONS.filter((s) => s.tab === tab);
+        : app.mobileOrder(tab).map((id) => SECTION_BY_ID[id]);
+  /** Tabs whose fixed sections can be reordered for small screens. */
+  const reorderable = (tab: Tab) => tab !== 'spells' && tab !== 'companions' && SECTIONS.filter((s) => s.tab === tab).length > 1;
+  let drag = $state<{ tab: Tab; from: number; over: number } | null>(null);
   const sheetTabs = $derived(app.tabs.filter((t) => t !== 'settings'));
 </script>
 
@@ -153,13 +157,14 @@
       <button
         type="button"
         class="head-btn px-2"
-        title="Show every section on screen and in print again"
+        title="Show every section on screen and in print again, in the default order"
         onclick={() => {
           c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
+          c.ui.mobileOrder = {};
         }}>Reset layout</button
       >
     {/snippet}
-    <p class="text-sm opacity-70">Hide a section on screen or leave it out of the printed sheet. Collapse sections with the chevron in their header.</p>
+    <p class="text-sm opacity-70">Hide a section on screen or leave it out of the printed sheet. Collapse sections with the chevron in their header. Drag ⠿ (or focus it and press ↑/↓) to change the order on phones and small screens.</p>
     <div class="grid gap-3 sm:grid-cols-2">
       {#each sheetTabs as tab (tab)}
         <table class="w-full self-start text-sm">
@@ -183,10 +188,48 @@
                 />
               </td>
             </tr>
-            {#each rowsFor(tab) as s (s.id)}
+            {#each rowsFor(tab) as s, i (s.id)}
               {@const ui = app.section(s.id)}
-              <tr class="border-b border-ink/10">
-                <td>{s.title}</td>
+              <tr
+                class={['border-b border-ink/10', drag?.tab === tab && drag.from === i && 'opacity-40', drag?.tab === tab && drag.over === i && drag.from !== i && 'bg-accent/15']}
+                ondragover={(e) => {
+                  if (drag?.tab !== tab) return;
+                  e.preventDefault();
+                  drag.over = i;
+                }}
+                ondrop={(e) => {
+                  e.preventDefault();
+                  if (drag?.tab === tab) app.moveSection(tab, drag.from, i);
+                  drag = null;
+                }}
+              >
+                <td>
+                  {#if reorderable(tab)}
+                    <button
+                      type="button"
+                      class="icon-btn mr-1 size-5 cursor-grab"
+                      draggable="true"
+                      aria-label="Move {s.title} (small-screen order)"
+                      title="Drag to change the order on small screens"
+                      ondragstart={(e) => {
+                        drag = { tab, from: i, over: i };
+                        e.dataTransfer!.effectAllowed = 'move';
+                        e.dataTransfer!.setData('text/plain', s.id);
+                        const row = (e.currentTarget as HTMLElement).closest('tr');
+                        if (row) e.dataTransfer!.setDragImage(row, 0, 0);
+                      }}
+                      ondragend={() => (drag = null)}
+                      onkeydown={(e) => {
+                        const by = e.key === 'ArrowUp' ? -1 : e.key === 'ArrowDown' ? 1 : 0;
+                        if (!by) return;
+                        e.preventDefault();
+                        app.moveSection(tab, i, i + by);
+                        const btn = e.currentTarget;
+                        tick().then(() => btn.focus());
+                      }}>⠿</button
+                    >
+                  {/if}{s.title}
+                </td>
                 <td class="text-center">
                   <input type="checkbox" aria-label="Show {s.title} on screen" checked={!ui.hidden} onchange={(e) => app.setSection(s.id, { hidden: !e.currentTarget.checked })} />
                 </td>

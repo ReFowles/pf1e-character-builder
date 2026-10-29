@@ -305,7 +305,7 @@
   }
 }
 
-/* --- Layout: mobile flows in mockup order, desktop/print use grid areas --- */
+/* --- Layout: mobile flows in the user's order, desktop/print use grid areas --- */
 .sheet-grid {
   display: grid;
   gap: 0.5rem;
@@ -334,7 +334,7 @@
   }
 }
 
-/* --- Core tab: two columns on large screens and print, mockup order on small --- */
+/* --- Core tab: two columns on large screens and print, user-set order on small --- */
 .core {
   display: flex;
   flex-direction: column;
@@ -344,18 +344,11 @@
 .core-row {
   display: contents;
 }
-.core [data-section='logo'] { order: 1; }
-.core [data-section='info'] { order: 2; }
-.core [data-section='currency'] { order: 3; }
-.core [data-section='abilities'] { order: 4; }
-.core [data-section='classes'] { order: 5; }
-.core [data-section='skills'] { order: 6; }
-.core [data-section='readiness'] { order: 7; }
-.core [data-section='hp'] { order: 8; }
-.core [data-section='macros'] { order: 9; }
-.core [data-section='offense'] { order: 10; }
-.core [data-section='defense'] { order: 11; }
-.core [data-section='special'] { order: 12; }
+/* Small-screen order is user-set (Settings → Layout & print); the logo stays first. */
+.core [data-section],
+.sheet-grid > [data-section] {
+  order: var(--m-order, 0);
+}
 
 @media (min-width: 1024px), print {
   /* Rows and spans are set by the spillover action (lib/ui/spillover.ts). */

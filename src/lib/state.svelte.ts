@@ -3,6 +3,7 @@ import { uid } from './model/id';
 import { normalize } from './model/normalize';
 import type { Character, SectionUi } from './model/types';
 import { derive } from './rules/derive';
+import { SECTIONS } from './sections';
 import { exportJson, parseImport, pickJsonFile } from './storage/io';
 import {
   StorageFullError,
@@ -59,6 +60,21 @@ class AppState {
 
   setSection(id: string, patch: Partial<SectionUi>) {
     this.char.ui.sections[id] = { ...this.section(id), ...patch };
+  }
+
+  /** A tab's fixed sections in small-screen order: the saved order, then any others in default order. */
+  mobileOrder(tab: Tab): string[] {
+    const ids = SECTIONS.filter((s) => s.tab === tab).map((s) => s.id);
+    const saved = (this.char.ui.mobileOrder[tab] ?? []).filter((id) => ids.includes(id));
+    return [...saved, ...ids.filter((id) => !saved.includes(id))];
+  }
+
+  moveSection(tab: Tab, from: number, to: number) {
+    const order = this.mobileOrder(tab);
+    if (from === to || to < 0 || to >= order.length) return;
+    const [id] = order.splice(from, 1);
+    order.splice(to, 0, id);
+    this.char.ui.mobileOrder[tab] = order;
   }
 
   notify(message: string) {

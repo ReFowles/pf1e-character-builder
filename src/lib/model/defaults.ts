@@ -388,6 +388,6 @@ export function newCharacter(): Character {
       spells: [],
       notes: '',
     },
-    ui: { sections: { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } } },
+    ui: { sections: { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } }, mobileOrder: {} },
   };
 }
