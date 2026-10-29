@@ -1,5 +1,7 @@
 import type { Tab } from './state.svelte';
 
+export const TAB_LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic', settings: 'Settings' };
+
 export interface SectionDef {
   id: string;
   title: string;

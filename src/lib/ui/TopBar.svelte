@@ -44,7 +44,6 @@
     <button type="button" class="btn p-1.5 sm:hidden" aria-label="Menu" title="Menu" popovertarget="app-menu">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M3.5 6h13M3.5 10h13M3.5 14h13" /></svg>
     </button>
-    <button type="button" class="btn-primary" onclick={() => (app.configOpen = true)}>Config</button>
   </div>
   <div bind:this={menu} id="app-menu" popover="auto" role="menu" class="app-menu">
     {#each ACTIONS as a (a.label)}

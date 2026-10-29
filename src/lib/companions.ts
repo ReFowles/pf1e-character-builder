@@ -1,5 +1,5 @@
 // Companions are sections on the optional Companions tab, added and removed
-// from Config (or the section's edit mode), like spellcasting sections.
+// from Settings (or the section's edit mode), like spellcasting sections.
 import { make } from './model/defaults';
 import type { Character, Companion, CompanionKind } from './model/types';
 import { KIND_LABELS } from './rules/companions';

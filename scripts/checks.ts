@@ -44,6 +44,7 @@ function check(desc: string, ok: boolean, detail = '') {
 }
 const hpMax = () => page.locator('[data-section=hp] [data-hp-max]');
 /** Toggle a section's Edit mode (structural controls only show while editing). */
+const openSettings = () => page.locator('nav').getByRole('button', { name: 'Settings', exact: true }).click();
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
 /** Choose an option from a custom Select (combobox button + popover listbox). */
 const pick = async (combo: Locator, option: string) => {
@@ -179,9 +180,8 @@ await toggleEdit('readiness');
 await expectStat('fly', '60ft');
 
 console.log('— mythic');
-await page.getByRole('button', { name: 'Config' }).click();
+await openSettings();
 await page.getByLabel('Mythic tab').check();
-await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 await page.locator('nav').getByRole('button', { name: 'Mythic', exact: true }).click();
 await pick(page.getByLabel('Tier', { exact: true }), '3');
 await pick(page.getByLabel('Path', { exact: true }), 'Champion (5 hp/tier)');
@@ -234,9 +234,9 @@ await nameInput.fill('Summoner');
 await nameInput.blur();
 await toggleEdit('classes');
 const addSpellSection = async () => {
-  await page.getByRole('button', { name: 'Config' }).click();
-  await page.locator('aside').getByRole('button', { name: '+ Spellcasting section' }).click();
-  await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+  await openSettings();
+  await page.getByRole('button', { name: '+ Spellcasting section' }).click();
+  await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 };
 await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 await addSpellSection();
@@ -262,18 +262,15 @@ await misc1.blur();
 await expectText('Other caster 1st level', other.getByText(/^DC \d+ · \d+\/day$/), /3\/day/);
 
 console.log('— dark mode');
-await page.getByRole('button', { name: 'Config' }).click();
+await openSettings();
 await page.getByLabel('Dark mode').check();
-await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 const paperBg = () => page.evaluate(() => getComputedStyle(document.querySelector('.sheet-section')!).backgroundColor);
 const darkBg = await paperBg();
 check('dark mode on screen', (await page.evaluate(() => document.documentElement.classList.contains('dark'))) && darkBg !== 'rgb(255, 253, 248)', darkBg);
 await page.emulateMedia({ media: 'print' });
 check('print stays light (white paper)', (await paperBg()) === 'rgb(255, 255, 255)', await paperBg());
 await page.emulateMedia({ media: 'screen' });
-await page.getByRole('button', { name: 'Config' }).click();
 await page.getByLabel('Dark mode').uncheck();
-await page.locator('aside').getByRole('button', { name: 'Close' }).click();
 
 console.log('— other caster with a spell table');
 await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
@@ -305,10 +302,9 @@ await eqp.click();
 check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
 
 console.log('— companions');
-await page.getByRole('button', { name: 'Config' }).click();
+await openSettings();
 await page.getByLabel(/Companions tab/).check();
-await page.locator('aside').getByRole('button', { name: '+ Companion' }).click();
-await page.locator('aside').getByRole('button', { name: 'Close' }).click();
+await page.getByRole('button', { name: '+ Companion' }).click();
 await page.locator('nav').getByRole('button', { name: 'Companions', exact: true }).click();
 const comp = page.locator('[data-section^=companion-]').first();
 await expectText('Companion title', comp.locator('.section-head h2'), /animal companion/i);

@@ -1,5 +1,5 @@
 // Each spellcasting block is its own section on the Spells tab. Blocks are
-// added and removed from Config (or from the section's edit mode).
+// added and removed from Settings (or from the section's edit mode).
 import { make } from './model/defaults';
 import type { Character, Spellcasting } from './model/types';
 import { PRESET_BY_ID } from './rules/classPresets';

@@ -121,8 +121,8 @@
 
 <Section id="classes" editable>
   {#snippet info()}
-    <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Config).</p>
-    <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Config says so. Each level adds at least 1 HP after Con.</p>
+    <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Settings).</p>
+    <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Settings say so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
   {/snippet}
@@ -137,7 +137,7 @@
       <div class="flex items-center justify-end gap-1">
         <NumInput class="w-28 text-right" bind:value={c.xp.current} aria-label="Current experience" />
         <span class="opacity-60">/</span>
-        <span class="tabular-nums" title="{c.xp.track} track (change in Config)">{d.xpNext?.toLocaleString() ?? '—'}</span>
+        <span class="tabular-nums" title="{c.xp.track} track (change in Settings)">{d.xpNext?.toLocaleString() ?? '—'}</span>
       </div>
       <span class="field-label">
         Experience
@@ -263,7 +263,7 @@
               </td>
               <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
-                  <span class="text-xs opacity-60" title="Max HP at 1st level (change in Config)">max</span>
+                  <span class="text-xs opacity-60" title="Max HP at 1st level (change in Settings)">max</span>
                 {:else}
                   <NumInput bind:value={l.hpRoll} aria-label="HP rolled at level {i + 1}" />
                 {/if}

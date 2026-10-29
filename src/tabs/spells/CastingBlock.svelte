@@ -220,7 +220,7 @@
     <button type="button" class="head-btn" title="Remove this spellcasting section" onclick={() => removeSpellBlock(c, b.id)}>Remove</button>
   {/snippet}
   {#snippet info()}
-    <p>Linked spell tables fill in slots by class level (or by caster level for "Other"); Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Config.</p>
+    <p>Linked spell tables fill in slots by class level (or by caster level for "Other"); Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Settings.</p>
     <p><strong>Per day</strong> = base slots + bonus spells from a high ability score + misc. Cantrips and orisons (level 0) can be cast any number of times; Prepared shows how many you can prepare.</p>
     <p><strong>Domain slots</strong> (clerics) add one spell per level that must come from a domain; they're counted separately.</p>
     <p><strong>DC</strong> = 10 + spell level + {b.ability.toUpperCase()} modifier. <strong>Pen</strong> (spell penetration) = caster level + bonuses, rolled against spell resistance. <strong>Cnc</strong> (concentration) = caster level + {b.ability.toUpperCase()} modifier + bonuses.</p>
