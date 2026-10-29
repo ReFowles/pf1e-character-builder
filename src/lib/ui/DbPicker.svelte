@@ -80,9 +80,7 @@
           <li role="option" aria-selected={i === active}>
             <button
               type="button"
-              class="flex w-full flex-col px-2 py-1 text-left hover:bg-ink/5"
-              class:bg-ink={i === active}
-              class:text-paper={i === active}
+              class={['db-option flex w-full flex-col px-2 py-1 text-left', { active: i === active }]}
               onmouseenter={() => (active = i)}
               onclick={() => pick(r)}
             >

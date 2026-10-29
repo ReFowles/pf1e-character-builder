@@ -144,7 +144,8 @@
   .select-group {
     @apply px-2 pt-1.5 text-[0.6rem] font-semibold tracking-wider uppercase opacity-60;
   }
-  .select-option.active {
+  .select-option.active,
+  .db-option.active {
     @apply bg-ink/10;
   }
   .select-option[aria-selected='true'] {
