@@ -91,6 +91,8 @@ export interface LevelEntry extends Identified {
   fcb: { kind: FcbKind; label: string; amount: string };
   /** Ids of casting classes this (prestige) level advances by one caster level. */
   spellAdvance: string[];
+  /** Second class taken at this level under the gestalt rule ('' = none); ignored while the rule is off. */
+  gestaltClassId: string;
 }
 
 /** A manual modifier entered by the user against a stat key. */
@@ -515,6 +517,8 @@ export interface Character {
   levels: LevelEntry[];
   /** Max HP at first level instead of the roll. */
   maxHpFirstLevel: boolean;
+  /** Gestalt rule: each level advances two classes, taking the better of each. */
+  gestalt: boolean;
   hp: { damage: number; temp: number; nonlethal: number };
   conditions: string[];
   speeds: Speeds;
