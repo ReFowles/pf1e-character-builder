@@ -148,13 +148,13 @@
             title="Type the number of sides (rolled instantly, no 3D)"
           />
         </div>
-      </div>
-      <div class="flex items-center justify-end gap-2">
-        <label class="flex items-center gap-1 text-sm">
-          +
-          <input class="w-14 text-right" type="number" bind:value={modifierInput} aria-label="Modifier" />
-        </label>
-        <button type="button" class="btn text-xs" disabled={!hasPending} onclick={addModifier} title="Add these dice as a group with this modifier">Add</button>
+        <div class="flex items-center justify-end gap-1.5">
+          <label class="flex items-center gap-1 text-sm">
+            +
+            <input class="w-12 text-right" type="number" bind:value={modifierInput} aria-label="Modifier" />
+          </label>
+          <button type="button" class="btn text-xs" disabled={!hasPending} onclick={addModifier} title="Add these dice as a group with this modifier">Add</button>
+        </div>
       </div>
       <div class="flex items-center gap-2">
         <span class="min-w-0 flex-1 truncate font-mono text-xs opacity-70" title={expression}>{expression || 'Choose dice above'}</span>
