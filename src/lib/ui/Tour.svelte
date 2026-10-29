@@ -44,7 +44,9 @@
     if (!ring) return null;
     const w = Math.min(320, innerWidth - 16);
     const x = Math.max(8, Math.min(ring.x + ring.w / 2 - w / 2, innerWidth - w - 8));
-    return { x, y: ring.y + ring.h + 10, w, arrow: ring.x + ring.w / 2 - x };
+    // Near the bottom of the screen (the roll log button), open the callout above the target instead.
+    const above = ring.y > innerHeight * 0.55;
+    return { x, above, y: ring.y + ring.h + 10, bottom: innerHeight - ring.y + 10, w, arrow: ring.x + ring.w / 2 - x };
   });
 </script>
 
@@ -63,10 +65,14 @@
     aria-labelledby="tour-title"
     class="fixed z-50 rounded-md border border-ink/20 bg-paper p-3 text-sm shadow-xl print:hidden"
     style:left="{callout.x}px"
-    style:top="{callout.y}px"
+    style:top={callout.above ? undefined : `${callout.y}px`}
+    style:bottom={callout.above ? `${callout.bottom}px` : undefined}
     style:width="{callout.w}px"
   >
-    <span class="absolute -top-1.5 size-3 rotate-45 border-t border-l border-ink/20 bg-paper" style:left="{callout.arrow - 6}px"></span>
+    <span
+      class={['absolute size-3 rotate-45 bg-paper', callout.above ? '-bottom-1.5 border-r border-b border-ink/20' : '-top-1.5 border-t border-l border-ink/20']}
+      style:left="{callout.arrow - 6}px"
+    ></span>
     <div class="mb-1 flex items-baseline justify-between gap-2">
       <h3 id="tour-title" class="font-display font-bold">{current.title}</h3>
       <span class="text-xs opacity-50">{tour.step + 1}/{TOUR_STEPS.length}</span>

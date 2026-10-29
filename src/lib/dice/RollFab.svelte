@@ -7,6 +7,7 @@
   type="button"
   class="fixed right-4 bottom-4 z-40 flex size-12 items-center justify-center rounded-full bg-accent text-paper shadow-lg transition-transform hover:scale-105 print:hidden"
   title="Roll log and dice"
+  data-tour="rolls"
   aria-label="Roll log{rolls.unread ? ` (${rolls.unread} new)` : ''}"
   onclick={() => rolls.toggle()}
 >

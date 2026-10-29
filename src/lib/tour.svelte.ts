@@ -20,6 +20,11 @@ export const TOUR_STEPS: TourStep[] = [
     title: 'Info',
     text: 'The ℹ button explains how a section’s numbers are worked out and collects every breakdown that is otherwise only shown on hover, so it works on phones too.',
   },
+  {
+    target: '[data-tour="rolls"]',
+    title: 'Dice log',
+    text: 'Click a number on the sheet (initiative, saves, attacks, skills, damage) to roll it. Results and their breakdowns collect here, with a quick tray for the standard dice.',
+  },
 ];
 
 class Tour {

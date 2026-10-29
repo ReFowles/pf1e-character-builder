@@ -400,7 +400,8 @@ await page.reload();
 const tourDialog = page.getByRole('dialog', { name: 'Edit mode' });
 await tourDialog.waitFor();
 await tourDialog.getByRole('button', { name: 'Next' }).click();
-await page.getByRole('dialog', { name: 'Info' }).getByRole('button', { name: 'Done' }).click();
+await page.getByRole('dialog', { name: 'Info' }).getByRole('button', { name: 'Next' }).click();
+await page.getByRole('dialog', { name: 'Dice log' }).getByRole('button', { name: 'Done' }).click();
 check('walkthrough dismissed and remembered', (await page.getByRole('dialog').count()) === 0 && (await page.evaluate(() => JSON.parse(localStorage.getItem('pf1e:prefs') ?? '{}').tourSeen)) === true);
 
 console.log('— small-screen menu');
