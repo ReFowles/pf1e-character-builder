@@ -4,6 +4,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // dice-box loads its physics worlds with relative dynamic imports; leave it unbundled in dev.
+  optimizeDeps: { exclude: ['@3d-dice/dice-box'] },
   plugins: [
     tailwindcss(),
     svelte(),
@@ -20,7 +22,7 @@ export default defineConfig({
         icons: [{ src: 'favicon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }],
       },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,svg,json,txt,woff2}'],
+        globPatterns: ['**/*.{js,css,html,svg,json,txt,woff2,wasm,png,jpg}'],
         maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
       },
     }),

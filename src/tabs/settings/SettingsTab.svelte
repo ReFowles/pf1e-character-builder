@@ -7,6 +7,9 @@
   import Section from '../../lib/ui/Section.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import AboutDialog from '../../lib/ui/AboutDialog.svelte';
+  import NumInput from '../../lib/ui/NumInput.svelte';
+  import { prefs } from '../../lib/prefs.svelte';
+  import { roll } from '../../lib/dice/rolls.svelte';
 
   let about: AboutDialog;
   const c = $derived(app.char);
@@ -135,6 +138,25 @@
         c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
       }}>Reset layout</button
     >
+  </Section>
+
+  <Section id="settings-dice" title="Dice">
+    <p class="text-sm opacity-70">Click initiative, saves, attacks, skills, ability modifiers or caster level to roll; weapons roll damage and criticals. Results go to the roll log (the d20 button in the header). Saved on this device.</p>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={prefs.dice.threeD} />
+      3D dice (physics-based, loads about 2 MB the first time)
+    </label>
+    <div class="flex flex-wrap items-end gap-3">
+      <label class="field w-28">
+        <input type="color" class="h-7 w-full cursor-pointer p-0.5" bind:value={prefs.dice.color} aria-label="Dice colour" />
+        <span class="field-label">Dice colour</span>
+      </label>
+      <label class="field w-20">
+        <NumInput bind:value={prefs.dice.scale} aria-label="Dice size (2 to 9)" />
+        <span class="field-label">Size (2–9)</span>
+      </label>
+      <button type="button" class="btn" onclick={() => roll({ title: 'Test roll', notation: '2d20+1d6' })}>Test roll</button>
+    </div>
   </Section>
 
   <Section id="settings-help" title="Help & data">

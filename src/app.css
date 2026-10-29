@@ -589,3 +589,32 @@
     content: attr(data-placeholder);
   }
 }
+
+/* Dice: rollable numbers, the header badge and the 3D dice layer. */
+@layer components {
+  .rollable {
+    @apply cursor-pointer rounded-sm transition-colors;
+  }
+  .rollable:hover,
+  .rollable:focus-visible {
+    @apply bg-accent/15 outline-none;
+  }
+  .roll-badge {
+    @apply absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[0.6rem] font-bold text-paper;
+  }
+  .dice-layer {
+    @apply pointer-events-none fixed inset-0 z-45;
+  }
+  .dice-layer canvas {
+    @apply h-full w-full;
+  }
+}
+@media print {
+  .rollable {
+    cursor: auto;
+    background: none;
+  }
+  .dice-layer {
+    display: none;
+  }
+}

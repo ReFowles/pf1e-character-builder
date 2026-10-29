@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { partsOf } from '../../lib/dice/roll';
+  import { rollable } from '../../lib/dice/rollable';
   import { make } from '../../lib/model/defaults';
   import type { SkillEntry } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
@@ -96,7 +98,7 @@
         </div>
       </td>
       <td class="text-center text-xs uppercase opacity-60">{sd.def.ability}</td>
-      <td class="text-center font-bold tabular-nums" title={breakdown(sd.breakdown)}>{fmt(sd.total)}</td>
+      <td class="text-center font-bold tabular-nums" title={breakdown(sd.breakdown)}><span use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown) }}>{fmt(sd.total)}</span></td>
       <td class="w-9"><NumInput class="h-6" bind:value={e.ranks} aria-label="{sd.label} ranks" /></td>
       <td class={['w-9', { 'print:hidden': allMiscZero }]}><NumInput class="h-6" bind:value={e.misc} signed aria-label="{sd.label} misc" /></td>
       {#if editing}

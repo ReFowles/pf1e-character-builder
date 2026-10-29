@@ -10,6 +10,7 @@
   import CompanionsTab from './tabs/companions/CompanionsTab.svelte';
   import SettingsTab from './tabs/settings/SettingsTab.svelte';
   import NotesTab from './tabs/notes/NotesTab.svelte';
+  import RollDrawer from './lib/dice/RollDrawer.svelte';
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
@@ -92,6 +93,8 @@
     </div>
   {/each}
 </main>
+
+<RollDrawer />
 
 {#if app.toast}
   <div role="status" class="fixed right-4 bottom-4 z-50 max-w-sm rounded-sm bg-ink px-4 py-2 text-sm text-paper shadow-lg print:hidden">

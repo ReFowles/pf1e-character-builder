@@ -301,6 +301,23 @@ const wasEquipped = await eqp.isChecked();
 await eqp.click();
 check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
 
+console.log('— dice');
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+const initText = await page.locator('.stat', { has: page.locator('.field-label', { hasText: /^Initiative$/ }) }).locator('.stat-value').innerText();
+await page.getByRole('button', { name: 'Roll Initiative' }).click();
+await page.getByRole('button', { name: /^Roll log/ }).click();
+const entry = page.locator('[data-roll]').last();
+await entry.waitFor();
+const total = Number(await entry.getAttribute('data-total'));
+const die = Number(await entry.getAttribute('data-dice'));
+check(`initiative roll = d20 + ${initText}`, die >= 1 && die <= 20 && total === die + Number(initText), `${die} → ${total}`);
+await page.getByRole('button', { name: 'd6', exact: true }).click();
+const tray = page.locator('[data-roll]').last();
+const d6 = Number(await tray.getAttribute('data-dice'));
+check('tray d6 in range', d6 >= 1 && d6 <= 6, String(d6));
+await expectStat('Initiative', initText); // rollables add no text
+await page.getByRole('button', { name: 'Close', exact: true }).click();
+
 console.log('— campaign notes');
 await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
 const prose = page.locator('[data-section=notes] .ProseMirror');

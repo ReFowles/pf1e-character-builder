@@ -1,4 +1,8 @@
 <script lang="ts">
+  import { partsOf } from '../../lib/dice/roll';
+  import { rollable } from '../../lib/dice/rollable';
+  import { roll } from '../../lib/dice/rolls.svelte';
+  import { damageNotation } from '../../lib/dice/notation';
   import { make } from '../../lib/model/defaults';
   import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
   import { ANIMAL_INCREASE_LEVELS, CREATURE_PROGRESSION, KIND_LABELS, deriveCompanion } from '../../lib/rules/companions';
@@ -197,13 +201,13 @@
             <Stat label="Flat-footed" value={cd.ac.flatFooted} signed={false} />
           </div>
           <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-            {#each SAVES as [s, label] (s)}<Stat {label} value={cd.saves[s]} size="md" />{/each}
+            {#each SAVES as [s, label] (s)}<Stat {label} value={cd.saves[s]} size="md" roll={{ title: `${label} save`, subtitle: x.name || 'Companion' }} />{/each}
           </div>
           <div class="grid grid-cols-4 gap-1">
             <Stat label="BAB" value={cd.bab} />
-            <Stat label="CMB" value={cd.cmb} />
+            <Stat label="CMB" value={cd.cmb} roll={{ title: 'Combat maneuver', subtitle: x.name || 'Companion' }} />
             <Stat label="CMD" value={cd.cmd} signed={false} />
-            <Stat label="Init" value={cd.init} />
+            <Stat label="Init" value={cd.init} roll={{ title: 'Initiative', subtitle: x.name || 'Companion' }} />
           </div>
           {#if editing}
             <div class="grid grid-cols-4 gap-2 sm:grid-cols-7 print:hidden">
@@ -238,11 +242,26 @@
                 <td data-label="Pri" class="w-8 text-center align-middle"><input type="checkbox" bind:checked={a.primary} aria-label="Primary attack" /></td>
                 <td data-label="Fin" class="w-8 text-center align-middle"><input type="checkbox" bind:checked={a.finesse} aria-label="Weapon Finesse" /></td>
               {/if}
-              <td data-label="Bonus" class="w-12 text-center align-middle font-bold tabular-nums" title={ad ? breakdown(ad.attack) : ''}>{ad ? fmt(ad.attack.total) : ''}</td>
+              <td data-label="Bonus" class="w-12 text-center align-middle font-bold tabular-nums" title={ad ? breakdown(ad.attack) : ''}>
+                {#if ad}<span use:rollable={{ title: `${a.name || 'Attack'} attack`, subtitle: x.name || 'Companion', bonus: ad.attack.total, parts: partsOf(ad.attack) }}>{fmt(ad.attack.total)}</span>{/if}
+              </td>
               <td data-label="Damage" class="w-28 align-middle">
                 <div class="flex items-center gap-0.5">
                   <input class="w-16 min-w-0" bind:value={a.damage} placeholder="1d6" aria-label="Damage dice" />
                   {#if ad && ad.damageBonus}<span class="font-bold whitespace-nowrap tabular-nums">{fmt(ad.damageBonus)}</span>{/if}
+                  {#if ad}
+                    <button
+                      type="button"
+                      class="icon-btn size-5 text-xs print:hidden"
+                      title="Roll damage"
+                      aria-label="Roll {a.name || 'attack'} damage"
+                      onclick={() => {
+                        const n = damageNotation(a.damage, ad.damageBonus);
+                        if (n) void roll({ title: `${a.name || 'Attack'} damage`, subtitle: x.name || 'Companion', notation: n, parts: ad.damageBonus ? [{ source: 'Damage bonus', value: ad.damageBonus }] : [] });
+                        else app.notify('Enter damage dice (e.g. 1d6) to roll.');
+                      }}>⚄</button
+                    >
+                  {/if}
                 </div>
               </td>
               <td data-label="Notes" class="align-middle"><input class="w-full" bind:value={a.notes} placeholder="trip, grab…" aria-label="Notes" /></td>

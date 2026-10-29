@@ -6,6 +6,7 @@
   import { breakdown, fmt } from '../../lib/ui/format';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
+  import { rollable } from '../../lib/dice/rollable';
 
   const PARTS = ['base', 'racial', 'level', 'enhancement', 'inherent', 'misc'] as const;
   const HEAD: Partial<Record<(typeof PARTS)[number], string>> = { enhancement: 'enh.', level: 'lvl' };
@@ -34,7 +35,7 @@
         <tr title={breakdown(s.breakdown)}>
           <th class="w-12 bg-head py-1 text-center text-sm text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
           <td class="text-xl font-bold tabular-nums">{s.score}</td>
-          <td class="text-xl font-bold tabular-nums">{fmt(s.mod)}</td>
+          <td class="text-xl font-bold tabular-nums"><span use:rollable={{ title: `${a.toUpperCase()} check`, bonus: s.hasTemp ? s.tempMod : s.mod, parts: [{ source: `${a.toUpperCase()} modifier`, value: s.hasTemp ? s.tempMod : s.mod }] }}>{fmt(s.mod)}</span></td>
           <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
           <td class="px-1"><div class="write-box h-7 leading-7 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
           <td class="px-1"><div class="write-box h-7"><NumInput class="h-full w-full bg-transparent print:invisible" bind:value={app.char.abilities[a].temp} signed aria-label="{a} temporary change" /></div></td>

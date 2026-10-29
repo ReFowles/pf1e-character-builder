@@ -17,6 +17,11 @@
   import Iterative from '../../lib/ui/Iterative.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import { partsOf } from '../../lib/dice/roll';
+  import { roll } from '../../lib/dice/rolls.svelte';
+  import { critMultiplier, damageNotation, multiplyNotation, parseNotation, formatNotation } from '../../lib/dice/notation';
+  import type { Weapon } from '../../lib/model/types';
+  import type { WeaponDerived } from '../../lib/rules/derive';
 
   function addWeapon(it: DbItem) {
     const w = it.weapon!;
@@ -41,6 +46,19 @@
   const d = $derived(app.d);
 
   const KEYS = ['attack', 'attack.melee', 'attack.ranged', 'damage', 'damage.melee', 'damage.ranged', 'cmb'];
+
+  const weaponName = (w: Weapon) => w.name || 'Weapon';
+  function rollDamage(w: Weapon, wd: WeaponDerived, crit = false) {
+    const notation = damageNotation(wd.damageDice, wd.damageBonus);
+    if (!notation) return app.notify(`Enter dice for ${weaponName(w)} (e.g. 1d8) to roll damage.`);
+    const times = crit ? critMultiplier(w.crit) : 1;
+    const n = parseNotation(notation)!;
+    void roll({
+      title: `${weaponName(w)} ${crit ? `critical ×${times}` : 'damage'}`,
+      notation: formatNotation(crit ? multiplyNotation(n, times) : n),
+      parts: partsOf(wd.damageBreakdown).map((p) => (crit ? { ...p, value: p.value * times } : p)),
+    });
+  }
 </script>
 
 <Section id="offense" editable>
@@ -58,9 +76,9 @@
   {/snippet}
   <div class="grid grid-cols-4 gap-2">
     <Stat label="BAB" value={d.bab} size="md" />
-    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" />
-    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" />
-    <Stat label="CMB" value={d.cmb} size="md" />
+    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" roll={{ title: 'Melee attack' }} />
+    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" roll={{ title: 'Ranged attack' }} />
+    <Stat label="CMB" value={d.cmb} size="md" roll={{ title: 'Combat maneuver' }} />
   </div>
 
   <EditMode>{#snippet children(editing)}
@@ -88,7 +106,9 @@
           </Field>
         {/if}
         <div class="field" title={wd ? breakdown(wd.attackBreakdown) : ''}>
-          <div class="px-1 leading-7 font-bold tabular-nums"><Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} /></div>
+          <div class="px-1 leading-7 font-bold tabular-nums">
+            <Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} onroll={wd ? { title: `${weaponName(w)} attack`, bonus: wd.attacks[0], parts: partsOf(wd.attackBreakdown) } : undefined} />
+          </div>
           <span class="field-label">Attack</span>
         </div>
         <Field label="Damage">
@@ -99,8 +119,12 @@
             </div>
           {:else}
             <!-- Dice (adjusted for size changes) with the modifier right after: 2d6+8. -->
-            <div class="px-1 leading-7 font-bold whitespace-nowrap tabular-nums" title={wd && wd.damageDice !== w.damage ? `${w.damage} before size change` : undefined}>
-              {wd?.damageDice || '—'}{wd && wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}
+            <div class="flex items-center gap-0.5 px-1 leading-7 font-bold whitespace-nowrap tabular-nums" title={wd && wd.damageDice !== w.damage ? `${w.damage} before size change` : undefined}>
+              <span>{wd?.damageDice || '—'}{wd && wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}</span>
+              {#if wd}
+                <button type="button" class="icon-btn size-5 text-xs font-normal print:hidden" title="Roll damage" aria-label="Roll {weaponName(w)} damage" onclick={() => rollDamage(w, wd)}>⚄</button>
+                <button type="button" class="icon-btn h-5 px-1 text-[0.6rem] font-normal print:hidden" title="Roll critical damage (×{critMultiplier(w.crit)})" aria-label="Roll {weaponName(w)} critical damage" onclick={() => rollDamage(w, wd, true)}>crit</button>
+              {/if}
             </div>
           {/if}
         </Field>

@@ -62,6 +62,7 @@ export interface WeaponDerived {
   damageDice: string;
   damageBonus: number;
   attackBreakdown: Total;
+  damageBreakdown: Total;
 }
 
 export interface WeightDerived {
@@ -76,6 +77,7 @@ export interface SpellcastingDerived {
   casterLevel: number;
   abilityMod: number;
   concentration: number;
+  concentrationBreakdown: Total;
   dcs: number[];
   /** Total slots per level (null = cannot cast that level). */
   slots: (number | null)[];
@@ -89,6 +91,7 @@ export interface SpellcastingDerived {
   prepared: number[];
   domainPrepared: number[];
   spellPen: number;
+  spellPenBreakdown: Total;
 }
 
 export interface WealthDerived {
@@ -465,16 +468,19 @@ export function derive(c: Character): Derived {
     ]);
     const offset = attackBreakdown.total - bab;
     const dmgMod = w.damageAbility === 'none' ? 0 : Math.floor(mods[w.damageAbility] * w.damageMultiplier);
-    const damageBonus =
-      dmgMod +
-      w.enhancement +
-      w.damageMisc +
-      set.total(['damage', `damage.${w.kind}`]).total;
+    const damageBreakdown = sumTotal([
+      base('damage', dmgMod, w.damageAbility === 'none' ? 'No ability' : `${w.damageAbility.toUpperCase()}${w.damageMultiplier !== 1 ? ` ×${w.damageMultiplier}` : ''}`),
+      { key: 'damage', value: w.enhancement, type: 'enhancement', source: 'Enhancement' },
+      base('damage', w.damageMisc, 'Misc'),
+      ...set.list(['damage', `damage.${w.kind}`]),
+    ]);
+    const damageBonus = damageBreakdown.total;
     weapons[w.id] = {
       attacks: iteratives(bab).map((b) => b + offset),
       damageDice: scaleDice(w.damage, sizeSteps),
       damageBonus,
       attackBreakdown,
+      damageBreakdown,
     };
   }
 
@@ -550,10 +556,18 @@ export function derive(c: Character): Derived {
     const domain = baseSlots.map((s, lvl) => (b.domainSlot && lvl > 0 && s !== null ? 1 : 0));
     const preparedAt = (lvl: number, isDomain: boolean) =>
       b.spells.filter((sp) => sp.level === lvl && !!sp.domain === isDomain).reduce((s, sp) => s + sp.prepared, 0);
+    const concentrationBreakdown = sumTotal([
+      base('concentration', casterLevel, 'Caster level'),
+      base('concentration', mod, b.ability.toUpperCase()),
+      base('concentration', b.concentrationMisc, 'Misc'),
+      ...set.list(['concentration']),
+    ]);
+    const spellPenBreakdown = sumTotal([base('spell.pen', casterLevel, 'Caster level'), base('spell.pen', b.spellPenMisc, 'Misc'), ...set.list(['spell.pen'])]);
     spellcasting[b.id] = {
       casterLevel,
       abilityMod: mod,
-      concentration: casterLevel + mod + b.concentrationMisc + set.total(['concentration']).total,
+      concentration: concentrationBreakdown.total,
+      concentrationBreakdown,
       dcs: baseSlots.map((_, lvl) => 10 + lvl + mod + dcBonus),
       slots: baseSlots.map((s, lvl) => (s === null ? null : s + bonus[lvl] + (misc[lvl] ?? 0))),
       base: baseSlots,
@@ -562,7 +576,8 @@ export function derive(c: Character): Derived {
       domain,
       prepared: baseSlots.map((_, lvl) => preparedAt(lvl, false)),
       domainPrepared: baseSlots.map((_, lvl) => preparedAt(lvl, true)),
-      spellPen: casterLevel + b.spellPenMisc + set.total(['spell.pen']).total,
+      spellPen: spellPenBreakdown.total,
+      spellPenBreakdown,
     };
   }
   const firstCl = Object.values(spellcasting)[0]?.casterLevel;

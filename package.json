@@ -29,6 +29,7 @@
     "yaml": "^2.9.1"
   },
   "dependencies": {
+    "@3d-dice/dice-box": "^1.1.4",
     "@tiptap/core": "^3.32.1",
     "@tiptap/extension-placeholder": "^3.32.1",
     "@tiptap/extension-table": "^3.32.1",

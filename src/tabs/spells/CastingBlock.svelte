@@ -1,6 +1,8 @@
 <script lang="ts">
   import { make } from '../../lib/model/defaults';
   import { uid } from '../../lib/model/id';
+  import { partsOf } from '../../lib/dice/roll';
+  import { rollable } from '../../lib/dice/rollable';
   import { ABILITIES, type SpellEntry, type Spellcasting } from '../../lib/model/types';
   import { SPELL_TABLES, spellRanges } from '../../lib/rules/spellTables';
   import { slug } from '../../lib/rules/derive';
@@ -264,7 +266,7 @@
         <div class="flex w-16 flex-col gap-0.5">
           {#if b.classId}
             <div class="stat" title="Class level + misc + caster level bonuses">
-              <div class="stat-value">{d?.casterLevel ?? 0}</div>
+              <div class="stat-value" use:rollable={{ title: 'Caster level check', subtitle: spellSectionTitle(c, b), bonus: d?.casterLevel ?? 0, parts: [{ source: 'Caster level', value: d?.casterLevel ?? 0 }] }}>{d?.casterLevel ?? 0}</div>
               <div class="field-label">CL</div>
             </div>
           {:else}
@@ -278,14 +280,14 @@
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + {b.ability.toUpperCase()} modifier + misc + concentration bonuses">
-            <div class="stat-value">{fmt(d?.concentration ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Concentration', subtitle: spellSectionTitle(c, b), bonus: d?.concentration ?? 0, parts: d ? partsOf(d.concentrationBreakdown) : [] }}>{fmt(d?.concentration ?? 0)}</div>
             <div class="field-label">Cnc</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.concentrationMisc} signed aria-label="Concentration misc" /></Field>
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + misc + spell penetration bonuses, vs spell resistance">
-            <div class="stat-value">{fmt(d?.spellPen ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Caster level check vs SR', subtitle: spellSectionTitle(c, b), bonus: d?.spellPen ?? 0, parts: d ? partsOf(d.spellPenBreakdown) : [] }}>{fmt(d?.spellPen ?? 0)}</div>
             <div class="field-label">Pen</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.spellPenMisc} signed aria-label="Spell penetration misc" /></Field>

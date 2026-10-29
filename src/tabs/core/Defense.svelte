@@ -142,9 +142,9 @@
     <Stat label="Flat-footed" value={d.ac.flatFooted} signed={false} />
   </div>
   <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    <Stat label="Fortitude" value={d.saves.fort} size="md" />
-    <Stat label="Reflex" value={d.saves.ref} size="md" />
-    <Stat label="Will" value={d.saves.will} size="md" />
+    <Stat label="Fortitude" value={d.saves.fort} size="md" roll={{ title: 'Fortitude save' }} />
+    <Stat label="Reflex" value={d.saves.ref} size="md" roll={{ title: 'Reflex save' }} />
+    <Stat label="Will" value={d.saves.will} size="md" roll={{ title: 'Will save' }} />
   </div>
   <div class="grid grid-cols-3 gap-1 px-1">
     <div class="stat" title="Flat-footed CMD: {d.cmdFlatFooted}">
