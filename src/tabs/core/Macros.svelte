@@ -8,6 +8,7 @@
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import Field from '../../lib/ui/Field.svelte';
+  import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import { fmt } from '../../lib/ui/format';
   import EditMode from '../../lib/ui/EditMode.svelte';
@@ -26,6 +27,7 @@
       libraryId: lib.id,
       notes: lib.notes,
       effects: lib.effects.map((e) => ({ ...e, id: uid() })),
+      damageDice: (lib.damageDice ?? []).map((x) => ({ ...x, id: uid() })),
     });
   }
 
@@ -35,14 +37,20 @@
     open[m.id] = true;
   }
 
+  const APPLIES = { all: 'Weapon damage', melee: 'Melee weapon damage', ranged: 'Ranged weapon damage' };
+
   function summary(m: Macro) {
-    return m.effects
-      .map((e) => {
+    return [
+      ...m.effects.map((e) => {
         const v = Math.trunc(tryEvaluate(e.value, app.d.vars, NaN));
         const label = KEY_LABELS[e.key] ?? e.key;
         return `${label} ${Number.isNaN(v) ? '?' : fmt(v)}${e.type !== 'untyped' ? ` ${e.type}` : ''}`;
-      })
-      .join(', ');
+      }),
+      ...m.damageDice.map((x) => {
+        const n = Math.trunc(tryEvaluate(x.count, app.d.vars, NaN));
+        return `${APPLIES[x.applies]} +${Number.isNaN(n) ? '?' : n}d${x.sides}${x.type ? ` ${x.type}` : ''}`;
+      }),
+    ].join(', ');
   }
 </script>
 
@@ -96,7 +104,20 @@
               <button type="button" class="icon-btn text-accent" aria-label="Remove effect" onclick={() => m.effects.splice(i, 1)}>✕</button>
             </div>
           {/each}
-          <button type="button" class="self-start text-xs underline opacity-70" onclick={() => m.effects.push(make.macroEffect())}>+ effect</button>
+          {#each m.damageDice as x, i (x.id)}
+            <div class="flex items-center gap-1">
+              <input class="min-w-0 flex-1 font-mono text-xs" bind:value={x.count} aria-label="Number of dice" class:text-accent={!!app.d.macroErrors[x.id]} title="Number of dice: a number or formula. Refs: {FORMULA_REFS.join(' ')}" />
+              <span>d</span>
+              <NumInput class="w-12" bind:value={x.sides} aria-label="Die sides" />
+              <input class="w-24" bind:value={x.type} placeholder="precision" aria-label="Damage type" />
+              <Select class="w-24" bind:value={x.applies} options={opts(['all', 'melee', 'ranged'] as const, (a) => (a === 'all' ? 'All weapons' : a === 'melee' ? 'Melee' : 'Ranged'))} aria-label="Weapons" />
+              <button type="button" class="icon-btn text-accent" aria-label="Remove damage dice" onclick={() => m.damageDice.splice(i, 1)}>✕</button>
+            </div>
+          {/each}
+          <div class="flex gap-3">
+            <button type="button" class="text-xs underline opacity-70" onclick={() => m.effects.push(make.macroEffect())}>+ effect</button>
+            <button type="button" class="text-xs underline opacity-70" title="Dice added to weapon damage rolls, never multiplied on a critical (sneak attack)" onclick={() => m.damageDice.push(make.macroDice())}>+ damage dice</button>
+          </div>
           <Field label="Notes"><input bind:value={m.notes} /></Field>
         </div>
       {/if}

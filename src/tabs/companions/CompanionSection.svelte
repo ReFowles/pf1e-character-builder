@@ -222,7 +222,7 @@
                   <td class="text-lg font-bold tabular-nums">{fmt(s.mod)}</td>
                   <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
                   <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
-                  <td class="px-1"><div class="write-box h-6"><NumInput class="h-full w-full bg-transparent print:invisible" bind:value={x.abilities[a].temp} signed aria-label="{x.name || 'Companion'} {a} temporary change" /></div></td>
+                  <td class="px-1"><div class="h-6 print:rounded-sm print:border print:border-ink/30"><NumInput class="h-full w-full bg-field print:invisible" bind:value={x.abilities[a].temp} signed aria-label="{x.name || 'Companion'} {a} temporary change" /></div></td>
                 </tr>
               {/each}
             </tbody>

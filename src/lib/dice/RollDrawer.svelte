@@ -52,7 +52,9 @@
   }
   function rollTray() {
     if (!notation) return;
-    void roll({ title: notation, notation });
+    // Each group is its own line item: the first is the main roll, the rest are extras (no damage type label).
+    const [first, ...rest] = all;
+    void roll({ title: notation, notation: groupText(first), extras: rest.map((g) => ({ label: '', notation: groupText(g) })) });
     groups = [];
     clearPending();
     modifierInput = 0;
@@ -70,6 +72,9 @@
   });
 
   const time = (t: number) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+  /** The main line's own total: its dice and modifier, times any critical multiplier (extras are never multiplied). */
+  const mainTotal = (r: { dice: { sign: 1 | -1; value: number }[]; modifier: number; multiplier?: number }) =>
+    (r.dice.reduce((s, d) => s + d.sign * d.value, 0) + r.modifier) * (r.multiplier ?? 1);
   // Everything a critical multiplies sits in brackets, followed by the multiplier.
   const partsText = (r: { parts: { source: string; value: number }[]; modifier: number; multiplier?: number }) => {
     const text = r.parts.length ? r.parts.map((p) => `${fmt(p.value)} ${p.source}`).join(' · ') : r.modifier ? `${fmt(r.modifier)} modifier` : '';
@@ -112,9 +117,31 @@
                 {d.sign < 0 ? '-' : ''}{d.value}
               </span>
             {/each}
-            <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}</span>
+            {#if r.extras?.length}
+              <!-- Several line items: the main line gets its own total, as the extras do; the sum goes to the Total row below. -->
+              <span class="ml-auto text-sm font-semibold tabular-nums" data-main-total={mainTotal(r)}>{mainTotal(r)}</span>
+            {:else}
+              <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}</span>
+            {/if}
           </div>
           {#if partsText(r)}<div class="text-xs opacity-70">{partsText(r)}</div>{/if}
+          {#each r.extras ?? [] as x, xi (xi)}
+            <!-- Extra damage (Flaming, sneak attack…): added after any critical multiplier. -->
+            <div class="mt-1 flex flex-wrap items-center gap-1" data-extra={x.label} data-total={x.total}>
+              <span class="font-mono text-xs opacity-60">+{x.notation}</span>
+              {#each x.dice as d, i (i)}
+                <span class="chip min-w-6 justify-center font-bold tabular-nums" title="d{d.sides}">{d.sign < 0 ? '-' : ''}{d.value}</span>
+              {/each}
+              {#if x.label}<span class="text-xs opacity-70">{x.label}</span>{/if}
+              <span class="ml-auto text-sm font-semibold tabular-nums">{x.total}</span>
+            </div>
+          {/each}
+          {#if r.extras?.length}
+            <div class="mt-1 flex items-baseline justify-end gap-2 border-t border-ink/10 pt-1">
+              <span class="text-xs opacity-70">Total</span>
+              <span class="text-2xl font-bold tabular-nums">{r.total}</span>
+            </div>
+          {/if}
         </li>
       {:else}
         <li class="text-sm italic opacity-50">Click a number on the sheet (initiative, saves, attacks, skills…) or build a roll in the tray below.</li>

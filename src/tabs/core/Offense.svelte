@@ -61,6 +61,8 @@
       notation: formatNotation(byDice ? multiplyNotation(n, times) : n),
       parts: partsOf(wd.damageBreakdown).map((p) => (byDice ? { ...p, value: p.value * times } : p)),
       multiplier: crit && !byDice ? times : 1,
+      // Extra dice (Flaming, sneak attack…) aren't multiplied on a critical.
+      extras: wd.extraDamage.map((x) => ({ label: x.type, notation: x.notation })),
     });
   }
 </script>
@@ -150,14 +152,51 @@
           {/if}
         </Field>
         <Field label="Range">
-          {#if editing}<input bind:value={w.range} aria-label="Range" />{:else}<div class="px-1 leading-7 whitespace-nowrap">{w.range}</div>{/if}
+          {#if editing}<input bind:value={w.range} aria-label="Range" />{:else}<div class="px-1 leading-7 whitespace-nowrap">{w.range || '—'}</div>{/if}
         </Field>
         <Field label="Type">
           {#if editing}<input bind:value={w.type} placeholder="S/P/B" aria-label="Type" />{:else}<div class="px-1 leading-7 whitespace-nowrap">{w.type}</div>{/if}
         </Field>
-        <Field label="Ammo"><input bind:value={w.ammo} /></Field>
       </div>
-      <Field label="Notes" class="mt-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
+      {#if editing}
+        <div class="mt-1 flex flex-wrap items-end gap-x-3 gap-y-1">
+          {#each w.extraDamage as x, i (x.id)}
+            <div class="flex items-end gap-1">
+              <input type="checkbox" class="mb-5" bind:checked={x.active} aria-label="Apply extra damage" title="Rolled with this weapon's damage while checked" />
+              <Field label="Extra dice" class="w-20"><input bind:value={x.dice} placeholder="1d6" aria-label="Extra damage dice" /></Field>
+              <Field label="Damage type" class="w-24"><input bind:value={x.type} placeholder="fire" aria-label="Extra damage type" /></Field>
+              <button type="button" class="icon-btn mb-4 text-accent" aria-label="Remove extra damage" onclick={() => w.extraDamage.splice(i, 1)}>✕</button>
+            </div>
+          {/each}
+          <button
+            type="button"
+            class={['btn text-xs print:hidden', { 'mb-4': w.extraDamage.length }]}
+            title="Dice rolled with this weapon's damage and never multiplied on a critical (Flaming, sneak attack…)"
+            onclick={() => w.extraDamage.push(make.extraDamage())}>+ Extra damage</button
+          >
+        </div>
+      {:else if w.extraDamage.some((x) => x.dice) || wd?.extraDamage.some((x) => x.macro)}
+        <!-- Click a chip to switch it on or off (sneak attack only when the target is flanked or denied Dex). -->
+        <div class="mt-1 flex flex-wrap items-center gap-1">
+          {#each w.extraDamage.filter((x) => x.dice) as x (x.id)}
+            <button
+              type="button"
+              class={['chip tabular-nums', { 'line-through opacity-50': !x.active }]}
+              aria-pressed={x.active}
+              title={x.active ? 'Rolled with damage; click to switch off' : 'Off; click to roll it with damage'}
+              onclick={() => (x.active = !x.active)}>+{x.dice}{x.type ? ` ${x.type}` : ''}</button
+            >
+          {/each}
+          {#each wd?.extraDamage.filter((x) => x.macro) ?? [] as x, i (i)}
+            <span class="chip border-dashed tabular-nums" title="From the {x.macro} macro; switch it off in Macros">+{x.notation}{x.type ? ` ${x.type}` : ''}</span>
+          {/each}
+          <span class="field-label">Extra damage</span>
+        </div>
+      {/if}
+      <div class="mt-1 flex items-end gap-2">
+        <Field label="Notes" class="flex-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
+        <Field label="Ammo" class="w-32 shrink-0"><input bind:value={w.ammo} aria-label="Ammo" /></Field>
+      </div>
       {#if editing}
         <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-8 print:hidden">
           <Field label="Kind">
@@ -188,7 +227,7 @@
     {/snippet}
     {#snippet blank()}
       <div class="weapon-grid grid gap-2">
-        {#each ['Weapon', 'Attack', 'Damage', 'Critical', 'Range', 'Type', 'Ammo'] as l (l)}
+        {#each ['Weapon', 'Attack', 'Damage', 'Critical', 'Range', 'Type'] as l (l)}
           <div class="field"><div class="h-5 border-b border-ink/30"></div><span class="field-label">{l}</span></div>
         {/each}
       </div>

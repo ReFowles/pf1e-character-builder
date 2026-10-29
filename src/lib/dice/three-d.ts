@@ -53,7 +53,8 @@ export async function roll3d(n: Notation, opts: ThreeDOptions): Promise<DieResul
   clearTimeout(clearTimer);
   const results = await box.roll(n.dice.map((t) => ({ qty: t.count, sides: t.sides })));
   clearTimer = setTimeout(() => box.clear(), 6000);
-  return results.map((r) => ({ sides: r.sides, value: r.value, sign: n.dice[r.groupId]?.sign ?? 1 }));
+  // Group order keeps each term's dice together, so callers can split the throw by term.
+  return [...results].sort((a, b) => a.groupId - b.groupId).map((r) => ({ sides: r.sides, value: r.value, sign: n.dice[r.groupId]?.sign ?? 1 }));
 }
 
 /** Drop the scene (e.g. when 3D is switched off). */

@@ -6,6 +6,7 @@
   import { addCompanion, companionSectionId, companionTitle, removeCompanion } from '../../lib/companions';
   import Section from '../../lib/ui/Section.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import FormulaGuide from './FormulaGuide.svelte';
   import AboutDialog from '../../lib/ui/AboutDialog.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import { prefs } from '../../lib/prefs.svelte';
@@ -185,5 +186,8 @@
       {/each}
     </div>
   </Section>
+</div>
+<div class="mt-3">
+  <FormulaGuide />
 </div>
 <AboutDialog bind:this={about} />

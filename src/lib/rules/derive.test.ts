@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { make, newCharacter } from '../model/defaults';
 import type { Character } from '../model/types';
 import { derive } from './derive';
+import { evaluate } from './expr';
 
 /** Level 3 human fighter: Str 16, Dex 14, Con 14, chain shirt + heavy shield. */
 function fighter(): Character {
@@ -23,6 +24,32 @@ function fighter(): Character {
 }
 
 describe('derive', () => {
+  it('collects extra damage from the weapon and from active macros', () => {
+    const c = fighter();
+    const bow = { ...make.weapon(), name: 'Longbow', kind: 'ranged' as const, damage: '1d8' };
+    c.weapons.push(bow);
+    const sword = c.weapons[0];
+    sword.extraDamage = [
+      { ...make.extraDamage(), dice: '1d6', type: 'fire' },
+      { ...make.extraDamage(), dice: '2d6+1', type: 'precision', active: false },
+      { ...make.extraDamage(), dice: 'junk' },
+    ];
+    const sneak = { ...make.macroDice(), count: 'ceil(@class.fighter.level / 2)', type: 'precision', applies: 'melee' as const };
+    c.macros = [{ ...make.macro(), name: 'Sneak Attack', active: true, damageDice: [sneak] }];
+    let d = derive(c);
+    expect(d.weapons[sword.id].extraDamage).toEqual([
+      { notation: '1d6', type: 'fire' },
+      { notation: '2d6', type: 'precision', macro: 'Sneak Attack' },
+    ]);
+    expect(d.weapons[bow.id].extraDamage).toEqual([]);
+    c.macros[0].active = false;
+    d = derive(c);
+    expect(d.weapons[sword.id].extraDamage).toEqual([{ notation: '1d6', type: 'fire' }]);
+    c.macros[0].active = true;
+    sneak.count = '@class.rogue.level';
+    expect(derive(c).macroErrors[sneak.id]).toBe(true);
+  });
+
   it('computes core combat stats', () => {
     const d = derive(fighter());
     expect(d.level).toBe(3);
@@ -180,6 +207,7 @@ describe('derive round 2', () => {
     const sc = d.spellcasting[c.spellcasting[0].id];
     expect(sc.casterLevel).toBe(7);
     expect(sc.base[4]).toBe(1); // 4th-level slot at wizard table row 7
-    expect(d.vars['class.wizard.casterLevel']).toBe(7);
+    // Formula references are case-insensitive, so the var key is lowercase.
+    expect(evaluate('@class.wizard.casterLevel', d.vars)).toBe(7);
   });
 });

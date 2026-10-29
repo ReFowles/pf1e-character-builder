@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { critMultiplier, damageNotation, formatNotation, multiplyNotation, parseNotation } from './notation';
-import { buildResult, capLog, partsOf, rollDice, rollInstant } from './roll';
+import { buildResult, capLog, partsOf, rollDice, rollInstant, throwNotation } from './roll';
 
 describe('dice notation', () => {
   it('parses simple and compound notation', () => {
@@ -77,5 +77,29 @@ describe('critical multiplier on the total', () => {
     expect(r.total).toBe((3 + 3 + 4) * 2);
     expect(r.multiplier).toBe(2);
     expect(buildResult({ title: 'x', notation: '1d8' }, parseNotation('1d8')!, [{ sides: 8, value: 5, sign: 1 }], 'instant').total).toBe(5);
+  });
+});
+
+describe('extra damage dice', () => {
+  it('throws the extras after the main dice and adds them after the multiplier', () => {
+    const spec = { title: 'crit', notation: '1d8+5', multiplier: 2, extras: [{ label: 'fire', notation: '1d6' }, { label: 'precision', notation: '2d6+1' }] };
+    const n = parseNotation(spec.notation)!;
+    const thrown = throwNotation(spec, n);
+    expect(thrown.dice.map((t) => `${t.count}d${t.sides}`)).toEqual(['1d8', '1d6', '2d6']);
+    const values = [7, 4, 2, 6];
+    const r = buildResult(spec, n, rollDice(thrown, () => values.shift()!), 'instant');
+    expect(r.dice.map((d) => d.value)).toEqual([7]);
+    expect(r.extras).toEqual([
+      { label: 'fire', notation: '1d6', dice: [{ sides: 6, value: 4, sign: 1 }], modifier: 0, total: 4 },
+      { label: 'precision', notation: '2d6+1', dice: [{ sides: 6, value: 2, sign: 1 }, { sides: 6, value: 6, sign: 1 }], modifier: 1, total: 9 },
+    ]);
+    expect(r.total).toBe((7 + 5) * 2 + 4 + 9);
+  });
+
+  it('skips extras that are not rollable', () => {
+    const spec = { title: 'x', notation: '1d4', extras: [{ label: 'junk', notation: 'fire' }] };
+    const n = parseNotation(spec.notation)!;
+    expect(throwNotation(spec, n).dice).toHaveLength(1);
+    expect(buildResult(spec, n, [{ sides: 4, value: 3, sign: 1 }], 'instant').extras).toBeUndefined();
   });
 });

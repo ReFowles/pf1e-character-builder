@@ -72,4 +72,4 @@ export const KEY_SHORT: Record<string, string> = {
 export const keyShort = (k: string) => KEY_SHORT[k] ?? KEY_LABELS[k] ?? k;
 
 /** Formula references available to macros and resource formulas. */
-export const FORMULA_REFS = ['@level', '@bab', '@cl', ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]), '@class.<name>.level'];
+export const FORMULA_REFS = ['@level', '@hd', '@bab', '@cl', ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]), '@class.<name>.level', '@class.<name>.casterLevel'];

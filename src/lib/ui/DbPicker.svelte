@@ -75,7 +75,7 @@
     </div>
     {#if error}<p class="absolute top-full left-0 z-30 mt-1 bg-paper px-2 text-xs text-accent">{error}</p>{/if}
     {#if results.length}
-      <ul id={listId} role="listbox" class="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
+      <ul id={listId} role="listbox" class="absolute top-full right-0 left-0 z-30 mt-1 max-h-72 overflow-y-auto overscroll-contain rounded-sm border border-ink/30 bg-paper text-sm shadow-lg">
         {#each results as r, i (r.name)}
           <li role="option" aria-selected={i === active}>
             <button

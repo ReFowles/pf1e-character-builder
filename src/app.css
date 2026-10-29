@@ -135,7 +135,7 @@
     @apply size-3.5 shrink-0 opacity-70;
   }
   .select-list {
-    @apply fixed m-0 max-h-72 overflow-y-auto rounded-md border border-ink/30 bg-paper p-0.5 text-sm text-ink shadow-lg;
+    @apply fixed m-0 max-h-72 overflow-y-auto overscroll-contain rounded-md border border-ink/30 bg-paper p-0.5 text-sm text-ink shadow-lg;
     inset: auto;
   }
   .select-option {
@@ -237,18 +237,18 @@
       @apply block max-w-full overflow-x-auto;
     }
   }
-  /* Weapon card top line: name, attack, damage, critical, range, type, ammo. */
+  /* Weapon card top line: name, attack, damage, critical, range, type. Ammo sits on the notes line. */
   .weapon-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   @media (min-width: 640px) {
     .weapon-grid {
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 0.8fr) minmax(0, 0.6fr);
     }
   }
   @media print {
     .weapon-grid {
-      grid-template-columns: minmax(0, 2fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 0.8fr) minmax(0, 0.6fr) minmax(0, 1fr);
+      grid-template-columns: minmax(0, 1.8fr) minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1.5fr) minmax(0, 0.8fr) minmax(0, 0.6fr);
     }
   }
   /* Ability scores: no table rules; the temp cells are boxed write-in cells (see .write-box). */

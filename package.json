@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@3d-dice/dice-box": "^1.1.4",
+    "@lucide/svelte": "^1.64.0",
     "@tiptap/core": "^3.32.1",
     "@tiptap/extension-placeholder": "^3.32.1",
     "@tiptap/extension-table": "^3.32.1",

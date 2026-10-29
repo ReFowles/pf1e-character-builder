@@ -2,7 +2,7 @@
 import { prefs } from '../prefs.svelte';
 import { app } from '../state.svelte';
 import { parseNotation } from './notation';
-import { buildResult, capLog, rollDice, type RollResult, type RollSpec } from './roll';
+import { buildResult, capLog, rollDice, throwNotation, type RollResult, type RollSpec } from './roll';
 
 const KEY = 'pf1e:rolls';
 const THREE_D_SIDES = new Set([4, 6, 8, 10, 12, 20, 100]);
@@ -58,19 +58,20 @@ export async function roll(spec: RollSpec): Promise<RollResult | null> {
     return null;
   }
   let result: RollResult | null = null;
+  const thrown = throwNotation(spec, n);
   // The 3D set has the standard dice only; anything else (custom-sided dice) rolls instantly.
-  if (prefs.dice.threeD && !rolls.busy && n.dice.every((t) => THREE_D_SIDES.has(t.sides))) {
+  if (prefs.dice.threeD && !rolls.busy && thrown.dice.every((t) => THREE_D_SIDES.has(t.sides))) {
     rolls.busy = true;
     try {
       const { roll3d } = await import('./three-d');
-      result = buildResult(spec, n, await roll3d(n, { color: prefs.dice.color, scale: prefs.dice.scale }), '3d');
+      result = buildResult(spec, n, await roll3d(thrown, { color: prefs.dice.color, scale: prefs.dice.scale }), '3d');
     } catch (e) {
       console.warn('3D dice unavailable, rolling instantly', e);
     } finally {
       rolls.busy = false;
     }
   }
-  result ??= buildResult(spec, n, rollDice(n), 'instant');
+  result ??= buildResult(spec, n, rollDice(thrown), 'instant');
   rolls.add(result);
   app.notify(`${spec.title}: ${result.total}`);
   return result;

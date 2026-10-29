@@ -1,10 +1,11 @@
-import type { BonusType, MacroCategory } from '../model/types';
+import type { BonusType, MacroCategory, MacroDice } from '../model/types';
 
 export interface LibraryMacro {
   id: string;
   name: string;
   category: MacroCategory;
   effects: { key: string; value: string; type: BonusType }[];
+  damageDice?: Omit<MacroDice, 'id'>[];
   notes: string;
 }
 
@@ -47,6 +48,14 @@ export const MACRO_LIBRARY: LibraryMacro[] = [
     'Greater rage: +6/+3. Mighty rage: +8/+4.'),
   m('smite-evil', 'Smite Evil', 'class', [['attack', '@cha.mod'], ['damage', '@level'], ['ac', '@cha.mod', 'deflection']],
     'Damage uses paladin level; change @level to @class.paladin.level when multiclassed.'),
+  m('favored-enemy', 'Favored Enemy', 'class',
+    [['attack', 2], ['damage', 2], ['skill.bluff', 2], ['skill.knowledge', 2], ['skill.perception', 2], ['skill.senseMotive', 2], ['skill.survival', 2]],
+    'Against the chosen creature type. +2 for one favored enemy; each later increase (ranger 5, 10, 15, 20) adds +2 to one of them, so raise every effect to match.'),
+  {
+    ...m('sneak-attack', 'Sneak Attack', 'class', [],
+      'When the target is denied its Dex bonus to AC or you flank it; ranged only within 30 feet. Uses rogue level: change the formula for slayers, ninjas and other classes.'),
+    damageDice: [{ count: 'ceil(@class.rogue.level / 2)', sides: 6, type: 'precision', applies: 'all' }],
+  },
   m('inspire-courage', 'Inspire Courage', 'class', [['attack', 1, 'competence'], ['damage', 1, 'competence']],
     '+2 at bard level 5, +3 at 11, +4 at 17. Also a morale bonus on saves against charm and fear.'),
   // Spells

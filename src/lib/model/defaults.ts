@@ -18,6 +18,7 @@ import type {
   LevelEntry,
   Macro,
   MacroEffect,
+  MacroDice,
   ManualBonus,
   MythicEntry,
   OtherSpeed,
@@ -30,6 +31,7 @@ import type {
   Trait,
   UseCounter,
   Weapon,
+  ExtraDamage,
   CreatureType,
   Save,
   Size,
@@ -107,8 +109,10 @@ export const make = {
     price: 0,
     ammo: '',
     notes: '',
+    extraDamage: [],
   }),
-  armor: (kind: 'armor' | 'shield' = 'armor'): ArmorPiece => ({
+  extraDamage: (): ExtraDamage => ({ id: uid(), dice: '', type: '', active: true }),
+  armor:(kind: 'armor' | 'shield' = 'armor'): ArmorPiece => ({
     id: uid(),
     name: '',
     kind,
@@ -140,8 +144,10 @@ export const make = {
     category: 'custom',
     active: false,
     effects: [],
+    damageDice: [],
     notes: '',
   }),
+  macroDice: (): MacroDice => ({ id: uid(), count: '1', sides: 6, type: '', applies: 'all' }),
   trait: (kind: Trait['kind'] = 'character'): Trait => ({
     id: uid(),
     name: '',

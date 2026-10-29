@@ -149,6 +149,17 @@ export interface Weapon extends Identified {
   price: number;
   ammo: string;
   notes: string;
+  extraDamage: ExtraDamage[];
+}
+
+/** Dice rolled along with a weapon's damage (Flaming 1d6 fire, sneak attack 3d6 precision). Never multiplied on a critical. */
+export interface ExtraDamage extends Identified {
+  /** Dice with an optional modifier, e.g. 1d6 or 2d6+1. */
+  dice: string;
+  /** Damage type or source, e.g. fire, precision. */
+  type: string;
+  /** Rows that are off aren't added (sneak attack only applies when the target is denied Dex or flanked). */
+  active: boolean;
 }
 
 export interface ArmorPiece extends Identified {
@@ -212,7 +223,19 @@ export interface Macro extends Identified {
   libraryId?: string;
   active: boolean;
   effects: MacroEffect[];
+  /** Damage dice added to matching weapons' damage rolls while active (sneak attack). */
+  damageDice: MacroDice[];
   notes: string;
+}
+
+export interface MacroDice extends Identified {
+  /** Number of dice: a number or formula, e.g. `ceil(@class.rogue.level / 2)`. */
+  count: string;
+  sides: number;
+  /** Damage type, e.g. precision. */
+  type: string;
+  /** Which weapons roll these dice. */
+  applies: 'all' | 'melee' | 'ranged';
 }
 
 export interface Trait extends Identified {

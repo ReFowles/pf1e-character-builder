@@ -16,6 +16,7 @@ import { abilityMod } from './math';
 import { SKILL_BY_KEY, isClassSkill, subtypeKey, type SkillDef } from './skills';
 import { SPELL_TABLE_BY_ID } from './spellTables';
 import { scaleDice } from './dice';
+import { formatNotation, parseNotation } from '../dice/notation';
 import { ABILITY_INCREASE_TIERS, PATH_HP, mythicPowerMax, surgeDie } from './mythic';
 import { addFractions, formatFraction, parseFraction } from './fraction';
 import {
@@ -63,6 +64,8 @@ export interface WeaponDerived {
   damageBonus: number;
   attackBreakdown: Total;
   damageBreakdown: Total;
+  /** Active extra damage with rollable dice, e.g. { notation: '1d6', type: 'fire' }; `macro` names a macro that adds it. */
+  extraDamage: { notation: string; type: string; macro?: string }[];
 }
 
 export interface WeightDerived {
@@ -282,7 +285,7 @@ export function derive(c: Character): Derived {
     const name = slug(k.name);
     if (name) {
       classVars[`class.${name}.level`] = classLevels[k.id];
-      classVars[`class.${name}.casterLevel`] = castingLevels[k.id];
+      classVars[`class.${name}.casterlevel`] = castingLevels[k.id];
     }
   }
   const makeVars = (): Vars => {
@@ -298,8 +301,14 @@ export function derive(c: Character): Derived {
   // --- Macros -------------------------------------------------------------
   const preVars = makeVars();
   const macroErrors: Record<string, true> = {};
+  const macroDice: { notation: string; type: string; macro: string; applies: 'all' | 'melee' | 'ranged' }[] = [];
   for (const m of c.macros) {
     if (!m.active) continue;
+    for (const x of m.damageDice) {
+      const count = Math.trunc(tryEvaluate(x.count, preVars, NaN));
+      if (Number.isNaN(count)) macroErrors[x.id] = true;
+      else if (count > 0 && x.sides >= 2) macroDice.push({ notation: `${count}d${x.sides}`, type: x.type.trim(), macro: m.name, applies: x.applies });
+    }
     for (const e of m.effects) {
       const value = tryEvaluate(e.value, preVars, NaN);
       if (Number.isNaN(value)) {
@@ -489,6 +498,13 @@ export function derive(c: Character): Derived {
       damageBonus,
       attackBreakdown,
       damageBreakdown,
+      extraDamage: [
+        ...w.extraDamage.flatMap((x) => {
+          const n = x.active ? parseNotation(x.dice) : null;
+          return n ? [{ notation: formatNotation(n), type: x.type.trim() }] : [];
+        }),
+        ...macroDice.filter((x) => x.applies === 'all' || x.applies === w.kind).map(({ notation, type, macro }) => ({ notation, type, macro })),
+      ],
     };
   }
 
