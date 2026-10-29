@@ -155,9 +155,9 @@ export interface ArmorPiece extends Identified {
   notes: string;
 }
 
+/** One chip, e.g. "fire 10" or "poison" for an immunity. */
 export interface Resistance extends Identified {
   name: string;
-  value: string;
 }
 
 export interface Resource extends Identified {

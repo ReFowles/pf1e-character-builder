@@ -176,12 +176,11 @@
             {#if editing}
               <span class="chip" data-sort-index={i}>
                 <span class="-ml-0.5 cursor-grab touch-none text-xs opacity-40 select-none hover:opacity-80 print:hidden" data-sort-handle title="Drag to reorder" aria-hidden="true">⋮⋮</span>
-                <input class="chip-input" bind:value={r.name} placeholder="fire" aria-label="Resistance type" />
-                <input class="chip-input font-semibold" bind:value={r.value} placeholder="—" aria-label="Resistance amount (blank for immunity)" />
+                <input class="chip-input" bind:value={r.name} placeholder="fire 10" aria-label="Resistance or immunity" />
                 <button type="button" class="print:hidden" aria-label="Remove resistance" onclick={() => c.resistances.splice(i, 1)}>×</button>
               </span>
             {:else}
-              <span class="chip">{r.name}{#if r.value.trim()}<strong>{r.value}</strong>{/if}</span>
+              <span class="chip">{r.name}</span>
             {/if}
           {:else}
             {#if !editing}<span class="text-sm italic opacity-40 print:hidden">None</span>{/if}

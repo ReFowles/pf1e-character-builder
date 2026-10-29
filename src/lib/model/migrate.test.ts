@@ -23,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(6);
+    expect(c.schemaVersion).toBe(7);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -112,5 +112,20 @@ describe('migrate v3 -> v4', () => {
     const perception = c.skills.find((s) => s.skill === 'perception')!;
     expect(perception.favorite).toBe(true);
     expect(c.favoriteOrder).toEqual([perception.id]);
+  });
+});
+
+describe('migrate v6 -> v7', () => {
+  it('joins resistance names and amounts into one chip text', () => {
+    const c = normalize({
+      schemaVersion: 6,
+      resistances: [
+        { id: 'a', name: 'fire', value: '10' },
+        { id: 'b', name: 'poison', value: '' },
+      ],
+    });
+    expect(c.schemaVersion).toBe(7);
+    expect(c.resistances.map((r) => r.name)).toEqual(['fire 10', 'poison']);
+    expect('value' in c.resistances[0]).toBe(false);
   });
 });

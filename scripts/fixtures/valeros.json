@@ -206,8 +206,7 @@
   "resistances": [
     {
       "id": "r1",
-      "name": "fire",
-      "value": "5"
+      "name": "fire 5"
     }
   ],
   "resources": [

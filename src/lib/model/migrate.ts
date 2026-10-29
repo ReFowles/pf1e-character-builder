@@ -129,6 +129,12 @@ STEPS[5] = (d) => {
   return { ...d, ui: { ...ui, sections } };
 };
 
+STEPS[6] = (d) => ({
+  ...d,
+  // Resistance chips are one text: "fire 10"; the separate amount field is gone.
+  resistances: arr(d.resistances).map(({ value, ...r }) => ({ ...r, name: [r.name, value].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ') })),
+});
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

@@ -32,7 +32,7 @@ import type {
   Weapon,
 } from './types';
 
-export const SCHEMA_VERSION = 6;
+export const SCHEMA_VERSION = 7;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -105,7 +105,7 @@ export const make = {
     price: 0,
     notes: '',
   }),
-  resistance: (): Resistance => ({ id: uid(), name: '', value: '' }),
+  resistance: (): Resistance => ({ id: uid(), name: '' }),
   resource: (): Resource => ({ id: uid(), name: '', max: 0, maxExpr: '', current: 0, notes: '' }),
   useCounter: (): UseCounter => ({ id: uid(), max: 1, maxExpr: '', per: 'day', used: 0 }),
   specialAbility: (): SpecialAbility => ({
