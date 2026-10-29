@@ -5,33 +5,61 @@
 
   const DICE = [4, 6, 8, 10, 12, 20, 100];
   const MAX_COUNT = 50;
-  /** Dice in the tray: how many of each. */
-  let counts = $state<Record<number, number>>({});
-  let list: HTMLOListElement | undefined = $state();
 
-  /** The custom die: its own count and sides (typed in). */
+  /** A dice group with its flat modifier, e.g. 1d6+2. */
+  interface Group {
+    terms: string[];
+    modifier: number;
+  }
+
+  /** Dice picked in the tray right now (not yet added as a group). */
+  let counts = $state<Record<number, number>>({});
   let customCount = $state(0);
   let customSides = $state(10);
-  const customOk = $derived(Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
+  let modifierInput = $state(0);
+  /** Committed groups, in the order they were added with Add. */
+  let groups = $state<Group[]>([]);
+  let list: HTMLOListElement | undefined = $state();
 
-  const terms = $derived([
+  const customOk = $derived(Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
+  const pendingTerms = $derived([
     ...DICE.filter((d) => counts[d] > 0).map((d) => `${counts[d]}d${d}`),
     ...(customCount > 0 && customOk ? [`${customCount}d${customSides}`] : []),
   ]);
-  const notation = $derived(terms.join('+'));
-  const total = $derived(DICE.reduce((n, d) => n + (counts[d] ?? 0), 0) + (customOk ? customCount : 0));
+  const hasPending = $derived(pendingTerms.length > 0);
+  /** Committed groups plus whatever is picked right now. */
+  const all = $derived<Group[]>(hasPending ? [...groups, { terms: pendingTerms, modifier: 0 }] : groups);
+
+  const groupText = (g: Group) => g.terms.join('+') + (g.modifier ? (g.modifier > 0 ? `+${g.modifier}` : `${g.modifier}`) : '');
+  /** Several groups read as (1d6+2)+(3d4+4); one group reads plainly. */
+  const expression = $derived(all.length > 1 ? all.map((g) => `(${groupText(g)})`).join('+') : all.length ? groupText(all[0]) : '');
+  const notation = $derived(all.map(groupText).join('+'));
 
   function bump(sides: number, by: number) {
     counts[sides] = Math.max(0, Math.min(MAX_COUNT, (counts[sides] ?? 0) + by));
   }
+  function clearPending() {
+    counts = {};
+    customCount = 0;
+  }
+  /** Commit the picked dice as a group with the modifier typed next to Add. */
+  function addModifier() {
+    if (!hasPending) return;
+    groups = [...groups, { terms: pendingTerms, modifier: Number.isFinite(modifierInput) ? Math.trunc(modifierInput) : 0 }];
+    clearPending();
+    modifierInput = 0;
+  }
   function rollTray() {
     if (!notation) return;
     void roll({ title: notation, notation });
-    resetTray();
+    groups = [];
+    clearPending();
+    modifierInput = 0;
   }
   function resetTray() {
-    counts = {};
-    customCount = 0;
+    groups = [];
+    clearPending();
+    modifierInput = 0;
   }
 
   // Newest at the bottom, like a chat: keep it scrolled to the end.
@@ -43,15 +71,15 @@
   const time = (t: number) => new Date(t).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   // Everything a critical multiplies sits in brackets, followed by the multiplier.
   const partsText = (r: { parts: { source: string; value: number }[]; modifier: number; multiplier?: number }) => {
-    const list = r.parts.length ? r.parts.map((p) => `${fmt(p.value)} ${p.source}`).join(' · ') : r.modifier ? `${fmt(r.modifier)} modifier` : '';
-    if (!list) return '';
-    return r.multiplier && r.multiplier !== 1 ? `(${list}) ×${r.multiplier}` : list;
+    const text = r.parts.length ? r.parts.map((p) => `${fmt(p.value)} ${p.source}`).join(' · ') : r.modifier ? `${fmt(r.modifier)} modifier` : '';
+    if (!text) return '';
+    return r.multiplier && r.multiplier !== 1 ? `(${text}) ×${r.multiplier}` : text;
   };
 </script>
 
 {#if rolls.open}
   <div class="fixed inset-0 z-40 bg-ink/40 print:hidden" role="presentation" onclick={() => rolls.toggle(false)}></div>
-  <aside class="fixed inset-y-0 right-0 z-50 flex w-full max-w-sm flex-col bg-paper shadow-xl print:hidden" aria-label="Roll log">
+  <aside class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-paper shadow-xl print:hidden" aria-label="Roll log">
     <div class="flex items-center gap-2 border-b border-ink/20 px-4 py-2">
       <h2 class="font-display text-lg font-bold">Rolls</h2>
       {#if rolls.entries.length}
@@ -62,19 +90,26 @@
 
     <ol bind:this={list} class="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-3" aria-live="polite">
       {#each rolls.entries as r (r.id)}
+        {@const mixed = new Set(r.dice.map((d) => d.sides)).size > 1}
         <li class="rounded-md border border-ink/15 bg-parchment/60 px-3 py-2" data-roll data-total={r.total} data-dice={r.dice.map((d) => d.value).join(',')}>
           <div class="flex items-baseline gap-2">
             <span class="font-semibold">{r.title}</span>
             {#if r.subtitle}<span class="text-xs opacity-60">{r.subtitle}</span>{/if}
             <time class="ml-auto text-xs opacity-50" datetime={new Date(r.at).toISOString()}>{time(r.at)}</time>
+            <button type="button" class="icon-btn size-5 text-accent" aria-label="Delete roll {r.title}" title="Delete this roll" onclick={() => rolls.remove(r.id)}>
+              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5A1 1 0 0 0 7.7 16.5h4.6a1 1 0 0 0 1-.9L14 6M8.5 9v4.5M11.5 9v4.5" /></svg>
+            </button>
           </div>
           <div class="flex flex-wrap items-center gap-1">
             <span class="font-mono text-xs opacity-60">{r.notation}</span>
             {#each r.dice as d, i (i)}
               <span
-                class={['chip min-w-6 justify-center font-bold tabular-nums', { 'bg-gold text-paper': d.sides === 20 && d.value === 20, 'bg-accent text-paper': d.sides === 20 && d.value === 1 }]}
-                title="d{d.sides}">{d.sign < 0 ? '-' : ''}{d.value}</span
+                class={['chip min-w-6 justify-center gap-0.5 font-bold tabular-nums', { 'bg-gold text-paper': d.sides === 20 && d.value === 20, 'bg-accent text-paper': d.sides === 20 && d.value === 1 }]}
+                title="d{d.sides}"
               >
+                {#if mixed}<span class="text-[0.6rem] font-normal opacity-70">d{d.sides}</span>{/if}
+                {d.sign < 0 ? '-' : ''}{d.value}
+              </span>
             {/each}
             <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}</span>
           </div>
@@ -85,17 +120,24 @@
       {/each}
     </ol>
 
-    <!-- Tray at the bottom: pick dice, then roll them together (2d6+3d4). -->
+    <!-- Tray at the bottom: pick dice, add a modifier to each group, then roll them together. -->
     <div class="flex flex-col gap-2 border-t border-ink/20 px-4 py-3" role="group" aria-label="Dice tray">
       <div class="grid grid-cols-3 gap-2">
         {#each DICE as sides (sides)}
-          {@render stepper(counts[sides] ?? 0, `d${sides}`, `d${sides}`, () => bump(sides, -1), () => bump(sides, 1))}
+          <div class="flex items-center overflow-hidden rounded-sm border border-ink/30">
+            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a d{sides}" disabled={!counts[sides]} onclick={() => bump(sides, -1)}>−</button>
+            <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{counts[sides] ?? 0} d{sides}">{counts[sides] ?? 0}</span>
+            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a d{sides}" disabled={(counts[sides] ?? 0) >= MAX_COUNT} onclick={() => bump(sides, 1)}>+</button>
+            <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">d{sides}</span>
+          </div>
         {/each}
         <div class="flex items-center overflow-hidden rounded-sm border border-ink/30" role="group" aria-label="Custom die">
-          {@render stepperButtons(customCount, `custom die`, () => (customCount = Math.max(0, customCount - 1)), () => (customCount = Math.min(MAX_COUNT, customCount + 1)))}
-          <span class="border-l border-ink/30 px-1 py-0.5 text-sm font-bold">d</span>
+          <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a custom die" disabled={customCount <= 0} onclick={() => (customCount = Math.max(0, customCount - 1))}>−</button>
+          <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{customCount} custom die">{customCount}</span>
+          <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a custom die" disabled={customCount >= MAX_COUNT} onclick={() => (customCount = Math.min(MAX_COUNT, customCount + 1))}>+</button>
+          <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">d</span>
           <input
-            class="w-12 min-w-0 border-0 bg-transparent px-1 py-0.5 text-sm font-bold tabular-nums"
+            class="w-14 min-w-0 border-0 bg-transparent px-1 py-0.5 text-sm font-bold tabular-nums"
             type="number"
             min="2"
             max="1000"
@@ -104,25 +146,17 @@
             title="Sides of the custom die (rolled instantly, no 3D)"
           />
         </div>
-        <div class="flex items-center justify-end gap-1">
-          <button type="button" class="btn text-xs" disabled={!total} onclick={() => resetTray()}>Reset</button>
-          <button type="button" class="btn-primary text-sm" disabled={!total || rolls.busy} onclick={rollTray}>Roll</button>
-        </div>
       </div>
-      <span class="truncate font-mono text-xs opacity-70" title={notation}>{notation || 'Choose dice above'}</span>
+      <div class="flex flex-wrap items-center gap-2">
+        <span class="min-w-0 flex-1 truncate font-mono text-xs opacity-70" title={expression}>{expression || 'Choose dice above'}</span>
+        <label class="flex items-center gap-1 text-sm">
+          +
+          <input class="w-14 text-right" type="number" bind:value={modifierInput} aria-label="Modifier" />
+        </label>
+        <button type="button" class="btn text-xs" disabled={!hasPending} onclick={addModifier} title="Add these dice as a group with this modifier">Add</button>
+        <button type="button" class="btn text-xs" disabled={!all.length && !modifierInput} onclick={resetTray}>Reset</button>
+        <button type="button" class="btn-primary text-sm" disabled={!notation || rolls.busy} onclick={rollTray}>Roll</button>
+      </div>
     </div>
   </aside>
 {/if}
-
-{#snippet stepperButtons(count: number, name: string, dec: () => void, inc: () => void)}
-  <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a {name}" disabled={count <= 0} onclick={dec}>−</button>
-  <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{count} {name}">{count}</span>
-  <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a {name}" disabled={count >= MAX_COUNT} onclick={inc}>+</button>
-{/snippet}
-
-{#snippet stepper(count: number, label: string, name: string, dec: () => void, inc: () => void)}
-  <div class="flex items-center overflow-hidden rounded-sm border border-ink/30">
-    {@render stepperButtons(count, name, dec, inc)}
-    <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">{label}</span>
-  </div>
-{/snippet}

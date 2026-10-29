@@ -30,6 +30,12 @@ class RollLog {
     localStorage.setItem(KEY, JSON.stringify($state.snapshot(this.entries)));
   }
 
+  /** Delete one logged roll. */
+  remove(id: string) {
+    this.entries = this.entries.filter((e) => e.id !== id);
+    localStorage.setItem(KEY, JSON.stringify($state.snapshot(this.entries)));
+  }
+
   clear() {
     this.entries = [];
     this.unread = 0;
