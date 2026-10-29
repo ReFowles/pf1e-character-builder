@@ -123,6 +123,13 @@
       <input type="checkbox" bind:checked={c.maxHpFirstLevel} />
       Max hit points at first level
     </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.gestalt} />
+      Gestalt (each level advances two classes)
+    </label>
+    {#if c.gestalt}
+      <p class="text-xs opacity-70">Pick each level's second class in Classes → Level history. A level takes the better hit die, BAB, saves and skill ranks of its two classes.</p>
+    {/if}
     <label class="field">
       <Select
         bind:value={c.critMode}

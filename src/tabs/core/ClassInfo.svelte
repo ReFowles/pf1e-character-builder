@@ -2,7 +2,8 @@
   import { classKnowledges, make } from '../../lib/model/defaults';
   import type { ClassDef, LevelEntry, Save } from '../../lib/model/types';
   import { CLASS_PRESETS, findPreset, presetFromDb, type ClassPreset } from '../../lib/rules/classPresets';
-  import { defaultSpellAdvance, eligibleCastingClasses, prestigeLevelOf } from '../../lib/rules/prestige';
+  import { eligibleCastingClasses, levelSpellAdvance, prestigeLevelOf } from '../../lib/rules/prestige';
+  import { levelClassIds } from '../../lib/rules/gestalt';
   import { loadDb } from '../../lib/db';
   import { subtypeKey } from '../../lib/rules/skills';
   import { app } from '../../lib/state.svelte';
@@ -36,6 +37,7 @@
   const ready = $derived(d.xpNext !== null && c.xp.current >= d.xpNext);
   let showLog = $state(false);
   let newLevelClass = $state('');
+  let newGestaltClass = $state('');
   const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
 
   /** Add Knowledge rows for any knowledge class skills not already on the sheet. */
@@ -69,7 +71,7 @@
     ensureKnowledgeRows(preset.classSkills);
     // Prestige levels already taken pick up the class's spellcasting advancement.
     c.levels.forEach((l, i) => {
-      if (l.classId === k.id) l.spellAdvance = defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, i));
+      if (levelClassIds(c, l).includes(k.id)) l.spellAdvance = levelSpellAdvance(c, i);
     });
   }
 
@@ -80,10 +82,13 @@
 
   /** Casting classes a level can advance, with the table's suggestion marked. */
   function advanceOptions(l: LevelEntry, i: number) {
-    const k = c.classes.find((x) => x.id === l.classId);
+    // Either side of a gestalt level can be the prestige class.
+    const k = levelClassIds(c, l)
+      .map((id) => c.classes.find((x) => x.id === id))
+      .find((x) => x?.castingAdvance);
     if (!k?.castingAdvance) return null;
     const eligible = eligibleCastingClasses(c, k.castingAdvance);
-    return { eligible, byTable: k.castingAdvance.levels.includes(prestigeLevelOf(c.levels, i)), k };
+    return { eligible, byTable: k.castingAdvance.levels.includes(prestigeLevelOf(c, i, k.id)), k };
   }
   const toggleAdvance = (l: LevelEntry, id: string) => (l.spellAdvance = l.spellAdvance.includes(id) ? l.spellAdvance.filter((x) => x !== id) : [...l.spellAdvance, id]);
   const hasPrestigeCasting = $derived(c.classes.some((k) => k.castingAdvance) && c.spellcasting.some((b) => b.classId));
@@ -108,14 +113,13 @@
     const id = newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id;
     if (!id) return;
     const l = make.level(id);
+    if (c.gestalt && newGestaltClass !== id) l.gestaltClassId = newGestaltClass;
     c.levels.push(l);
-    const k = c.classes.find((x) => x.id === id);
-    if (k) l.spellAdvance = defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, c.levels.length - 1));
+    l.spellAdvance = levelSpellAdvance(c, c.levels.length - 1);
   }
-  function onLevelClass(l: LevelEntry, i: number) {
-    const k = c.classes.find((x) => x.id === l.classId);
-    l.spellAdvance = k ? defaultSpellAdvance(c, k, prestigeLevelOf(c.levels, i)) : [];
-  }
+  const onLevelClass = (l: LevelEntry, i: number) => (l.spellAdvance = levelSpellAdvance(c, i));
+  /** Gestalt side choices: none, or any class other than the level's own. */
+  const gestaltOptions = (mainId: string) => [{ value: '', label: '—' }, ...c.classes.filter((k) => k.id !== mainId).map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))];
 
   function toggleSave(k: ClassDef, s: Save) {
     k.goodSaves = k.goodSaves.includes(s) ? k.goodSaves.filter((x) => x !== s) : [...k.goodSaves, s];
@@ -167,6 +171,7 @@
     <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Settings say so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
+    {#if c.gestalt}<p><strong>Gestalt</strong> (Settings): each level can add a second class. The level takes the better hit die, BAB, saves and skill ranks of the two, gets both classes' skills and features, and earns one favored class bonus if either side is favored. A class can't be taken on both sides.</p>{/if}
     <p><strong>Prestige classes</strong> are in the class list under Prestige. Levels that grant "+1 level of existing spellcasting class" are ticked in Level history by the class table; tick an extra level for the Prestigious Spellcaster feat. Each tick adds one caster level (and spells per day) to that class's spells section.</p>
   {/snippet}
   <EditMode>
@@ -283,6 +288,15 @@
         aria-label="Class for new level"
         class="text-sm"
       />
+      {#if c.gestalt}
+        <span class="text-sm opacity-60">//</span>
+        <Select
+          bind:value={newGestaltClass}
+          options={gestaltOptions(newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id)}
+          aria-label="Gestalt class for new level"
+          class="text-sm"
+        />
+      {/if}
       <button type="button" class="btn-primary" onclick={addLevel}>+ Level</button>
       {#if editing && c.levels.length}
         <button type="button" class="btn inline-flex items-center gap-1" aria-expanded={showLog} onclick={() => (showLog = !showLog)}>
@@ -299,6 +313,7 @@
           <tr>
             <th>#</th>
             <th>Class</th>
+            {#if c.gestalt}<th title="Second class taken at this level">Gestalt</th>{/if}
             <th class="text-center">HP roll</th>
             <th>Favored class bonus</th>
             {#if hasPrestigeCasting}<th title="Casting classes this level advances by one caster level">Spellcasting</th>{/if}
@@ -312,6 +327,11 @@
               <td data-label="Class" class="w-28">
                 <Select class="w-full" bind:value={l.classId} onchange={() => onLevelClass(l, i)} options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))} aria-label="Class for level {i + 1}" />
               </td>
+              {#if c.gestalt}
+                <td data-label="Gestalt" class="w-28">
+                  <Select class="w-full" bind:value={l.gestaltClassId} onchange={() => onLevelClass(l, i)} options={gestaltOptions(l.classId)} aria-label="Gestalt class for level {i + 1}" />
+                </td>
+              {/if}
               <td data-label="HP roll" class="w-20 text-center align-middle">
                 {#if i === 0 && c.maxHpFirstLevel}
                   <span class="text-xs opacity-60" title="Max HP at 1st level (change in Settings)">max</span>
@@ -320,7 +340,7 @@
                 {/if}
               </td>
               <td data-label="Favored class bonus">
-                {#if c.favoredClassIds.includes(l.classId)}
+                {#if levelClassIds(c, l).some((id) => c.favoredClassIds.includes(id))}
                   <div class="flex flex-wrap gap-1">
                     <Select
                       class="max-w-48"
@@ -376,6 +396,10 @@
         </tbody>
       </table>
     </div>
+  {/if}
+
+  {#if d.gestaltConflicts.length}
+    <p class="text-sm text-accent">Gestalt: {d.gestaltConflicts.join(', ')} {d.gestaltConflicts.length === 1 ? 'is' : 'are'} taken on both sides.</p>
   {/if}
 
   {#if app.d.fcb.hp || app.d.fcb.skill || app.d.fcb.other.length}

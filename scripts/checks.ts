@@ -447,6 +447,29 @@ check('no hamburger menu', (await page.getByRole('button', { name: 'Menu', exact
 check('print stays in the header', await page.locator('#app > header').getByRole('button', { name: 'Print / PDF' }).isVisible());
 await page.setViewportSize({ width: 1280, height: 900 });
 
+console.log('— gestalt');
+const will = async () => Number((await page.locator('.stat').filter({ has: page.locator('.field-label', { hasText: /^Will/ }) }).first().locator('.stat-value').innerText()).trim());
+const willBefore = await will();
+await openSettings();
+await page.getByLabel(/Gestalt \(each level/).check();
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await toggleEdit('classes');
+await page.getByRole('button', { name: '+ Class' }).click();
+const wizName = page.getByLabel('Class name').last();
+await wizName.fill('Wizard');
+await wizName.blur();
+await openLevelHistory();
+const gestaltPicks = page.getByLabel(/^Gestalt class for level \d+$/);
+const levelCount = await gestaltPicks.count();
+for (let i = 0; i < levelCount; i++) await pick(gestaltPicks.nth(i), 'Wizard');
+await toggleEdit('classes');
+const willGestalt = await will();
+check('gestalt Wizard side raises Will (good save track)', willGestalt > willBefore, `${willBefore} → ${willGestalt}`);
+await openSettings();
+await page.getByLabel(/Gestalt \(each level/).uncheck();
+await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+check('turning gestalt off restores Will', (await will()) === willBefore, String(await will()));
+
 if (errors.length) {
   failed += errors.length;
   console.log('page errors:', errors);
