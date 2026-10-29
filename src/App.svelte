@@ -56,7 +56,7 @@
     {#each app.tabs as tab (tab)}
       <button
         type="button"
-        class={['shrink-0 rounded-t-sm border border-b-0 py-1.5 font-display text-sm font-bold tracking-wider whitespace-nowrap uppercase', tab === 'settings' ? 'ml-auto px-3' : 'px-4']}
+        class={['shrink-0 rounded-t-sm border border-b-0 py-1.5 font-display text-sm font-bold tracking-wider whitespace-nowrap uppercase', tab === 'settings' ? 'px-3' : 'px-4']}
         class:bg-ink={app.tab === tab}
         class:text-paper={app.tab === tab}
         class:border-ink={app.tab === tab}
