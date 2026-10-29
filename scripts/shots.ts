@@ -1,6 +1,7 @@
 // Screenshot the app for agentic review.
 // Usage: node scripts/shots.ts [--url http://localhost:5173] [--fixture scripts/fixtures/x.json]
 //        [--tabs core,character] [--widths 1280,390] [--pdf] [--full] [--dark]
+//        [--edit readiness,offense] [--section readiness]
 import { mkdirSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { chromium } from 'playwright';
@@ -17,6 +18,12 @@ const { values: args } = parseArgs({
     full: { type: 'boolean', default: true },
     // Split full-page shots into chunks of this many px (easier to inspect).
     slice: { type: 'string' },
+    // Put these sections (data-section ids) into edit mode before shooting.
+    edit: { type: 'string' },
+    // Crop the shot to one section instead of the whole page.
+    section: { type: 'string' },
+    // Click these buttons (accessible names) after entering edit mode, e.g. "Add Initiative / speed bonuses".
+    press: { type: 'string' },
   },
 });
 
@@ -48,7 +55,22 @@ for (const width of args.widths.split(',').map(Number)) {
   for (const tab of args.tabs.split(',')) {
     await page.goto(`${args.url}/#${tab}`);
     await page.waitForTimeout(300);
-    const file = `${out}/${tab}-${width}${suffix}.png`;
+    for (const id of args.edit?.split(',') ?? []) {
+      const head = page.locator(`[data-section="${id}"] .section-head`);
+      if (await head.count()) await head.getByRole('button', { name: /^Edit / }).click();
+    }
+    for (const name of args.press?.split(',') ?? []) await page.getByRole('button', { name, exact: true }).first().click();
+    const file = `${out}/${tab}-${width}${suffix}${args.section ? `-${args.section}` : ''}.png`;
+    if (args.section) {
+      // Page coordinates (not viewport) so the clip works on a full-page shot.
+      const box = await page.locator(`[data-section="${args.section}"]`).first().evaluate((el) => {
+        const r = el.getBoundingClientRect();
+        return { x: r.x + scrollX, y: r.y + scrollY, width: r.width, height: r.height };
+      });
+      await page.screenshot({ path: file, fullPage: true, clip: box });
+      console.log(file);
+      continue;
+    }
     await page.screenshot({ path: file, fullPage: args.full });
     console.log(file);
     if (args.slice) {
