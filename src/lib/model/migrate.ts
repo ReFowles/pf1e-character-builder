@@ -1,4 +1,5 @@
 import { uid } from './id';
+import { splitCrit } from './crit';
 import { isClassSkill } from '../rules/skills';
 import { RETIRED_MACRO_FEATS, bonusRowsFor, featKey } from '../rules/featBonuses';
 
@@ -153,6 +154,12 @@ STEPS[6] = (d) => {
     resistances: arr(d.resistances).map(({ value, ...r }) => ({ ...r, name: [r.name, value].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ') })),
   };
 };
+
+STEPS[7] = (d) => ({
+  ...d,
+  // Weapon critical text ("19-20/×2") becomes a threat range and a multiplier.
+  weapons: arr(d.weapons).map((w) => ({ ...w, ...splitCrit(String(w.crit ?? '')) })),
+});
 
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;

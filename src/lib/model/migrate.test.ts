@@ -23,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(7);
+    expect(c.schemaVersion).toBe(8);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -124,7 +124,7 @@ describe('migrate v6 -> v7', () => {
         { id: 'b', name: 'poison', value: '' },
       ],
     });
-    expect(c.schemaVersion).toBe(7);
+    expect(c.schemaVersion).toBe(8);
     expect(c.resistances.map((r) => r.name)).toEqual(['fire 10', 'poison']);
     expect('value' in c.resistances[0]).toBe(false);
   });
@@ -145,5 +145,25 @@ describe('migrate v6 -> v7', () => {
     expect(c.feats.map((f) => f.name)).toEqual(['Toughness', 'Improved Initiative']);
     expect(c.bonuses.map((b) => [b.key, b.value, b.source])).toEqual([['init', 4, 'Improved Initiative']]);
     expect(normalize({ schemaVersion: 6, favoredClassId: null }).favoredClassIds).toEqual([]);
+  });
+});
+
+describe('migrate v7 -> v8', () => {
+  it('splits weapon critical text into a threat range and a multiplier', () => {
+    const c = normalize({
+      schemaVersion: 7,
+      weapons: [
+        { id: 'a', name: 'Scimitar', crit: '18-20/×2' },
+        { id: 'b', name: 'Longsword', crit: '20/×2' },
+        { id: 'c', name: 'Longbow', crit: '×3' },
+      ],
+    });
+    expect(c.schemaVersion).toBe(8);
+    expect(c.weapons.map((w) => [w.critRange, w.crit])).toEqual([
+      [18, '×2'],
+      [20, '×2'],
+      [20, '×3'],
+    ]);
+    expect(c.critMode).toBe('total');
   });
 });

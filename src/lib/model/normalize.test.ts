@@ -8,7 +8,8 @@ describe('normalize', () => {
     expect(c.info.size).toBe('medium');
     expect(c.abilities.str.base).toBe(10);
     expect(c.weapons[0].name).toBe('Longsword');
-    expect(c.weapons[0].crit).toBe('20/×2');
+    expect(c.weapons[0].crit).toBe('×2');
+    expect(c.weapons[0].critRange).toBe(20);
     expect(c.weapons[0].id).toBeTruthy();
   });
 

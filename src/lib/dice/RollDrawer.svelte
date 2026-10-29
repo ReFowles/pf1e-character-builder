@@ -60,7 +60,7 @@
                 title="d{d.sides}">{d.sign < 0 ? '-' : ''}{d.value}</span
               >
             {/each}
-            <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}</span>
+            <span class="ml-auto text-2xl font-bold tabular-nums">{r.total}{#if r.multiplier && r.multiplier !== 1}<span class="ml-1 text-sm opacity-70">×{r.multiplier}</span>{/if}</span>
           </div>
           {#if partsText(r)}<div class="text-xs opacity-70">{partsText(r)}</div>{/if}
         </li>

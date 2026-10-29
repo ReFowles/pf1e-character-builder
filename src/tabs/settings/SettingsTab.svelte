@@ -52,6 +52,20 @@
       <input type="checkbox" bind:checked={c.maxHpFirstLevel} />
       Max hit points at first level
     </label>
+    <label class="field">
+      <Select
+        bind:value={c.critMode}
+        options={[
+          { value: 'total' as const, label: 'Multiply the total' },
+          { value: 'dice' as const, label: 'Multiply the dice' },
+        ]}
+        aria-label="Critical hit rule"
+      />
+      <span class="field-label">Critical hits</span>
+    </label>
+    <p class="text-xs opacity-70">
+      {c.critMode === 'total' ? 'Roll the damage normally, then multiply the whole total (×2, ×3…).' : 'Roll the dice multiplied (×2 means twice as many dice), with the bonus multiplied too.'}
+    </p>
   </Section>
   <Section id="settings-tabs" title="Tabs">
     <label class="flex items-center gap-2 text-sm">

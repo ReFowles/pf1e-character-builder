@@ -36,7 +36,7 @@ import type {
   EidolonEvolution,
 } from './types';
 
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -99,7 +99,8 @@ export const make = {
     attackMisc: 0,
     damageMisc: 0,
     damage: '',
-    crit: '20/×2',
+    critRange: 20,
+    crit: '×2',
     range: '',
     type: '',
     weight: 0,
@@ -353,6 +354,7 @@ export function newCharacter(): Character {
     currency: { carried: coins(), locations: [] },
     spellcasting: [],
     companionTab: false,
+    critMode: 'total',
     notes: { html: '' },
     companions: [],
     mythic: {

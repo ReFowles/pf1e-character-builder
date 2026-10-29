@@ -69,3 +69,13 @@ describe('rolling', () => {
     ]);
   });
 });
+
+describe('critical multiplier on the total', () => {
+  it('multiplies the whole total when the spec carries a multiplier', () => {
+    const n = parseNotation('2d6+4')!;
+    const r = buildResult({ title: 'crit', notation: '2d6+4', multiplier: 2 }, n, rollDice(n, () => 3), 'instant');
+    expect(r.total).toBe((3 + 3 + 4) * 2);
+    expect(r.multiplier).toBe(2);
+    expect(buildResult({ title: 'x', notation: '1d8' }, parseNotation('1d8')!, [{ sides: 8, value: 5, sign: 1 }], 'instant').total).toBe(5);
+  });
+});

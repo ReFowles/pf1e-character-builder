@@ -22,6 +22,7 @@
   import { critMultiplier, damageNotation, multiplyNotation, parseNotation, formatNotation } from '../../lib/dice/notation';
   import type { Weapon } from '../../lib/model/types';
   import type { WeaponDerived } from '../../lib/rules/derive';
+  import { splitCrit } from '../../lib/model/crit';
 
   function addWeapon(it: DbItem) {
     const w = it.weapon!;
@@ -34,7 +35,7 @@
       damageAbility: ranged ? 'none' : 'str',
       damageMultiplier: w.handedness === 'two-handed' ? 1.5 : 1,
       damage: w.damage,
-      crit: w.crit,
+      ...splitCrit(w.crit),
       range: w.range,
       type: w.type,
       weight: it.weight,
@@ -53,10 +54,13 @@
     if (!notation) return app.notify(`Enter dice for ${weaponName(w)} (e.g. 1d8) to roll damage.`);
     const times = crit ? critMultiplier(w.crit) : 1;
     const n = parseNotation(notation)!;
+    // "dice" mode rolls the multiplied dice; "total" mode rolls normally and multiplies the result.
+    const byDice = crit && app.char.critMode === 'dice';
     void roll({
       title: `${weaponName(w)} ${crit ? `critical ×${times}` : 'damage'}`,
-      notation: formatNotation(crit ? multiplyNotation(n, times) : n),
-      parts: partsOf(wd.damageBreakdown).map((p) => (crit ? { ...p, value: p.value * times } : p)),
+      notation: formatNotation(byDice ? multiplyNotation(n, times) : n),
+      parts: partsOf(wd.damageBreakdown).map((p) => (byDice ? { ...p, value: p.value * times } : p)),
+      multiplier: crit && !byDice ? times : 1,
     });
   }
 </script>
@@ -134,9 +138,23 @@
             </div>
           {/if}
         </Field>
-        <Field label="Critical"><input bind:value={w.crit} /></Field>
-        <Field label="Range"><input bind:value={w.range} /></Field>
-        <Field label="Type"><input bind:value={w.type} placeholder="S/P/B" /></Field>
+        <Field label="Critical">
+          {#if editing}
+            <div class="flex items-center gap-0.5">
+              <NumInput class="w-12 shrink-0" bind:value={w.critRange} aria-label="Crit range" title="Threat range: 20 = natural 20 only; 19 for 19–20 (keen weapons, improved critical…)" />
+              <span class="opacity-60">–20/</span>
+              <input class="w-14 min-w-0" bind:value={w.crit} placeholder="×2" aria-label="Crit multiplier" />
+            </div>
+          {:else}
+            <div class="px-1 leading-7 whitespace-nowrap">{w.critRange !== 20 ? `${w.critRange}–20/` : ''}{w.crit}</div>
+          {/if}
+        </Field>
+        <Field label="Range">
+          {#if editing}<input bind:value={w.range} aria-label="Range" />{:else}<div class="px-1 leading-7 whitespace-nowrap">{w.range}</div>{/if}
+        </Field>
+        <Field label="Type">
+          {#if editing}<input bind:value={w.type} placeholder="S/P/B" aria-label="Type" />{:else}<div class="px-1 leading-7 whitespace-nowrap">{w.type}</div>{/if}
+        </Field>
         <Field label="Ammo"><input bind:value={w.ammo} /></Field>
       </div>
       <Field label="Notes" class="mt-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>

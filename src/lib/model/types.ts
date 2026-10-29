@@ -138,6 +138,9 @@ export interface Weapon extends Identified {
   attackMisc: number;
   damageMisc: number;
   damage: string;
+  /** Threat range: 20 for a natural 20 only; 19 for 19–20, and so on. */
+  critRange: number;
+  /** Multiplier text, e.g. ×2. */
   crit: string;
   range: string;
   type: string;
@@ -500,6 +503,8 @@ export interface Character {
   spellcasting: Spellcasting[];
   /** Show the Companions tab. */
   companionTab: boolean;
+  /** Critical hits: multiply the total of a normal roll, or roll the dice multiplied. */
+  critMode: 'total' | 'dice';
   /** Campaign notes: HTML from the Notes tab's editor. */
   notes: { html: string };
   companions: Companion[];

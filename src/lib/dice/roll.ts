@@ -19,6 +19,8 @@ export interface RollSpec {
   title: string;
   subtitle?: string;
   notation: string;
+  /** Multiplies the whole total (critical hits in "total" mode). Default 1. */
+  multiplier?: number;
   /** Where the flat modifier comes from (shown under the dice). */
   parts?: RollPart[];
 }
@@ -32,6 +34,8 @@ export interface RollResult {
   modifier: number;
   parts: RollPart[];
   total: number;
+  /** Applied to the total of dice and modifier. */
+  multiplier: number;
   at: number;
   mode: 'instant' | '3d';
 }
@@ -41,8 +45,10 @@ export function rollDice(n: Notation, rng: Rng = cryptoRng): DieResult[] {
 }
 
 export function buildResult(spec: RollSpec, n: Notation, dice: DieResult[], mode: RollResult['mode']): RollResult {
-  const total = dice.reduce((s, d) => s + d.sign * d.value, 0) + n.modifier;
+  const multiplier = spec.multiplier ?? 1;
+  const total = (dice.reduce((s, d) => s + d.sign * d.value, 0) + n.modifier) * multiplier;
   return {
+    multiplier,
     id: `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 7)}`,
     title: spec.title,
     subtitle: spec.subtitle,
