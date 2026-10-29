@@ -85,7 +85,7 @@
       </td>
       <td class="w-full">
         <div class="flex items-center gap-1">
-          <span class="whitespace-nowrap max-sm:text-sm">
+          <span class="whitespace-nowrap max-sm:text-sm" use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown) }}>
             {sd.def.name}{#if sd.def.trainedOnly}<sup title="Trained only" class="ml-0.5 font-bold text-accent">T</sup>{/if}{#if sd.def.acp}<sup title="Armor check penalty applies" class="ml-0.5">*</sup>{/if}
           </span>
           {#if sd.def.multi}

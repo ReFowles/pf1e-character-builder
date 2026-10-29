@@ -2,7 +2,6 @@
   import { app } from '../state.svelte';
   import AboutDialog from './AboutDialog.svelte';
   import Select from './Select.svelte';
-  import { rolls } from '../dice/rolls.svelte';
 
   let about: AboutDialog;
 
@@ -13,7 +12,6 @@
     { label: 'Export JSON', run: () => app.exportJson() },
     { label: 'Print / PDF', title: 'Print, or choose “Save as PDF” in the print dialog', run: () => print() },
     { label: 'About', run: () => about.open() },
-    { label: 'Roll log', run: () => rolls.toggle(true) },
   ];
 
   const sorted = $derived([...app.roster].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
@@ -40,16 +38,9 @@
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5A1 1 0 0 0 7.7 16.5h4.6a1 1 0 0 0 1-.9L14 6M8.5 9v4.5M11.5 9v4.5"/></svg>
   </button>
   <div class="ml-auto flex flex-wrap gap-2">
-    {#each ACTIONS.filter((a) => a.label !== 'Roll log') as a (a.label)}
+    {#each ACTIONS as a (a.label)}
       <button type="button" class="btn hidden sm:inline-block" title={a.title} onclick={a.run}>{a.label}</button>
     {/each}
-    <button type="button" class="btn relative p-1.5" title="Roll log and dice" aria-label="Roll log{rolls.unread ? ` (${rolls.unread} new)` : ''}" onclick={() => rolls.toggle()}>
-      <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" class="size-4" aria-hidden="true">
-        <path d="M10 1.8 17.2 6v8L10 18.2 2.8 14V6L10 1.8Z" />
-        <path d="M10 1.8 6 8.5h8L10 1.8ZM2.8 6 6 8.5 4.2 13.3 2.8 14M17.2 6 14 8.5l1.8 4.8 1.4.7M6 8.5l1.6 5.3h4.8L14 8.5M7.6 13.8 10 18.2l2.4-4.4" />
-      </svg>
-      {#if rolls.unread}<span class="roll-badge">{rolls.unread}</span>{/if}
-    </button>
     <button type="button" class="btn p-1.5 sm:hidden" aria-label="Menu" title="Menu" popovertarget="app-menu">
       <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" class="size-4" aria-hidden="true"><path d="M3.5 6h13M3.5 10h13M3.5 14h13" /></svg>
     </button>
