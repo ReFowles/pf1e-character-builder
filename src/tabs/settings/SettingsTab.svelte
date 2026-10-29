@@ -133,7 +133,17 @@
   </div>
 </div>
 <div class="mt-3">
-  <Section id="settings-layout" title="Layout & print" >
+  <Section id="settings-layout" title="Layout & print">
+    {#snippet actions()}
+      <button
+        type="button"
+        class="head-btn px-2"
+        title="Show every section on screen and in print again"
+        onclick={() => {
+          c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
+        }}>Reset layout</button
+      >
+    {/snippet}
     <p class="text-sm opacity-70">Hide a section on screen or leave it out of the printed sheet. Collapse sections with the chevron in their header.</p>
     <div class="grid gap-3 sm:grid-cols-2">
       {#each sheetTabs as tab (tab)}
@@ -174,13 +184,6 @@
         </table>
       {/each}
     </div>
-    <button
-      type="button"
-      class="btn self-start"
-      onclick={() => {
-        c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
-      }}>Reset layout</button
-    >
   </Section>
 </div>
 <AboutDialog bind:this={about} />

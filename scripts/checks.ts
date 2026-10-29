@@ -361,10 +361,15 @@ await entry.waitFor();
 const total = Number(await entry.getAttribute('data-total'));
 const die = Number(await entry.getAttribute('data-dice'));
 check(`initiative roll = d20 + ${initText}`, die >= 1 && die <= 20 && total === die + Number(initText), `${die} → ${total}`);
-await page.getByRole('button', { name: 'd6', exact: true }).click();
+await page.getByRole('button', { name: 'Add a d6' }).click();
+await page.getByRole('button', { name: 'Add a d6' }).click();
+await page.getByRole('button', { name: 'Add a d20' }).click();
+await page.getByRole('button', { name: 'Roll', exact: true }).click();
 const tray = page.locator('[data-roll]').last();
-const d6 = Number(await tray.getAttribute('data-dice'));
-check('tray d6 in range', d6 >= 1 && d6 <= 6, String(d6));
+const trayNotation = await tray.locator('.font-mono').first().innerText();
+const trayDice = (await tray.getAttribute('data-dice'))?.split(',') ?? [];
+check('tray rolls 2d6+1d20 as one entry', trayNotation === '2d6+1d20' && trayDice.length === 3, `${trayNotation}, ${trayDice.length} dice`);
+check('tray resets after rolling', (await page.getByRole('button', { name: 'Roll', exact: true }).isDisabled()) === true);
 await expectStat('Initiative', initText); // rollables add no text
 await page.getByRole('button', { name: 'Close', exact: true }).click();
 

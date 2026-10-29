@@ -1,12 +1,29 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import NumInput from '../ui/NumInput.svelte';
   import { fmt } from '../ui/format';
   import { roll, rolls } from './rolls.svelte';
 
   const DICE = [4, 6, 8, 10, 12, 20, 100];
-  let count = $state(1);
+  const MAX_COUNT = 50;
+  /** Dice in the tray: how many of each. */
+  let counts = $state<Record<number, number>>({});
   let list: HTMLOListElement | undefined = $state();
+
+  const notation = $derived(
+    DICE.filter((d) => counts[d] > 0)
+      .map((d) => `${counts[d]}d${d}`)
+      .join('+'),
+  );
+  const total = $derived(DICE.reduce((n, d) => n + (counts[d] ?? 0), 0));
+
+  function bump(sides: number, by: number) {
+    counts[sides] = Math.max(0, Math.min(MAX_COUNT, (counts[sides] ?? 0) + by));
+  }
+  function rollTray() {
+    if (!notation) return;
+    void roll({ title: notation, notation });
+    counts = {};
+  }
 
   // Newest at the bottom, like a chat: keep it scrolled to the end.
   $effect(() => {
@@ -34,20 +51,6 @@
       <button type="button" class={['icon-btn', { 'ml-auto': !rolls.entries.length }]} aria-label="Close" onclick={() => rolls.toggle(false)}>✕</button>
     </div>
 
-    <!-- Quick tray: the standard seven-dice set. -->
-    <div class="flex flex-wrap items-center gap-1 border-b border-ink/20 px-4 py-2" role="group" aria-label="Quick roll">
-      <NumInput class="w-12" bind:value={count} aria-label="Number of dice" />
-      <span class="text-sm opacity-60">×</span>
-      {#each DICE as sides (sides)}
-        <button
-          type="button"
-          class="btn px-2 py-0.5 font-bold tabular-nums"
-          disabled={rolls.busy}
-          onclick={() => roll({ title: `${Math.max(1, Math.min(100, count))}d${sides}`, notation: `${Math.max(1, Math.min(100, count))}d${sides}` })}>d{sides}</button
-        >
-      {/each}
-    </div>
-
     <ol bind:this={list} class="flex flex-1 flex-col gap-2 overflow-y-auto px-4 py-3" aria-live="polite">
       {#each rolls.entries as r (r.id)}
         <li class="rounded-md border border-ink/15 bg-parchment/60 px-3 py-2" data-roll data-total={r.total} data-dice={r.dice.map((d) => d.value).join(',')}>
@@ -69,8 +72,27 @@
           {#if partsText(r)}<div class="text-xs opacity-70">{partsText(r)}</div>{/if}
         </li>
       {:else}
-        <li class="text-sm italic opacity-50">Click a number on the sheet (initiative, saves, attacks, skills…) or use the tray above.</li>
+        <li class="text-sm italic opacity-50">Click a number on the sheet (initiative, saves, attacks, skills…) or build a roll in the tray below.</li>
       {/each}
     </ol>
+
+    <!-- Tray at the bottom: pick dice, then roll them together (2d6+3d4). -->
+    <div class="flex flex-col gap-2 border-t border-ink/20 px-4 py-3" role="group" aria-label="Dice tray">
+      <div class="flex flex-wrap justify-end gap-1.5">
+        {#each DICE as sides (sides)}
+          <div class="flex items-center overflow-hidden rounded-sm border border-ink/30">
+            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Remove a d{sides}" disabled={!counts[sides]} onclick={() => bump(sides, -1)}>−</button>
+            <span class="min-w-5 text-center text-sm font-semibold tabular-nums" aria-label="{counts[sides] ?? 0} d{sides}">{counts[sides] ?? 0}</span>
+            <button type="button" class="px-1.5 py-0.5 text-sm hover:bg-ink/10 disabled:opacity-30" aria-label="Add a d{sides}" disabled={(counts[sides] ?? 0) >= MAX_COUNT} onclick={() => bump(sides, 1)}>+</button>
+            <span class="border-l border-ink/30 px-1.5 py-0.5 text-sm font-bold">d{sides}</span>
+          </div>
+        {/each}
+      </div>
+      <div class="flex items-center gap-2">
+        <span class="min-w-0 flex-1 truncate font-mono text-xs opacity-70" title={notation}>{notation || 'Choose dice above'}</span>
+        <button type="button" class="btn text-xs" disabled={!total} onclick={() => (counts = {})}>Reset</button>
+        <button type="button" class="btn-primary text-sm" disabled={!total || rolls.busy} onclick={rollTray}>Roll</button>
+      </div>
+    </div>
   </aside>
 {/if}

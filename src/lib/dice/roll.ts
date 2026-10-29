@@ -70,7 +70,12 @@ export function rollInstant(spec: RollSpec, rng: Rng = cryptoRng): RollResult | 
 
 /** The applied parts of a derived total, in the log's shape (same sources as the hover breakdown). */
 export function partsOf(t: Total): RollPart[] {
-  return t.parts.filter((p) => p.applied).map((p) => ({ source: `${p.source}${p.type !== 'untyped' ? ` (${p.type})` : ''}`, value: p.value }));
+  // "Enhancement" with the type "enhancement" reads as just "(enhancement)"; other typed bonuses keep both.
+  const label = (p: { source: string; type: string }) => {
+    if (p.type === 'untyped') return p.source;
+    return p.source.toLowerCase() === p.type ? `(${p.type})` : `${p.source} (${p.type})`;
+  };
+  return t.parts.filter((p) => p.applied).map((p) => ({ source: label(p), value: p.value }));
 }
 
 export const LOG_CAP = 200;
