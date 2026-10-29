@@ -49,7 +49,15 @@
 </script>
 
 {#if current && ring && callout}
-  <div class="pointer-events-none fixed z-40 rounded-md ring-2 ring-accent ring-offset-2 ring-offset-paper print:hidden" style:left="{ring.x}px" style:top="{ring.y}px" style:width="{ring.w}px" style:height="{ring.h}px"></div>
+  <!-- A transparent cutout whose huge shadow tints the page; the target inside stays bright. -->
+  <div
+    class="pointer-events-none fixed z-40 rounded-md border-2 border-accent print:hidden"
+    style:left="{ring.x}px"
+    style:top="{ring.y}px"
+    style:width="{ring.w}px"
+    style:height="{ring.h}px"
+    style:box-shadow="0 0 0 9999px rgb(0 0 0 / 0.45)"
+  ></div>
   <div
     role="dialog"
     aria-labelledby="tour-title"
