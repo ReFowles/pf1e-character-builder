@@ -2,6 +2,8 @@ Additional Section 15 copyright notices for the bundled rules data:
 
 Pathfinder Roleplaying Game Core Rulebook. © 2009, Paizo Publishing, LLC; Author: Jason Bulmahn, based on material by Jonathan Tweet, Monte Cook, and Skip Williams.
 Pathfinder Roleplaying Game Advanced Player's Guide. © 2010, Paizo Publishing, LLC; Author: Jason Bulmahn.
-Foundry VTT Pathfinder 1e system compendium data (gitlab.com/foundryvtt_pathfinder1e/foundryvtt-pathfinder1), distributed under the Open Game License v1.0a.
+Foundry VTT Pathfinder 1e system compendium data (gitlab.com/foundryvtt_pathfinder1e/foundryvtt-pathfinder1), distributed under the Open Game License v1.0a: spells, feats, items, base and unchained classes.
+pf1-content module for Foundry VTT (gitlab.com project 47251054), game data distributed under the Open Game License v1.0a and Paizo's Community Use Policy: feats, animal companions, familiars, eidolon evolutions.
+pf1e-archetypes module for Foundry VTT (gitlab.com project 47896698), game data distributed under the Open Game License v1.0a and Paizo's Community Use Policy: prestige classes.
 
-Each spell, feat and item lists its source product code (e.g. PZO1110 = Core Rulebook).
+The full Section 15 notices of all three sources are merged into OGL.txt. Spells, items and most feats and classes list their source product code (e.g. PZO1110 = Core Rulebook); familiars list the book and page of their stat block.

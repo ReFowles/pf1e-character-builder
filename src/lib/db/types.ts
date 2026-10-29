@@ -60,8 +60,58 @@ export interface DbItem {
   armor?: DbArmor;
 }
 
+export interface DbClass {
+  /** Slug of the name: lowercase, non-alphanumerics → '-'. */
+  id: string;
+  name: string;
+  kind: 'base' | 'unchained' | 'prestige';
+  hd: number;
+  /** Foundry high/med/low. */
+  bab: 'full' | '3/4' | '1/2';
+  goodSaves: ('fort' | 'ref' | 'will')[];
+  /** Skill ranks per level (before Int). */
+  skillRanks: number;
+  /** App skill keys from src/lib/rules/skills.ts, plus "knowledge:arcana" style subtypes. */
+  classSkills: string[];
+  castingAbility?: 'int' | 'wis' | 'cha';
+  /** From Foundry's system.casting when the class casts spells. */
+  casting?: { type: string; progression: string; spells: string };
+  summary: string;
+  source: string;
+}
+
+export interface DbCompanion {
+  name: string;
+  kind: 'animal' | 'familiar';
+  /** tiny/small/medium/large…, lowercase. */
+  size: string;
+  /** e.g. "40 ft, fly 60 ft (good)". */
+  speed: string;
+  naturalArmor: number;
+  abilities: { str: number; dex: number; con: number; int: number; wis: number; cha: number };
+  attacks: { name: string; damage: string; secondary?: boolean }[];
+  senses: string;
+  /** Special qualities and attacks. */
+  special: string[];
+  /** Plain text of the 4th/7th-level advancement paragraph(s); '' for familiars. */
+  advancement: string;
+  source: string;
+}
+
+export interface DbEvolution {
+  name: string;
+  /** Evolution points. */
+  cost: number;
+  summary: string;
+  description: string;
+  source: string;
+}
+
 export interface DbData {
   spells: DbSpell[];
   feats: DbFeat[];
   items: DbItem[];
+  classes: DbClass[];
+  companions: DbCompanion[];
+  evolutions: DbEvolution[];
 }
