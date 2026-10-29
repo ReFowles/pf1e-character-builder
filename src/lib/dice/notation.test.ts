@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { critMultiplier, damageNotation, formatNotation, multiplyNotation, parseNotation } from './notation';
+import { critMultiplier, damageNotation, formatNotation, multiplyNotation, parseNotation, spellDamageNotation } from './notation';
 import { buildResult, capLog, partsOf, rollDice, rollInstant, throwNotation } from './roll';
 
 describe('dice notation', () => {
@@ -101,5 +101,24 @@ describe('extra damage dice', () => {
     const n = parseNotation(spec.notation)!;
     expect(throwNotation(spec, n).dice).toHaveLength(1);
     expect(buildResult(spec, n, [{ sides: 4, value: 3, sign: 1 }], 'instant').extras).toBeUndefined();
+  });
+});
+
+describe('spell damage', () => {
+  const base = { damage: '1d6', damageDicePerLevel: false, damageBonusPerLevel: 0, damageMax: 0, damageBonus: 0 };
+  it('rolls fixed dice as written, with the flat bonus', () => {
+    expect(spellDamageNotation({ ...base, damage: '6d6', damageBonus: 2 }, 9)).toBe('6d6+2');
+  });
+  it('scales dice per caster level up to the cap', () => {
+    expect(spellDamageNotation({ ...base, damageDicePerLevel: true, damageMax: 10 }, 7)).toBe('7d6');
+    expect(spellDamageNotation({ ...base, damageDicePerLevel: true, damageMax: 10 }, 15)).toBe('10d6');
+    expect(spellDamageNotation({ ...base, damageDicePerLevel: true }, 0)).toBe('1d6');
+  });
+  it('scales the bonus per level (cure light wounds: 1d8+1/level, max +5)', () => {
+    expect(spellDamageNotation({ ...base, damage: '1d8', damageBonusPerLevel: 1, damageMax: 5 }, 3)).toBe('1d8+3');
+    expect(spellDamageNotation({ ...base, damage: '1d8', damageBonusPerLevel: 1, damageMax: 5 }, 12)).toBe('1d8+5');
+  });
+  it('is null without rollable dice', () => {
+    expect(spellDamageNotation({ ...base, damage: '' }, 5)).toBeNull();
   });
 });

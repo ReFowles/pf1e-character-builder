@@ -17,7 +17,8 @@ export const SIZES = [
 ] as const;
 export type Size = (typeof SIZES)[number];
 
-export type XpTrack = 'slow' | 'medium' | 'fast';
+/** 'milestone' levels up by GM decision, so no experience is tracked. */
+export type XpTrack = 'slow' | 'medium' | 'fast' | 'milestone';
 export type BabProgression = 'full' | '3/4' | '1/2';
 export type Save = 'fort' | 'ref' | 'will';
 
@@ -328,6 +329,19 @@ export interface SpellEntry extends Identified {
   prepared: number;
   used: number;
   notes: string;
+  /** Touch attack rolled with this spell (BAB + Str for melee, + Dex for ranged); 'none' for no attack roll. */
+  attack: 'none' | 'melee' | 'ranged';
+  attackMisc: number;
+  /** Damage dice, e.g. "1d6"; empty for a spell that doesn't roll damage. */
+  damage: string;
+  /** Roll the dice once per caster level (fireball: 1d6 per level, max 10). */
+  damageDicePerLevel: boolean;
+  /** Flat damage added per caster level (cure light wounds: +1 per level, max 5). */
+  damageBonusPerLevel: number;
+  /** Caster levels that count for the per-level damage; 0 = no cap. */
+  damageMax: number;
+  damageBonus: number;
+  damageType: string;
 }
 
 export interface Spellcasting extends Identified {

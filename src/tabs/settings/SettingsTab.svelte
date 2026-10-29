@@ -109,7 +109,7 @@
   </Section>
   <Section id="settings-rules" title="Rules">
     <label class="field">
-      <Select bind:value={c.xp.track} options={opts(['slow', 'medium', 'fast'] as const)} aria-label="Experience track" />
+      <Select bind:value={c.xp.track} options={[...opts(['slow', 'medium', 'fast'] as const), { value: 'milestone' as const, label: 'Milestones (no XP)' }]} aria-label="Experience track" />
       <span class="field-label">Experience track</span>
     </label>
     <label class="flex items-center gap-2 text-sm">

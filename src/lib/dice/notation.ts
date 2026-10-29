@@ -60,3 +60,23 @@ export function critMultiplier(crit: string): number {
 export function multiplyNotation(n: Notation, times: number): Notation {
   return { dice: n.dice.map((t) => ({ ...t, count: t.count * times })), modifier: n.modifier * times };
 }
+
+export interface SpellDamage {
+  damage: string;
+  damageDicePerLevel: boolean;
+  damageBonusPerLevel: number;
+  damageMax: number;
+  damageBonus: number;
+}
+
+/** Caster levels that count toward per-level spell damage (at least 1; `max` 0 = uncapped). */
+export const spellLevels = (casterLevel: number, max: number) => Math.max(1, max > 0 ? Math.min(casterLevel, max) : casterLevel);
+
+/** A spell's damage at the given caster level, e.g. "1d6" per level at CL 7 → "7d6"; null when the dice aren't rollable text. */
+export function spellDamageNotation(s: SpellDamage, casterLevel: number): string | null {
+  const n = parseNotation(s.damage);
+  if (!n) return null;
+  const levels = spellLevels(casterLevel, s.damageMax);
+  const dice = s.damageDicePerLevel ? n.dice.map((t) => ({ ...t, count: Math.min(t.count * levels, 100) })) : n.dice;
+  return formatNotation({ dice, modifier: n.modifier + s.damageBonus + s.damageBonusPerLevel * levels });
+}

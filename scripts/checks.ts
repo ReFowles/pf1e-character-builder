@@ -373,6 +373,35 @@ check('tray resets after rolling', (await page.getByRole('button', { name: 'Roll
 await expectStat('Initiative', initText); // rollables add no text
 await page.getByRole('button', { name: 'Close', exact: true }).click();
 
+console.log('— spell rolls');
+await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await other.getByRole('button', { name: /1st-level spell/ }).first().click();
+await other.getByLabel('Spell name').first().fill('Fireball');
+await other.getByRole('button', { name: /Set up Fireball attack and damage rolls/ }).click();
+await other.getByLabel('Spell damage dice').fill('1d6');
+await other.getByLabel('Spell damage type').fill('fire');
+await other.getByLabel('Caster level cap for per-level damage (0 for none)').fill('3');
+await other.getByLabel('Caster level cap for per-level damage (0 for none)').blur();
+await other.getByLabel('Dice/level').check();
+await pick(other.getByLabel('Spell attack'), 'Ranged touch');
+await other.locator('.section-head').getByRole('button', { name: /^Done editing / }).click();
+check('spell roll setup is hidden outside edit mode', (await other.getByRole('button', { name: /Set up Fireball/ }).count()) === 0 && (await other.getByLabel('Spell damage dice').count()) === 0);
+await expectText('Spell damage shows dice per level up to the cap', other.getByRole('button', { name: 'Roll Fireball damage' }), /^3d6$/);
+await other.getByRole('button', { name: 'Roll Fireball damage' }).click();
+await page.getByRole('button', { name: /^Roll log/ }).click();
+const spellRoll = page.locator('[data-roll]').last();
+await spellRoll.waitFor();
+const spellDice = (await spellRoll.getAttribute('data-dice'))?.split(',').map(Number) ?? [];
+check('spell damage rolls 3d6', spellDice.length === 3 && Number(await spellRoll.getAttribute('data-total')) === spellDice.reduce((x, y) => x + y, 0), spellDice.join(','));
+await page.getByRole('button', { name: 'Close', exact: true }).click();
+await other.getByRole('button', { name: 'Roll Fireball attack' }).click();
+await page.getByRole('button', { name: /^Roll log/ }).click();
+const spellAttack = page.locator('[data-roll]').last();
+const atkBonus = Number((await other.getByRole('button', { name: 'Roll Fireball attack' }).innerText()).replace('+', ''));
+const atkDie = Number(await spellAttack.getAttribute('data-dice'));
+check(`spell attack = d20 ${atkBonus >= 0 ? '+' : ''}${atkBonus}`, Number(await spellAttack.getAttribute('data-total')) === atkDie + atkBonus, `${atkDie} → ${await spellAttack.getAttribute('data-total')}`);
+await page.getByRole('button', { name: 'Close', exact: true }).click();
+
 console.log('— campaign notes');
 await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
 const prose = page.locator('[data-section=notes] .ProseMirror');

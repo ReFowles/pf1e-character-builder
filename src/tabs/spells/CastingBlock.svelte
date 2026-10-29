@@ -3,6 +3,8 @@
   import { uid } from '../../lib/model/id';
   import { partsOf } from '../../lib/dice/roll';
   import { rollable } from '../../lib/dice/rollable';
+  import { roll } from '../../lib/dice/rolls.svelte';
+  import { spellDamageNotation, spellLevels } from '../../lib/dice/notation';
   import { ABILITIES, type SpellEntry, type Spellcasting } from '../../lib/model/types';
   import { SPELL_TABLES, spellRanges } from '../../lib/rules/spellTables';
   import { slug } from '../../lib/rules/derive';
@@ -99,6 +101,30 @@
     });
   }
   const removeSpell = (s: SpellEntry) => b.spells.splice(b.spells.indexOf(s), 1);
+
+  // Spells with a rollable attack or damage show them in the Rolls column; the editor opens per spell.
+  let rollEditor = $state<Record<string, boolean>>({});
+  const spellName = (s: SpellEntry) => s.name || 'Spell';
+  const touch = (s: SpellEntry) => (s.attack === 'melee' ? 'melee touch' : 'ranged touch');
+  const attackTotal = (s: SpellEntry) => (s.attack === 'melee' ? app.d.attack.melee : app.d.attack.ranged);
+  const attackBonus = (s: SpellEntry) => attackTotal(s).total + s.attackMisc;
+  const attackParts = (s: SpellEntry) => [...partsOf(attackTotal(s)), ...(s.attackMisc ? [{ source: 'Misc', value: s.attackMisc }] : [])];
+  const damageText = (s: SpellEntry) => spellDamageNotation(s, d?.casterLevel ?? 0);
+  function rollSpellDamage(s: SpellEntry) {
+    const notation = damageText(s);
+    if (!notation) return app.notify(`Enter dice for ${spellName(s)} (e.g. 1d6) to roll damage.`);
+    const levels = spellLevels(d?.casterLevel ?? 0, s.damageMax);
+    const base = s.damageBonus;
+    void roll({
+      title: `${spellName(s)} damage`,
+      subtitle: spellSectionTitle(c, b),
+      notation,
+      parts: [
+        ...(s.damageBonusPerLevel ? [{ source: `${fmt(s.damageBonusPerLevel)} × ${levels} caster level${levels === 1 ? '' : 's'}`, value: s.damageBonusPerLevel * levels }] : []),
+        ...(base ? [{ source: 'Misc', value: base }] : []),
+      ],
+    });
+  }
 </script>
 
 {#snippet slotTable(rows: number[])}
@@ -157,12 +183,12 @@
   </table>
 {/snippet}
 
-{#snippet spellTable(lvl: number, domain: boolean)}
+{#snippet spellTable(lvl: number, domain: boolean, editing: boolean)}
   {@const prepared = b.kind === 'prepared'}
   {@const tracksUses = prepared && lvl > 0}
   <DynamicTable
     items={spellsAt(lvl, domain)}
-    cols={(prepared ? 1 : 0) + (tracksUses ? 1 : 0) + 7}
+    cols={(prepared ? 1 : 0) + (tracksUses ? 1 : 0) + 8}
     reorder={false}
     onremove={removeSpell}
     onadd={() => b.spells.push({ ...make.spell(lvl), domain })}
@@ -178,6 +204,7 @@
       <th>Range</th>
       <th>Save</th>
       <th>SR</th>
+      <th title="Touch attack and damage dice you can roll for this spell">Rolls</th>
       <th>Notes</th>
     {/snippet}
     {#snippet row(s)}
@@ -191,6 +218,66 @@
       <td data-label="Range" class="w-20 align-middle"><input class="w-full" bind:value={s.range} aria-label="Range" /></td>
       <td data-label="Save" class="w-24 align-middle"><input class="w-full" bind:value={s.save} aria-label="Save" /></td>
       <td data-label="SR" class="w-12 align-middle"><input class="w-full" bind:value={s.sr} aria-label="Spell resistance" /></td>
+      <td data-label="Rolls" class="min-w-32 align-middle">
+        <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-bold whitespace-nowrap tabular-nums">
+          {#if s.attack !== 'none'}
+            <span class="inline-flex items-baseline gap-1">
+              <span use:rollable={{ title: `${spellName(s)} attack`, subtitle: spellSectionTitle(c, b), bonus: attackBonus(s), parts: attackParts(s) }}>{fmt(attackBonus(s))}</span>
+              <span class="text-[0.65rem] font-normal opacity-70">{touch(s)}</span>
+            </span>
+          {/if}
+          {#if s.damage}
+            <span class="inline-flex items-baseline gap-1">
+              {#if damageText(s)}
+                <span
+                  class="rollable"
+                  role="button"
+                  tabindex="0"
+                  title="Roll {spellName(s)} damage"
+                  aria-label="Roll {spellName(s)} damage"
+                  onclick={() => rollSpellDamage(s)}
+                  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), rollSpellDamage(s))}>{damageText(s)}</span>
+              {:else}
+                <span class="text-accent" title="Not rollable dice; use a form like 1d6 or 2d8+3">{s.damage}</span>
+              {/if}
+              {#if s.damageType}<span class="text-[0.65rem] font-normal opacity-70">{s.damageType}</span>{/if}
+            </span>
+          {/if}
+          {#if editing}
+          <button
+            type="button"
+            class="text-xs font-normal underline opacity-70 hover:opacity-100 print:hidden"
+            aria-expanded={!!rollEditor[s.id]}
+            aria-label="{rollEditor[s.id] ? 'Done with' : 'Set up'} {spellName(s)} attack and damage rolls"
+            onclick={() => (rollEditor[s.id] = !rollEditor[s.id])}>{rollEditor[s.id] ? 'Done' : s.attack !== 'none' || s.damage ? 'Edit' : '+ Roll'}</button
+          >
+          {/if}
+        </div>
+        {#if editing && rollEditor[s.id]}
+          <div class="mt-1 flex min-w-56 flex-wrap items-end gap-x-2 gap-y-1 print:hidden">
+            <Field label="Attack" class="w-28">
+              <Select
+                bind:value={s.attack}
+                options={[
+                  { value: 'none' as const, label: 'None' },
+                  { value: 'ranged' as const, label: 'Ranged touch' },
+                  { value: 'melee' as const, label: 'Melee touch' },
+                ]}
+                aria-label="Spell attack"
+              />
+            </Field>
+            {#if s.attack !== 'none'}<Field label="Atk misc" class="w-14"><NumInput bind:value={s.attackMisc} signed aria-label="Spell attack misc" /></Field>{/if}
+            <Field label="Damage" class="w-20"><input bind:value={s.damage} placeholder="1d6" aria-label="Spell damage dice" /></Field>
+            <Field label="Type" class="w-20"><input bind:value={s.damageType} placeholder="fire" aria-label="Spell damage type" /></Field>
+            <Field label="Dmg misc" class="w-14"><NumInput bind:value={s.damageBonus} signed aria-label="Spell damage misc" /></Field>
+            <Field label="+/level" class="w-14" ><NumInput bind:value={s.damageBonusPerLevel} signed aria-label="Damage bonus per caster level" /></Field>
+            <Field label="Max CL" class="w-14"><NumInput bind:value={s.damageMax} aria-label="Caster level cap for per-level damage (0 for none)" /></Field>
+            <label class="mb-1 inline-flex items-center gap-1 text-xs" title="Roll the dice once per caster level (fireball: 1d6 per level, max 10)">
+              <input type="checkbox" bind:checked={s.damageDicePerLevel} /> Dice/level
+            </label>
+          </div>
+        {/if}
+      </td>
       <td data-label="Notes" class="min-w-56 align-middle"><textarea rows="1" class="w-full" bind:value={s.notes} aria-label="Notes"></textarea></td>
     {/snippet}
     {#snippet tools()}
@@ -224,6 +311,7 @@
   {#snippet info()}
     <p>Linked spell tables fill in slots by class level (or by caster level for "Other"); Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Settings.</p>
     <p><strong>Per day</strong> = base slots + bonus spells from a high ability score + misc. Cantrips and orisons (level 0) can be cast any number of times; Prepared shows how many you can prepare.</p>
+    <p><strong>Rolls</strong>: in Edit mode, use + Roll on a spell to give it a touch attack (BAB, Str or Dex, size and your attack bonuses) and damage dice. Tick Dice/level for spells that roll dice per caster level (fireball: 1d6, max CL 10), or use +/level for a flat bonus per level (cure light wounds: 1d8, +1/level, max CL 5). Click the numbers to roll.</p>
     <p><strong>Domain slots</strong> (clerics) add one spell per level that must come from a domain; they're counted separately.</p>
     <p><strong>DC</strong> = 10 + spell level + {b.ability.toUpperCase()} modifier. <strong>Pen</strong> (spell penetration) = caster level + bonuses, rolled against spell resistance. <strong>Cnc</strong> (concentration) = caster level + {b.ability.toUpperCase()} modifier + bonuses.</p>
     <table class="w-full text-sm">
@@ -349,10 +437,10 @@
           DC {d?.dcs[lvl]} · {lvl === 0 ? 'at will' : d?.slots[lvl] != null ? `${d.slots[lvl]}/day` : 'not castable'}
         </span>
       </div>
-      {@render spellTable(lvl, false)}
+      {@render spellTable(lvl, false, editing)}
       {#if d?.domain[lvl]}
         <div class="field-label mt-1">Domain spell</div>
-        {@render spellTable(lvl, true)}
+        {@render spellTable(lvl, true, editing)}
       {/if}
     </div>
   {/each}

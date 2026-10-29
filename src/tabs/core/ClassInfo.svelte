@@ -163,7 +163,7 @@
 
 <Section id="classes" editable>
   {#snippet info()}
-    <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Settings).</p>
+    <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track === 'milestone' ? 'milestone setting, which hides experience entirely' : `${c.xp.track} track`} (change it in Settings).</p>
     <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Settings say so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
@@ -176,17 +176,19 @@
       <div class="stat-value text-lg">{d.level}</div>
       <div class="field-label">Level</div>
     </div>
-    <div class="flex flex-1 flex-col items-end">
-      <div class="flex items-center justify-end gap-1">
-        <NumInput class="w-28 text-right" bind:value={c.xp.current} aria-label="Current experience" />
-        <span class="opacity-60">/</span>
-        <span class="tabular-nums" title="{c.xp.track} track (change in Settings)">{d.xpNext?.toLocaleString() ?? '—'}</span>
+    {#if c.xp.track !== 'milestone'}
+      <div class="flex flex-1 flex-col items-end">
+        <div class="flex items-center justify-end gap-1">
+          <NumInput class="w-28 text-right" bind:value={c.xp.current} aria-label="Current experience" />
+          <span class="opacity-60">/</span>
+          <span class="tabular-nums" title="{c.xp.track} track (change in Settings)">{d.xpNext?.toLocaleString() ?? '—'}</span>
+        </div>
+        <span class="field-label">
+          Experience
+          {#if ready}<span class="ml-1 rounded-sm bg-gold px-1 text-paper normal-case">Level up!</span>{/if}
+        </span>
       </div>
-      <span class="field-label">
-        Experience
-        {#if ready}<span class="ml-1 rounded-sm bg-gold px-1 text-paper normal-case">Level up!</span>{/if}
-      </span>
-    </div>
+    {/if}
   </div>
 
   <div class="overflow-x-auto">

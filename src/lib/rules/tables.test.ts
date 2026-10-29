@@ -12,6 +12,7 @@ describe('tables', () => {
   it('xp for next level', () => {
     expect(xpForNextLevel('medium', 1)).toBe(2000);
     expect(xpForNextLevel('medium', 0)).toBe(2000);
+    expect(xpForNextLevel('milestone', 5)).toBeNull();
     expect(xpForNextLevel('fast', 4)).toBe(10000);
     expect(xpForNextLevel('slow', 20)).toBeNull();
   });

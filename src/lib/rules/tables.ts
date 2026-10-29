@@ -1,7 +1,7 @@
 import { SIZES, type BabProgression, type Size, type XpTrack } from '../model/types';
 
 /** XP required to reach each level (index 0 = level 1). Core Rulebook table 3-1. */
-export const XP_TABLE: Record<XpTrack, number[]> = {
+export const XP_TABLE: Record<Exclude<XpTrack, 'milestone'>, number[]> = {
   slow: [
     0, 3000, 7500, 14000, 23000, 35000, 53000, 77000, 115000, 160000, 235000, 330000, 475000,
     665000, 955000, 1350000, 1900000, 2700000, 3850000, 5350000,
@@ -16,8 +16,9 @@ export const XP_TABLE: Record<XpTrack, number[]> = {
   ],
 };
 
-/** XP needed for the level after `level`, or null at level 20+. */
+/** XP needed for the level after `level`, or null at level 20+ (and on the milestone track). */
 export function xpForNextLevel(track: XpTrack, level: number): number | null {
+  if (track === 'milestone') return null;
   return XP_TABLE[track][Math.max(level, 1)] ?? null;
 }
 
