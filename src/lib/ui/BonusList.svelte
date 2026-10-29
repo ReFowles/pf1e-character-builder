@@ -3,7 +3,7 @@
   import { make } from '../model/defaults';
   import { BONUS_TYPES } from '../model/types';
   import { app } from '../state.svelte';
-  import { KEY_LABELS } from '../rules/keys';
+  import { KEY_LABELS, keyShort } from '../rules/keys';
   import NumInput from './NumInput.svelte';
   import { useSection } from './sectionContext';
   import Select, { opts } from './Select.svelte';
@@ -35,15 +35,16 @@
     </div>
     {#if fixed}{@render fixed()}{/if}
     {#each rows as b (b.id)}
-      <div class="flex flex-wrap items-center gap-1">
-        <NumInput class="w-12" bind:value={b.value} signed aria-label="Bonus value" />
+      <!-- One row that never wraps: the source field gives way first, the ✕ stays at the end. -->
+      <div class="flex flex-nowrap items-center gap-1">
+        <NumInput class="w-11 shrink-0" bind:value={b.value} signed aria-label="Bonus value" />
         {#if keys.length > 1}
-          <Select class="w-28" bind:value={b.key} options={keys.map((k) => ({ value: k, label: KEY_LABELS[k] ?? k }))} aria-label="Applies to" />
+          <Select class="w-24 shrink-0" bind:value={b.key} options={keys.map((k) => ({ value: k, label: keyShort(k), title: KEY_LABELS[k] }))} aria-label="Applies to" />
         {/if}
-        <Select class="w-28" bind:value={b.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
-        <input class="min-w-24 flex-1" bind:value={b.source} placeholder="Source (e.g. Toughness)" aria-label="Source" />
+        <Select class="w-24 shrink-0" bind:value={b.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
+        <input class="min-w-0 flex-1" bind:value={b.source} placeholder="Source (e.g. Toughness)" aria-label="Source" />
         {#if section.editing}
-          <button type="button" class="icon-btn text-accent print:hidden" aria-label="Remove bonus" onclick={() => remove(b.id)}>✕</button>
+          <button type="button" class="icon-btn shrink-0 text-accent print:hidden" aria-label="Remove bonus" onclick={() => remove(b.id)}>✕</button>
         {/if}
       </div>
     {/each}

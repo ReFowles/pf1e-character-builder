@@ -49,5 +49,27 @@ export const KEY_LABELS: Record<string, string> = Object.fromEntries(
   BONUS_KEYS.map((k) => [k.key, k.label]),
 );
 
+/** Short names for narrow pickers (bonus rows); falls back to KEY_LABELS. */
+export const KEY_SHORT: Record<string, string> = {
+  attack: 'Attack',
+  'attack.melee': 'Melee attack',
+  'attack.ranged': 'Ranged attack',
+  damage: 'Damage',
+  'damage.melee': 'Melee damage',
+  'damage.ranged': 'Ranged damage',
+  cmb: 'CMB',
+  cmd: 'CMD',
+  ac: 'AC',
+  save: 'All saves',
+  'save.fort': 'Fortitude',
+  'save.ref': 'Reflex',
+  'save.will': 'Will',
+  init: 'Initiative',
+  speed: 'Speed',
+  'hp.max': 'Max HP',
+  skills: 'All skills',
+};
+export const keyShort = (k: string) => KEY_SHORT[k] ?? KEY_LABELS[k] ?? k;
+
 /** Formula references available to macros and resource formulas. */
 export const FORMULA_REFS = ['@level', '@bab', '@cl', ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]), '@class.<name>.level'];
