@@ -242,7 +242,7 @@ await expectText('Other section title', other.locator('.section-head h2'), /^Rac
 const cl = other.getByLabel('Caster level', { exact: true });
 await cl.fill('5');
 await cl.blur();
-await expectText('Other caster level', other.locator('.stat', { hasText: 'Conc.' }).locator('.stat-value'), /^\+6$/);
+await expectText('Other caster level', other.locator('.stat', { hasText: 'Cnc' }).locator('.stat-value'), /^\+6$/);
 const misc1 = other.getByLabel('Misc slots level 1');
 await misc1.fill('2');
 await misc1.blur();

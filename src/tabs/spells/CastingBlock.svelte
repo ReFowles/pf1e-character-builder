@@ -223,7 +223,7 @@
     <p>Linked spell tables fill in slots by class level (or by caster level for "Other"); Manual lets you enter slots for every level. Use Edit to change the class, table or details; add more spellcasting sections from Config.</p>
     <p><strong>Per day</strong> = base slots + bonus spells from a high ability score + misc. Cantrips and orisons (level 0) can be cast any number of times; Prepared shows how many you can prepare.</p>
     <p><strong>Domain slots</strong> (clerics) add one spell per level that must come from a domain; they're counted separately.</p>
-    <p><strong>DC</strong> = 10 + spell level + {b.ability.toUpperCase()} modifier. <strong>Pen.</strong> (spell penetration) = caster level + bonuses, rolled against spell resistance. <strong>Conc.</strong> = caster level + {b.ability.toUpperCase()} modifier + bonuses.</p>
+    <p><strong>DC</strong> = 10 + spell level + {b.ability.toUpperCase()} modifier. <strong>Pen</strong> (spell penetration) = caster level + bonuses, rolled against spell resistance. <strong>Cnc</strong> (concentration) = caster level + {b.ability.toUpperCase()} modifier + bonuses.</p>
     <table class="w-full text-sm">
       <thead>
         <tr><th></th><th>Defensive</th><th>Reactionary</th></tr>
@@ -279,14 +279,14 @@
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + {b.ability.toUpperCase()} modifier + misc + concentration bonuses">
             <div class="stat-value">{fmt(d?.concentration ?? 0)}</div>
-            <div class="field-label">Conc.</div>
+            <div class="field-label">Cnc</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.concentrationMisc} signed aria-label="Concentration misc" /></Field>
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + misc + spell penetration bonuses, vs spell resistance">
             <div class="stat-value">{fmt(d?.spellPen ?? 0)}</div>
-            <div class="field-label">Pen.</div>
+            <div class="field-label">Pen</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.spellPenMisc} signed aria-label="Spell penetration misc" /></Field>
         </div>
