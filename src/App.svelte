@@ -9,6 +9,7 @@
   import SpellsTab from './tabs/spells/SpellsTab.svelte';
   import CompanionsTab from './tabs/companions/CompanionsTab.svelte';
   import SettingsTab from './tabs/settings/SettingsTab.svelte';
+  import NotesTab from './tabs/notes/NotesTab.svelte';
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
@@ -87,7 +88,7 @@
         },
       ]}
     >
-      {#if tab === 'core'}<CoreTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'companions'}<CompanionsTab />{:else if tab === 'spells'}<SpellsTab />{:else if tab === 'mythic'}<MythicTab />{:else}<SettingsTab />{/if}
+      {#if tab === 'core'}<CoreTab />{:else if tab === 'character'}<CharacterTab />{:else if tab === 'companions'}<CompanionsTab />{:else if tab === 'spells'}<SpellsTab />{:else if tab === 'mythic'}<MythicTab />{:else if tab === 'notes'}<NotesTab />{:else}<SettingsTab />{/if}
     </div>
   {/each}
 </main>

@@ -516,3 +516,76 @@
     break-before: page;
   }
 }
+
+/* Campaign Notes editor and its printed copy. */
+@layer components {
+  .notes-host .ProseMirror {
+    @apply px-1 py-2;
+  }
+  .notes-prose {
+    @apply text-base leading-relaxed;
+  }
+  .notes-prose > * + * {
+    @apply mt-2;
+  }
+  .notes-prose h1 {
+    @apply font-display text-2xl font-bold;
+  }
+  .notes-prose h2 {
+    @apply font-display text-xl font-bold;
+  }
+  .notes-prose h3 {
+    @apply font-display text-lg font-bold;
+  }
+  .notes-prose ul {
+    @apply list-disc pl-6;
+  }
+  .notes-prose ol {
+    @apply list-decimal pl-6;
+  }
+  .notes-prose ul[data-type='taskList'] {
+    @apply list-none pl-0;
+  }
+  .notes-prose ul[data-type='taskList'] li {
+    @apply flex items-start gap-2;
+  }
+  .notes-prose ul[data-type='taskList'] li > label {
+    @apply mt-1 shrink-0;
+  }
+  .notes-prose ul[data-type='taskList'] li > div {
+    @apply flex-1;
+  }
+  .notes-prose blockquote {
+    @apply border-l-4 border-rule/60 pl-3 italic opacity-80;
+  }
+  .notes-prose hr {
+    @apply my-3 border-ink/30;
+  }
+  .notes-prose a {
+    @apply text-accent underline;
+  }
+  .notes-prose code {
+    @apply rounded-sm bg-ink/10 px-1 font-mono text-sm;
+  }
+  .notes-prose pre {
+    @apply overflow-x-auto rounded-sm bg-ink/10 p-2 font-mono text-sm;
+  }
+  .notes-prose table {
+    @apply w-full border-collapse text-sm;
+  }
+  .notes-prose th,
+  .notes-prose td {
+    @apply border border-ink/30 px-2 py-1 align-top;
+    min-width: 4rem;
+  }
+  .notes-prose th {
+    @apply bg-ink/5 text-left font-semibold;
+  }
+  .notes-prose .selectedCell {
+    @apply bg-accent/10;
+  }
+  .notes-prose p.is-editor-empty:first-child::before {
+    @apply pointer-events-none float-left h-0 opacity-40;
+    content: attr(data-placeholder);
+  }
+}

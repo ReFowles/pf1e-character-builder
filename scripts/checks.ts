@@ -301,6 +301,22 @@ const wasEquipped = await eqp.isChecked();
 await eqp.click();
 check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
 
+console.log('— campaign notes');
+await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
+const prose = page.locator('[data-section=notes] .ProseMirror');
+await prose.click();
+await page.keyboard.type('# Session 1');
+await page.keyboard.press('Enter');
+await page.keyboard.type('Met the **baron**.');
+await expectText('Heading from markdown shortcut', page.locator('[data-section=notes] .ProseMirror h1'), /^Session 1$/);
+await page.waitForTimeout(600); // autosave debounce
+await page.reload();
+await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
+await expectText('Notes persist after reload', page.locator('[data-section=notes] .ProseMirror strong'), /^baron$/);
+await page.emulateMedia({ media: 'print' });
+check('notes hidden in print by default', await page.locator('[data-section=notes]').isHidden());
+await page.emulateMedia({ media: 'screen' });
+
 console.log('— companions');
 await openSettings();
 await page.getByLabel(/Companions tab/).check();

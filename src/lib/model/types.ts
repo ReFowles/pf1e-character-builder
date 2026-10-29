@@ -478,6 +478,8 @@ export interface Character {
   spellcasting: Spellcasting[];
   /** Show the Companions tab. */
   companionTab: boolean;
+  /** Campaign notes: HTML from the Notes tab's editor. */
+  notes: { html: string };
   companions: Companion[];
   mythic: Mythic;
   ui: {

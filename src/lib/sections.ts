@@ -1,6 +1,6 @@
 import type { Tab } from './state.svelte';
 
-export const TAB_LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic', settings: 'Settings' };
+export const TAB_LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic', notes: 'Notes', settings: 'Settings' };
 
 export interface SectionDef {
   id: string;
@@ -33,6 +33,7 @@ export const SECTIONS: SectionDef[] = [
   { id: 'mythicFeats', title: 'Mythic Feats', tab: 'mythic' },
   { id: 'mythicPathAbilities', title: 'Path Abilities', tab: 'mythic' },
   { id: 'mythicSpells', title: 'Mythic Spells', tab: 'mythic' },
+  { id: 'notes', title: 'Campaign Notes', tab: 'notes' },
 ];
 
 export const SECTION_BY_ID = Object.fromEntries(SECTIONS.map((s) => [s.id, s]));

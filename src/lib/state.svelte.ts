@@ -15,7 +15,7 @@ import {
   type RosterEntry,
 } from './storage/local';
 
-export const TABS = ['core', 'character', 'companions', 'spells', 'mythic', 'settings'] as const;
+export const TABS = ['core', 'character', 'companions', 'spells', 'mythic', 'notes', 'settings'] as const;
 export type Tab = (typeof TABS)[number];
 
 const tabFromHash = (): Tab => {
