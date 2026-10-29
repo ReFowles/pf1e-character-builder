@@ -23,7 +23,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(8);
+    expect(c.schemaVersion).toBe(9);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -124,7 +124,7 @@ describe('migrate v6 -> v7', () => {
         { id: 'b', name: 'poison', value: '' },
       ],
     });
-    expect(c.schemaVersion).toBe(8);
+    expect(c.schemaVersion).toBe(9);
     expect(c.resistances.map((r) => r.name)).toEqual(['fire 10', 'poison']);
     expect('value' in c.resistances[0]).toBe(false);
   });
@@ -158,12 +158,19 @@ describe('migrate v7 -> v8', () => {
         { id: 'c', name: 'Longbow', crit: '×3' },
       ],
     });
-    expect(c.schemaVersion).toBe(8);
+    expect(c.schemaVersion).toBe(9);
     expect(c.weapons.map((w) => [w.critRange, w.crit])).toEqual([
       [18, '×2'],
       [20, '×2'],
       [20, '×3'],
     ]);
     expect(c.critMode).toBe('total');
+  });
+});
+
+describe('migrate v8 -> v9', () => {
+  it('shows the Spells tab only for characters that already cast', () => {
+    expect(normalize({ schemaVersion: 8, spellcasting: [{ id: 'b', table: 'wizard' }] }).spellsTab).toBe(true);
+    expect(normalize({ schemaVersion: 8 }).spellsTab).toBe(false);
   });
 });

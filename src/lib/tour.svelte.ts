@@ -1,5 +1,5 @@
-// First-run walkthrough: two coach marks pointing at a section's Edit and Info
-// buttons. Shown once per device (prefs.tourSeen); replayable from Settings.
+// First-run walkthrough: coach marks pointing at a section's Edit and Info
+// buttons, the dice log and the Settings tab. Shown once per device (prefs.tourSeen); replayable from Settings.
 import { prefs } from './prefs.svelte';
 
 export interface TourStep {
@@ -13,17 +13,22 @@ export const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-section="info"] [data-tour="edit"]',
     title: 'Edit mode',
-    text: 'Numbers and names are always editable. The pencil opens a section’s edit mode, which reveals the add, reorder, remove and database-search controls, such as adding languages here or finding a feat.',
+    text: 'Numbers and names are always editable. The pencil opens a section’s edit mode, which reveals the add, reorder, remove, and database-search controls, such as adding languages here or finding a feat.',
   },
   {
     target: '[data-section="info"] [data-tour="info"]',
     title: 'Info',
-    text: 'The ℹ button explains how a section’s numbers are worked out and collects every breakdown that is otherwise only shown on hover, so it works on phones too.',
+    text: 'The ℹ button explains how a section’s numbers are worked out and collects every breakdown that is otherwise only shown on hover, so you can see the full breakdown on phones too.',
   },
   {
     target: '[data-tour="rolls"]',
     title: 'Dice log',
     text: 'Click a number on the sheet (initiative, saves, attacks, skills, damage) to roll it. Results and their breakdowns collect here, with a quick tray for the standard dice.',
+  },
+  {
+    target: '[data-tour="settings"]',
+    title: 'Settings',
+    text: 'The Spells, Companions, and Mythic tabs start hidden. Open Settings to turn them on and add sections. It also has character exports and imports, sections to exclude in printing, and more.',
   },
 ];
 

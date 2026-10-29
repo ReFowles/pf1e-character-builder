@@ -70,4 +70,4 @@ pnpm import-data /tmp/pf1/foundryvtt-*/packs \
 
 ## Legal
 
-This website uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy. It is not published, endorsed, or specifically approved by Paizo. The rules data is Open Game Content under the Open Game License v1.0a. The license text is in the app's **About** dialog and in `public/data/OGL.txt`.
+This website uses trademarks and/or copyrights owned by Paizo Inc., used under Paizo's Community Use Policy. It is not published, endorsed, or specifically approved by Paizo. The rules data is Open Game Content under the Open Game License v1.0a. The license text is in the app's **About & licenses** dialog (Settings → Help & data) and in `public/data/OGL.txt`.

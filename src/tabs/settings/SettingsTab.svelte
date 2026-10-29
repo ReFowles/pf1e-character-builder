@@ -40,6 +40,10 @@
   </Section>
   <Section id="settings-tabs" title="Tabs">
     <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.spellsTab} />
+      Spells tab
+    </label>
+    <label class="flex items-center gap-2 text-sm">
       <input type="checkbox" bind:checked={c.mythic.enabled} />
       Mythic tab
     </label>
@@ -59,7 +63,10 @@
         <li class="italic opacity-60">None yet.</li>
       {/each}
     </ul>
-    <button type="button" class="add-btn self-start" onclick={() => addSpellBlock(c)}>+ Spellcasting section</button>
+    <button type="button" class="add-btn self-start" onclick={() => {
+        c.spellsTab = true;
+        addSpellBlock(c);
+      }}>+ Spellcasting section</button>
   </Section>
   <Section id="settings-companions" title="Companions">
     <ul class="flex flex-col gap-1 text-sm">

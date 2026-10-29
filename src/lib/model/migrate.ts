@@ -161,6 +161,12 @@ STEPS[7] = (d) => ({
   weapons: arr(d.weapons).map((w) => ({ ...w, ...splitCrit(String(w.crit ?? '')) })),
 });
 
+STEPS[8] = (d) => ({
+  ...d,
+  // The Spells tab is opt-in; keep it for characters that already have spellcasting.
+  spellsTab: arr(d.spellcasting).length > 0,
+});
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

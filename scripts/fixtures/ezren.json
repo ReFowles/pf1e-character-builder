@@ -303,6 +303,7 @@
       }
     }
   },
+  "spellsTab": true,
   "companionTab": true,
   "companions": [
     {

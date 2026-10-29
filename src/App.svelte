@@ -63,6 +63,7 @@
         class:border-transparent={app.tab !== tab}
         aria-current={app.tab === tab ? 'page' : undefined}
         use:keepVisible={app.tab === tab}
+        data-tour={tab === 'settings' ? 'settings' : undefined}
         aria-label={tab === 'settings' ? 'Settings' : undefined}
         title={tab === 'settings' ? 'Settings' : undefined}
         onclick={() => app.setTab(tab)}

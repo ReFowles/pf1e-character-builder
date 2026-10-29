@@ -33,14 +33,53 @@
     const [x] = items.splice(i, 1);
     items.splice(j, 0, x);
   }
+
+  let dragId = $state<string | null>(null);
+  let overId = $state<string | null>(null);
+
+  function drop(target: number) {
+    const from = items.findIndex((x) => x.id === dragId);
+    dragId = overId = null;
+    if (from < 0 || from === target) return;
+    const [x] = items.splice(from, 1);
+    items.splice(target, 0, x);
+  }
 </script>
 
 <div class={cls}>
   {#each items as it, i (it.id)}
-    <div class={['group relative break-inside-avoid rounded-sm border border-ink/20 p-1.5', section.editing && 'min-h-[4.75rem] pr-7']}>
+    <div
+      role="listitem"
+      class={['group relative break-inside-avoid rounded-sm border border-ink/20 p-1.5', section.editing && 'min-h-[4.75rem] pr-7', dragId === it.id && 'opacity-40', overId === it.id && dragId !== it.id && 'border-accent']}
+      ondragover={(e) => {
+        if (dragId === null) return;
+        e.preventDefault();
+        overId = it.id;
+      }}
+      ondrop={(e) => {
+        e.preventDefault();
+        drop(i);
+      }}
+    >
       {@render item(it, i)}
       {#if section.editing}
-      <div class="absolute top-0.5 right-0.5 flex flex-col print:hidden">
+      <div class="absolute top-0.5 right-0.5 flex flex-col items-center print:hidden">
+        <span
+          role="button"
+          tabindex="-1"
+          aria-label="Drag to reorder"
+          title="Drag to reorder"
+          draggable="true"
+          class="icon-btn cursor-grab select-none"
+          ondragstart={(e) => {
+            dragId = it.id;
+            e.dataTransfer!.effectAllowed = 'move';
+            e.dataTransfer!.setData('text/plain', it.id);
+            const card = (e.currentTarget as HTMLElement).closest('[role=listitem]');
+            if (card) e.dataTransfer!.setDragImage(card, 0, 0);
+          }}
+          ondragend={() => (dragId = overId = null)}
+        >⠿</span>
         <button type="button" class="icon-btn text-accent" aria-label="Remove" onclick={() => items.splice(i, 1)}>✕</button>
         <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
         <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>

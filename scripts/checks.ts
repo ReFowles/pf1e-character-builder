@@ -246,7 +246,6 @@ const addSpellSection = async () => {
   await page.getByRole('button', { name: '+ Spellcasting section' }).click();
   await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 };
-await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
 await addSpellSection();
 const summoner = page.locator('[data-section^=spells-]').first();
 await expectText('Section title', summoner.locator('.section-head h2'), /^Summoner$/i);
@@ -437,14 +436,15 @@ const tourDialog = page.getByRole('dialog', { name: 'Edit mode' });
 await tourDialog.waitFor();
 await tourDialog.getByRole('button', { name: 'Next' }).click();
 await page.getByRole('dialog', { name: 'Info' }).getByRole('button', { name: 'Next' }).click();
-await page.getByRole('dialog', { name: 'Dice log' }).getByRole('button', { name: 'Done' }).click();
+await page.getByRole('dialog', { name: 'Dice log' }).getByRole('button', { name: 'Next' }).click();
+await page.getByRole('dialog', { name: 'Settings' }).getByRole('button', { name: 'Done' }).click();
 check('walkthrough dismissed and remembered', (await page.getByRole('dialog').count()) === 0 && (await page.evaluate(() => JSON.parse(localStorage.getItem('pf1e:prefs') ?? '{}').tourSeen)) === true);
 
 console.log('— small-screen header');
 await page.setViewportSize({ width: 390, height: 800 });
 check('import and export are not in the header', (await page.locator('#app > header').getByRole('button', { name: /JSON/ }).count()) === 0);
 check('no hamburger menu', (await page.getByRole('button', { name: 'Menu', exact: true }).count()) === 0);
-check('print and about stay in the header', await page.locator('#app > header').getByRole('button', { name: 'Print / PDF' }).isVisible());
+check('print stays in the header', await page.locator('#app > header').getByRole('button', { name: 'Print / PDF' }).isVisible());
 await page.setViewportSize({ width: 1280, height: 900 });
 
 if (errors.length) {

@@ -538,6 +538,8 @@ export interface Character {
   items: Item[];
   currency: { carried: Coins; locations: CoinLocation[] };
   spellcasting: Spellcasting[];
+  /** Show the Spells tab. */
+  spellsTab: boolean;
   /** Show the Companions tab. */
   companionTab: boolean;
   /** Critical hits: multiply the total of a normal roll, or roll the dice multiplied. */

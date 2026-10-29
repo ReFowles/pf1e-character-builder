@@ -1,14 +1,10 @@
 <script lang="ts">
   import { app } from '../state.svelte';
-  import AboutDialog from './AboutDialog.svelte';
   import Select from './Select.svelte';
-
-  let about: AboutDialog;
 
   // Import and export live in Settings → Help & data.
   const ACTIONS: { label: string; title?: string; run: () => void }[] = [
     { label: 'Print / PDF', title: 'Print, or choose “Save as PDF” in the print dialog', run: () => print() },
-    { label: 'About', run: () => about.open() },
   ];
 
   const sorted = $derived([...app.roster].sort((a, b) => (a.name || '').localeCompare(b.name || '')));
@@ -40,4 +36,3 @@
     {/each}
   </div>
 </header>
-<AboutDialog bind:this={about} />

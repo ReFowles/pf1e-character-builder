@@ -30,9 +30,9 @@ class AppState {
   roster = $state<RosterEntry[]>([]);
   char = $state<Character>(newCharacter());
   d = $derived(derive(this.char));
-  /** Tabs this character uses; Companions and Mythic only once enabled in Settings. */
+  /** Tabs this character uses; Spells, Companions and Mythic only once enabled in Settings. */
   tabs = $derived(
-    TABS.filter((t) => (t !== 'mythic' || this.char.mythic.enabled) && (t !== 'companions' || this.char.companionTab)),
+    TABS.filter((t) => (t !== 'mythic' || this.char.mythic.enabled) && (t !== 'spells' || this.char.spellsTab) && (t !== 'companions' || this.char.companionTab)),
   );
   tab = $state<Tab>(tabFromHash());
   toast = $state<string | null>(null);
