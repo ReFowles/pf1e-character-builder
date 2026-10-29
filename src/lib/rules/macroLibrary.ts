@@ -40,14 +40,8 @@ export const MACRO_LIBRARY: LibraryMacro[] = [
   m('two-weapon-fighting', 'Two-Weapon Fighting', 'feat', [['attack', -2]],
     'With the feat and a light off-hand weapon. Main hand -4 / off-hand -8 without the feat.'),
   m('rapid-shot', 'Rapid Shot', 'feat', [['attack.ranged', -2]], 'One extra ranged attack at highest bonus.'),
-  // Always-on feats (leave active)
-  m('toughness', 'Toughness', 'feat', [['hp.max', 'max(3, @level)']]),
-  m('weapon-focus', 'Weapon Focus', 'feat', [['attack', 1]], 'Applies to one weapon type; leave on if that is your main weapon.'),
-  m('dodge', 'Dodge', 'feat', [['ac', 1, 'dodge']]),
-  m('improved-initiative', 'Improved Initiative', 'feat', [['init', 4]]),
-  m('iron-will', 'Iron Will', 'feat', [['save.will', 2]]),
-  m('great-fortitude', 'Great Fortitude', 'feat', [['save.fort', 2]]),
-  m('lightning-reflexes', 'Lightning Reflexes', 'feat', [['save.ref', 2]]),
+  // Always-on feats (Toughness, Improved Initiative, Iron Will…) are not macros:
+  // picking the feat adds a row to the section's bonus list (rules/featBonuses.ts).
   // Class features
   m('rage', 'Rage', 'class', [['ability.str', 4, 'morale'], ['ability.con', 4, 'morale'], ['save.will', 2, 'morale'], ['ac', -2]],
     'Greater rage: +6/+3. Mighty rage: +8/+4.'),

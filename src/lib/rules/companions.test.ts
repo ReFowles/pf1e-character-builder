@@ -8,7 +8,7 @@ function withClass(name: string, levels: number, extra: Partial<ClassDef> = {}) 
   const c = newCharacter();
   const k = { ...make.classDef(), name, hd: 8, bab: '3/4' as const, goodSaves: ['fort' as const, 'will' as const], ...extra };
   c.classes = [k];
-  c.favoredClassId = k.id;
+  c.favoredClassIds = [k.id];
   c.levels = Array.from({ length: levels }, () => ({ ...make.level(k.id), hpRoll: 5 }));
   return { c, k };
 }

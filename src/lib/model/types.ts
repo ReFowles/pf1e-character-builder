@@ -54,6 +54,8 @@ export interface Identified {
 export interface AbilityScore {
   base: number;
   racial: number;
+  /** Permanent +1s gained at 4th, 8th, 12th, 16th and 20th level. */
+  level: number;
   enhancement: number;
   inherent: number;
   misc: number;
@@ -446,7 +448,8 @@ export interface Character {
   xp: { current: number; track: XpTrack };
   abilities: Record<Ability, AbilityScore>;
   classes: ClassDef[];
-  favoredClassId: string | null;
+  /** Usually one; two for a half-elf (Multitalented) or with the Favored Prestige Class feat. */
+  favoredClassIds: string[];
   levels: LevelEntry[];
   /** Max HP at first level instead of the roll. */
   maxHpFirstLevel: boolean;

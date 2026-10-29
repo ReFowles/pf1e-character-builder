@@ -37,6 +37,7 @@ export const SCHEMA_VERSION = 7;
 const ability = (): AbilityScore => ({
   base: 10,
   racial: 0,
+  level: 0,
   enhancement: 0,
   inherent: 0,
   misc: 0,
@@ -300,7 +301,7 @@ export function newCharacter(): Character {
       cha: ability(),
     },
     classes: [],
-    favoredClassId: null,
+    favoredClassIds: [],
     levels: [],
     maxHpFirstLevel: true,
     hp: { damage: 0, temp: 0, nonlethal: 0 },

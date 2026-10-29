@@ -128,4 +128,22 @@ describe('migrate v6 -> v7', () => {
     expect(c.resistances.map((r) => r.name)).toEqual(['fire 10', 'poison']);
     expect('value' in c.resistances[0]).toBe(false);
   });
+
+  it('wraps the favored class id and turns always-on feat macros into feats and bonus rows', () => {
+    const c = normalize({
+      schemaVersion: 6,
+      favoredClassId: 'c1',
+      feats: [{ id: 'f1', name: 'Toughness', level: 1, source: 'Level', type: '', description: '' }],
+      macros: [
+        { id: 'm1', name: 'Improved Initiative', category: 'feat', libraryId: 'improved-initiative', active: true, effects: [], notes: '' },
+        { id: 'm2', name: 'Toughness', category: 'feat', active: true, effects: [{ id: 'e', key: 'hp.max', value: 'max(3, @level)', type: 'untyped' }], notes: '' },
+        { id: 'm3', name: 'Power Attack', category: 'feat', libraryId: 'power-attack', active: true, effects: [], notes: '' },
+      ],
+    });
+    expect(c.favoredClassIds).toEqual(['c1']);
+    expect(c.macros.map((m) => m.name)).toEqual(['Power Attack']);
+    expect(c.feats.map((f) => f.name)).toEqual(['Toughness', 'Improved Initiative']);
+    expect(c.bonuses.map((b) => [b.key, b.value, b.source])).toEqual([['init', 4, 'Improved Initiative']]);
+    expect(normalize({ schemaVersion: 6, favoredClassId: null }).favoredClassIds).toEqual([]);
+  });
 });

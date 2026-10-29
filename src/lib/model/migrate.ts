@@ -1,5 +1,6 @@
 import { uid } from './id';
 import { isClassSkill } from '../rules/skills';
+import { RETIRED_MACRO_FEATS, bonusRowsFor, featKey } from '../rules/featBonuses';
 
 type Plain = Record<string, any>;
 
@@ -129,11 +130,29 @@ STEPS[5] = (d) => {
   return { ...d, ui: { ...ui, sections } };
 };
 
-STEPS[6] = (d) => ({
-  ...d,
-  // Resistance chips are one text: "fire 10"; the separate amount field is gone.
-  resistances: arr(d.resistances).map(({ value, ...r }) => ({ ...r, name: [r.name, value].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ') })),
-});
+STEPS[6] = (d) => {
+  const { favoredClassId, ...rest } = d;
+  // Always-on feat macros (Improved Initiative, Toughness…) became bonus rows
+  // or derive() rules keyed on the feat's name; keep the numbers by converting.
+  const feats = arr(d.feats);
+  const bonuses = arr(d.bonuses);
+  const macros = arr(d.macros).filter((m) => {
+    const feat = RETIRED_MACRO_FEATS[m.libraryId] ?? (featKey(String(m.name ?? '')) === String(m.name ?? '').trim() ? String(m.name).trim() : undefined);
+    if (!feat || m.active === false) return true;
+    if (!feats.some((f) => featKey(String(f.name ?? '')) === feat)) feats.push({ id: uid(), name: feat, level: 1, source: 'Level', type: '', description: '' });
+    if (!bonuses.some((b) => b.source === feat)) bonuses.push(...bonusRowsFor(feat, uid));
+    return false;
+  });
+  return {
+    ...rest,
+    favoredClassIds: favoredClassId ? [favoredClassId] : [],
+    feats,
+    bonuses,
+    macros,
+    // Resistance chips are one text: "fire 10"; the separate amount field is gone.
+    resistances: arr(d.resistances).map(({ value, ...r }) => ({ ...r, name: [r.name, value].map((x) => String(x ?? '').trim()).filter(Boolean).join(' ') })),
+  };
+};
 
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;

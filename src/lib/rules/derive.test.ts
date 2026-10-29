@@ -12,7 +12,7 @@ function fighter(): Character {
   c.abilities.con.base = 14;
   const k = { ...make.classDef(), name: 'Fighter', hd: 10, bab: 'full' as const, goodSaves: ['fort' as const], classSkills: ['climb'] };
   c.classes = [k];
-  c.favoredClassId = k.id;
+  c.favoredClassIds = [k.id];
   c.levels = [6, 6, 7].map((roll) => ({ ...make.level(k.id), hpRoll: roll }));
   c.armor = [
     { ...make.armor('armor'), name: 'Chain shirt', acBonus: 4, maxDex: 4, checkPenalty: -2, category: 'light' },
@@ -136,5 +136,28 @@ describe('derive round 2', () => {
     // 3 levels of d10 at Con +2 (rolls 6/6/7, first max) + 15 mythic, no FCB hp.
     expect(d.hp.max.total).toBe(12 + 8 + 9 + 15);
     expect(d.mythic).toMatchObject({ powerMax: 9, surgeDie: '1d6' });
+  });
+
+  it('counts favored class bonuses for every favored class', () => {
+    const c = fighter();
+    const rogue = { ...make.classDef(), name: 'Rogue', hd: 8, bab: '3/4' as const, goodSaves: ['ref' as const] };
+    c.classes.push(rogue);
+    c.levels.push({ ...make.level(rogue.id), hpRoll: 4, fcb: { kind: 'hp', label: '', amount: '' } });
+    const own = derive(c).fcb.hp;
+    c.favoredClassIds.push(rogue.id);
+    expect(derive(c).fcb.hp).toBe(own + 1);
+  });
+
+  it('applies Toughness by feat name and level-up ability increases', () => {
+    const c = fighter();
+    const before = derive(c).hp.max.total;
+    c.feats.push({ ...make.feat(1), name: 'toughness' });
+    expect(derive(c).hp.max.total).toBe(before + 3);
+    c.levels.push(...[1, 1].map(() => ({ ...make.level(c.classes[0].id), hpRoll: 5 })));
+    expect(derive(c).hp.max.parts.find((p) => p.source === 'Toughness')?.value).toBe(5);
+    c.abilities.str.level = 1;
+    const d = derive(c);
+    expect(d.abilities.str.score).toBe(17);
+    expect(d.abilityIncreases).toEqual({ expected: 1, used: 1 });
   });
 });

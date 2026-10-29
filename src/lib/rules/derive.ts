@@ -8,6 +8,7 @@ import {
   type SkillEntry,
   type Size,
 } from '../model/types';
+import { hasFeat } from './featBonuses';
 import { BonusSet, stack, type Bonus, type Total } from './bonuses';
 import { findCondition } from './conditions';
 import { tryEvaluate, type Vars } from './expr';
@@ -132,6 +133,8 @@ export interface Derived {
   weight: WeightDerived;
   wealth: WealthDerived;
   fcb: FcbSummary;
+  /** Level-up ability increases: one every four levels vs the +1s entered. */
+  abilityIncreases: { expected: number; used: number };
   mythic: { tier: number; effectiveTier: number; paragon: boolean; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
   /** Size after size-changing effects, and the steps applied. */
@@ -193,7 +196,8 @@ export function derive(c: Character): Derived {
   for (const l of c.levels) if (l.classId in classLevels) classLevels[l.classId]++;
   const level = c.levels.length;
   const bab = c.classes.reduce((s, k) => s + babFor(k.bab, classLevels[k.id]), 0);
-  const favoredLevels = c.levels.filter((l) => l.classId === c.favoredClassId);
+  const favored = new Set(c.favoredClassIds);
+  const favoredLevels = c.levels.filter((l) => favored.has(l.classId));
   const fcbHp = favoredLevels.filter((l) => l.fcb.kind === 'hp').length;
   const fcbSkill = favoredLevels.filter((l) => l.fcb.kind === 'skill').length;
 
@@ -203,6 +207,7 @@ export function derive(c: Character): Derived {
     const s = c.abilities[a];
     set.add(
       { key: `ability.${a}`, value: s.racial, type: 'racial', source: 'Racial' },
+      { key: `ability.${a}`, value: s.level, type: 'untyped', source: 'Level' },
       { key: `ability.${a}`, value: s.enhancement, type: 'enhancement', source: 'Enhancement' },
       { key: `ability.${a}`, value: s.inherent, type: 'inherent', source: 'Inherent' },
       { key: `ability.${a}`, value: s.misc, type: 'untyped', source: 'Misc' },
@@ -210,6 +215,8 @@ export function derive(c: Character): Derived {
     );
   }
   set.add(...c.bonuses.map((b) => ({ ...b, source: b.source || 'Misc' })));
+  // Feats that scale with level are applied by name (fixed ones are bonus rows, see rules/featBonuses).
+  if (hasFeat(c.feats, 'Toughness')) set.add({ key: 'hp.max', value: Math.max(3, level), type: 'untyped', source: 'Toughness' });
 
   const mythicOn = c.mythic.enabled && c.mythic.tier > 0;
   const tier = mythicOn ? Math.min(10, c.mythic.tier) : 0;
@@ -594,6 +601,7 @@ export function derive(c: Character): Derived {
     weight,
     wealth,
     fcb,
+    abilityIncreases: { expected: Math.floor(level / 4), used: ABILITIES.reduce((s, a) => s + c.abilities[a].level, 0) },
     mythic: mythicOn
       ? { tier, effectiveTier, paragon: c.mythic.paragon, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier, c.mythic.surgeUpgrades), hp: mythicHp }
       : null,

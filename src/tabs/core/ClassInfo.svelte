@@ -56,7 +56,7 @@
   function addClass() {
     const k = make.classDef();
     c.classes.push(k);
-    if (!c.favoredClassId) c.favoredClassId = k.id;
+    if (!c.favoredClassIds.length) c.favoredClassIds = [k.id];
     newLevelClass = k.id;
   }
 
@@ -66,11 +66,11 @@
     if (taken && !confirm(`Remove ${k.name || 'this class'} and its ${taken} level(s)?`)) return;
     c.levels = c.levels.filter((l) => l.classId !== k.id);
     c.classes.splice(i, 1);
-    if (c.favoredClassId === k.id) c.favoredClassId = c.classes[0]?.id ?? null;
+    c.favoredClassIds = c.favoredClassIds.filter((id) => id !== k.id);
   }
 
   function addLevel() {
-    const id = newLevelClass || c.favoredClassId || c.classes[0]?.id;
+    const id = newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id;
     if (!id) return;
     c.levels.push(make.level(id));
   }
@@ -80,6 +80,7 @@
   }
 
   const className = (id: string) => c.classes.find((k) => k.id === id)?.name || '—';
+  const toggleFavored = (id: string) => (c.favoredClassIds = c.favoredClassIds.includes(id) ? c.favoredClassIds.filter((x) => x !== id) : [...c.favoredClassIds, id]);
 
   // Named "other" FCBs already used, offered as choices on every favored level.
   const knownOther = $derived.by(() => {
@@ -123,7 +124,7 @@
     <p><strong>Level</strong> is the total of all class levels. The experience target follows the {c.xp.track} track (change it in Config).</p>
     <p><strong>Hit points</strong> per level are entered in Level history (Edit mode); 1st level takes the maximum when Config says so. Each level adds at least 1 HP after Con.</p>
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
-    <p><strong>Favored class bonuses</strong> only count on levels taken in the favored class (★). Fractional "other" bonuses add up as entered and round down when used.</p>
+    <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
   {/snippet}
   <EditMode>
   {#snippet children(editing)}
@@ -165,7 +166,7 @@
       </thead>
       <tbody>
         {#each c.classes as k, i (k.id)}
-          {@const fav = c.favoredClassId === k.id}
+          {@const fav = c.favoredClassIds.includes(k.id)}
           <tr>
             <td class="w-6 text-center align-middle">
               <button
@@ -174,7 +175,7 @@
                 aria-pressed={fav}
                 aria-label="Favored class: {k.name || 'unnamed'}"
                 title="Favored class"
-                onclick={() => (c.favoredClassId = k.id)}>★</button
+                onclick={() => toggleFavored(k.id)}>★</button
               >
             </td>
             <td class="w-8 text-center align-middle font-bold tabular-nums">{app.d.classLevels[k.id] ?? 0}</td>
@@ -227,7 +228,7 @@
     {#if editing || !c.classes.length}<button type="button" class="add-btn" onclick={addClass}>+ Class</button>{/if}
     {#if c.classes.length && (editing || !c.levels.length)}
       <Select
-        bind:value={() => newLevelClass || c.favoredClassId || c.classes[0]?.id, (v) => (newLevelClass = v ?? '')}
+        bind:value={() => newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id, (v) => (newLevelClass = v ?? '')}
         options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))}
         aria-label="Class for new level"
         class="text-sm"
@@ -268,7 +269,7 @@
                 {/if}
               </td>
               <td data-label="Favored class bonus">
-                {#if l.classId === c.favoredClassId}
+                {#if c.favoredClassIds.includes(l.classId)}
                   <div class="flex flex-wrap gap-1">
                     <Select
                       class="max-w-48"
@@ -308,7 +309,7 @@
 
   {#if app.d.fcb.hp || app.d.fcb.skill || app.d.fcb.other.length}
     <div class="text-sm">
-      <span class="field-label">Favored class bonuses ({className(c.favoredClassId ?? '')})</span>
+      <span class="field-label">Favored class bonuses ({c.favoredClassIds.map(className).join(', ') || '—'})</span>
       <ul class="flex flex-wrap gap-x-3">
         {#if app.d.fcb.hp}<li>+{app.d.fcb.hp} HP</li>{/if}
         {#if app.d.fcb.skill}<li>+{app.d.fcb.skill} skill rank{app.d.fcb.skill === 1 ? '' : 's'}</li>{/if}
