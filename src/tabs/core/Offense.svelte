@@ -68,16 +68,25 @@
     {#snippet item(w)}
       {@const wd = d.weapons[w.id]}
       <div class="weapon-grid grid gap-x-2 gap-y-1">
-        <Field label="Weapon" class="col-span-2 sm:col-span-1">
-          <div class="flex items-center gap-1">
-            {#if editing}
-              <NumInput class="w-10 shrink-0" bind:value={w.enhancement} signed aria-label="Enhancement" title="Enhancement bonus" />
-            {:else if w.enhancement}
-              <span class="font-semibold tabular-nums" title="Enhancement bonus">{fmt(w.enhancement)}</span>
-            {/if}
-            <input class="w-full min-w-0 font-semibold" bind:value={w.name} aria-label="Weapon name" />
+        {#if editing}
+          <div class="col-span-2 flex items-end gap-1 sm:col-span-1">
+            <Field label="Enh" class="w-11 shrink-0 text-center">
+              <NumInput bind:value={w.enhancement} signed aria-label="Enhancement" title="Enhancement bonus" />
+            </Field>
+            <Field label="Weapon" class="flex-1">
+              <input class="w-full min-w-0 font-semibold" bind:value={w.name} aria-label="Weapon name" />
+            </Field>
           </div>
-        </Field>
+        {:else}
+          <Field label="Weapon" class="col-span-2 sm:col-span-1">
+            <div class="flex items-center gap-1">
+              {#if w.enhancement}
+                <span class="font-semibold tabular-nums" title="Enhancement bonus">{fmt(w.enhancement)}</span>
+              {/if}
+              <input class="w-full min-w-0 font-semibold" bind:value={w.name} aria-label="Weapon name" />
+            </div>
+          </Field>
+        {/if}
         <div class="field" title={wd ? breakdown(wd.attackBreakdown) : ''}>
           <div class="px-1 leading-7 font-bold tabular-nums"><Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} /></div>
           <span class="field-label">Attack</span>
