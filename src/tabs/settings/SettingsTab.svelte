@@ -27,13 +27,22 @@
 
 <!-- Device and character settings as cards; never printed (see App.svelte). -->
 <div class="grid items-start gap-3 sm:grid-cols-2">
+  <div class="flex flex-col gap-3">
+  <Section id="settings-help" title="Help & data">
+    <div class="flex flex-wrap gap-2">
+      <button type="button" class="btn" onclick={() => app.exportJson()}>Export JSON</button>
+      <button type="button" class="btn" onclick={() => app.importJson()}>Import JSON</button>
+      <button type="button" class="btn" onclick={() => about.open()}>About & licenses</button>
+      <button type="button" class="btn" onclick={() => tour.start()}>Show the walkthrough again</button>
+    </div>
+    <p class="text-sm opacity-70">Characters are saved in this browser. Export a JSON backup before clearing site data or switching devices.</p>
+  </Section>
   <Section id="settings-appearance" title="Appearance">
     <label class="flex items-center gap-2 text-sm" title="Saved on this device. Printing always uses the light theme.">
       <input type="checkbox" bind:checked={() => theme.dark, (v) => (theme.dark = v)} />
       Dark mode
     </label>
   </Section>
-
   <Section id="settings-rules" title="Rules">
     <label class="field">
       <Select bind:value={c.xp.track} options={opts(['slow', 'medium', 'fast'] as const)} aria-label="Experience track" />
@@ -44,7 +53,6 @@
       Max hit points at first level
     </label>
   </Section>
-
   <Section id="settings-tabs" title="Tabs">
     <label class="flex items-center gap-2 text-sm">
       <input type="checkbox" bind:checked={c.mythic.enabled} />
@@ -55,7 +63,26 @@
       Companions tab (familiars, animal companions, eidolons…)
     </label>
   </Section>
-
+  </div>
+  <div class="flex flex-col gap-3">
+  <Section id="settings-dice" title="Dice">
+    <p class="text-sm opacity-70">Click initiative, saves, attacks, skills, ability modifiers or caster level to roll; weapons roll damage and criticals. Results go to the roll log (the d20 button in the header). Saved on this device.</p>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={prefs.dice.threeD} />
+      3D dice (physics-based, loads about 2 MB the first time)
+    </label>
+    <div class="flex flex-wrap items-end gap-3">
+      <label class="field w-28">
+        <input type="color" class="h-7 w-full cursor-pointer p-0.5" bind:value={prefs.dice.color} aria-label="Dice colour" />
+        <span class="field-label">Dice colour</span>
+      </label>
+      <label class="field w-20">
+        <NumInput bind:value={prefs.dice.scale} aria-label="Dice size (2 to 9)" />
+        <span class="field-label">Size (2–9)</span>
+      </label>
+      <button type="button" class="btn" onclick={() => roll({ title: 'Test roll', notation: '2d20+1d6' })}>Test roll</button>
+    </div>
+  </Section>
   <Section id="settings-spells" title="Spellcasting sections">
     <ul class="flex flex-col gap-1 text-sm">
       {#each c.spellcasting as b (b.id)}
@@ -69,7 +96,6 @@
     </ul>
     <button type="button" class="add-btn self-start" onclick={() => addSpellBlock(c)}>+ Spellcasting section</button>
   </Section>
-
   <Section id="settings-companions" title="Companions">
     <ul class="flex flex-col gap-1 text-sm">
       {#each c.companions as x (x.id)}
@@ -90,8 +116,10 @@
       }}>+ Companion</button
     >
   </Section>
-
-  <Section id="settings-layout" title="Layout & print" class="sm:col-span-2">
+  </div>
+</div>
+<div class="mt-3">
+  <Section id="settings-layout" title="Layout & print" >
     <p class="text-sm opacity-70">Hide a section on screen or leave it out of the printed sheet. Collapse sections with the chevron in their header.</p>
     <div class="grid gap-3 sm:grid-cols-2">
       {#each sheetTabs as tab (tab)}
@@ -139,35 +167,6 @@
         c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
       }}>Reset layout</button
     >
-  </Section>
-
-  <Section id="settings-dice" title="Dice">
-    <p class="text-sm opacity-70">Click initiative, saves, attacks, skills, ability modifiers or caster level to roll; weapons roll damage and criticals. Results go to the roll log (the d20 button in the header). Saved on this device.</p>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={prefs.dice.threeD} />
-      3D dice (physics-based, loads about 2 MB the first time)
-    </label>
-    <div class="flex flex-wrap items-end gap-3">
-      <label class="field w-28">
-        <input type="color" class="h-7 w-full cursor-pointer p-0.5" bind:value={prefs.dice.color} aria-label="Dice colour" />
-        <span class="field-label">Dice colour</span>
-      </label>
-      <label class="field w-20">
-        <NumInput bind:value={prefs.dice.scale} aria-label="Dice size (2 to 9)" />
-        <span class="field-label">Size (2–9)</span>
-      </label>
-      <button type="button" class="btn" onclick={() => roll({ title: 'Test roll', notation: '2d20+1d6' })}>Test roll</button>
-    </div>
-  </Section>
-
-  <Section id="settings-help" title="Help & data">
-    <div class="flex flex-wrap gap-2">
-      <button type="button" class="btn" onclick={() => app.exportJson()}>Export JSON</button>
-      <button type="button" class="btn" onclick={() => app.importJson()}>Import JSON</button>
-      <button type="button" class="btn" onclick={() => about.open()}>About & licenses</button>
-      <button type="button" class="btn" onclick={() => tour.start()}>Show the walkthrough again</button>
-    </div>
-    <p class="text-sm opacity-70">Characters are saved in this browser. Export a JSON backup before clearing site data or switching devices.</p>
   </Section>
 </div>
 <AboutDialog bind:this={about} />
