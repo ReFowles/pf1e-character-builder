@@ -211,3 +211,66 @@ describe('derive round 2', () => {
     expect(evaluate('@class.wizard.casterLevel', d.vars)).toBe(7);
   });
 });
+
+describe('gestalt', () => {
+  /** Fighter 3 // Wizard 3: Con 14, Int 10. */
+  function gestalt(): { c: Character; ftr: string; wiz: string } {
+    const c = fighter();
+    const ftr = c.classes[0].id;
+    const wiz = { ...make.classDef(), name: 'Wizard', hd: 6, bab: '1/2' as const, goodSaves: ['will' as const], skillRanks: 2, classSkills: ['spellcraft'] };
+    c.classes.push(wiz);
+    c.gestalt = true;
+    for (const l of c.levels) l.gestaltClassId = wiz.id;
+    return { c, ftr, wiz: wiz.id };
+  }
+
+  it('takes the better progression of both classes each level', () => {
+    const { c, ftr, wiz } = gestalt();
+    const d = derive(c);
+    expect(d.level).toBe(3);
+    expect(d.classLevels).toEqual({ [ftr]: 3, [wiz]: 3 });
+    expect(d.vars['class.wizard.level']).toBe(3);
+    expect(d.bab).toBe(3);
+    // Fort 3 (fighter) + Con 2; Ref 1 + Dex 2; Will 3 (wizard) + Wis 0.
+    expect([d.saves.fort.total, d.saves.ref.total, d.saves.will.total]).toEqual([5, 3, 3]);
+    expect(d.hp.perLevel).toEqual([12, 8, 9]);
+    expect(d.skillRanks.available).toBe(6); // max(2, 2) + Int 0, three levels
+    expect(d.classSkills.has('spellcraft') && d.classSkills.has('climb')).toBe(true);
+    expect(d.gestaltConflicts).toEqual([]);
+  });
+
+  it('ignores the second class while the rule is off', () => {
+    const { c } = gestalt();
+    c.gestalt = false;
+    const plain = derive(fighter());
+    const d = derive(c);
+    expect([d.bab, d.saves.will.total, d.hp.max.total, d.skillRanks.available]).toEqual([plain.bab, plain.saves.will.total, plain.hp.max.total, plain.skillRanks.available]);
+    expect(Object.values(d.classLevels)).toEqual([3, 0]);
+  });
+
+  it('keeps per-class rounding for ordinary multiclassing', () => {
+    const c = newCharacter();
+    const rog = { ...make.classDef(), name: 'Rogue', bab: '3/4' as const, goodSaves: ['ref' as const] };
+    const wiz = { ...make.classDef(), name: 'Wizard', bab: '1/2' as const, goodSaves: ['will' as const] };
+    c.classes = [rog, wiz];
+    c.levels = [make.level(rog.id), make.level(wiz.id)];
+    const d = derive(c);
+    expect(d.bab).toBe(0);
+    expect([d.saves.fort.total, d.saves.ref.total, d.saves.will.total]).toEqual([0, 2, 2]);
+  });
+
+  it('earns one favored class bonus per level from either side', () => {
+    const { c, wiz } = gestalt();
+    c.favoredClassIds = [wiz];
+    expect(derive(c).fcb.hp).toBe(3);
+    c.favoredClassIds.push(c.classes[0].id);
+    expect(derive(c).fcb.hp).toBe(3);
+  });
+
+  it('flags a class taken on both sides', () => {
+    const { c, ftr } = gestalt();
+    c.levels[2].classId = c.levels[2].gestaltClassId;
+    c.levels[2].gestaltClassId = ftr;
+    expect(derive(c).gestaltConflicts.sort()).toEqual(['Fighter', 'Wizard']);
+  });
+});

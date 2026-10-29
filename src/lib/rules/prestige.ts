@@ -2,7 +2,8 @@
 // existing arcane spellcasting class"). Keyed by the class id (slug of its
 // name). Levels are the prestige class's own levels 1–10 that advance; the
 // Prestigious Spellcaster feat is "tick one more level" on the sheet.
-import type { Ability, Character, ClassDef, LevelEntry } from '../model/types';
+import type { Ability, Character, ClassDef } from '../model/types';
+import { levelClassIds } from './gestalt';
 
 export type SpellType = 'arcane' | 'divine' | 'psychic';
 export interface CastingAdvance {
@@ -101,9 +102,9 @@ export function eligibleCastingClasses(c: Character, adv: CastingAdvance): Class
   return cast.filter((k) => (spellTypeOf(k) ?? adv.which) === adv.which);
 }
 
-/** Which of the character's levels this is for its class (1 for the first level taken in it). */
-export function prestigeLevelOf(levels: LevelEntry[], i: number): number {
-  return levels.slice(0, i + 1).filter((l) => l.classId === levels[i].classId).length;
+/** Which of the character's levels this is for a class (1 for the first level taken in it); either side of a gestalt level counts. */
+export function prestigeLevelOf(c: Pick<Character, 'gestalt' | 'classes' | 'levels'>, i: number, classId = c.levels[i].classId): number {
+  return c.levels.slice(0, i + 1).filter((l) => levelClassIds(c, l).includes(classId)).length;
 }
 
 /** Default casting classes a prestige level advances: by the class table, first arcane + first divine for "both". */
@@ -117,6 +118,20 @@ export function defaultSpellAdvance(c: Character, k: ClassDef, prestigeLevel: nu
     return [arcane, divine].filter((x): x is ClassDef => !!x).map((x) => x.id);
   }
   return eligible[0] ? [eligible[0].id] : [];
+}
+
+/**
+ * Default casting advancement for level i from every class it advances (both
+ * sides of a gestalt level). A class levelled on this level's other side
+ * already gains its caster level, so it isn't advanced twice.
+ */
+export function levelSpellAdvance(c: Character, i: number): string[] {
+  const own = levelClassIds(c, c.levels[i]);
+  const ids = own.flatMap((id) => {
+    const k = c.classes.find((x) => x.id === id);
+    return k ? defaultSpellAdvance(c, k, prestigeLevelOf(c, i, id)) : [];
+  });
+  return [...new Set(ids)].filter((id) => !own.includes(id));
 }
 
 export const CASTING_ABILITY_DEFAULT: Record<SpellType, Ability> = { arcane: 'int', divine: 'wis', psychic: 'int' };

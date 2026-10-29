@@ -3,6 +3,7 @@
 import { make } from './model/defaults';
 import type { Character, Companion, CompanionKind } from './model/types';
 import { KIND_LABELS } from './rules/companions';
+import { levelClassIds } from './rules/gestalt';
 
 export const companionSectionId = (comp: Companion) => `companion-${comp.id}`;
 
@@ -13,7 +14,7 @@ export const companionTitle = (comp: Companion) => `${comp.name.trim() || 'Unnam
 export function guessKind(c: Character): { kind: CompanionKind; classId: string | null; label: string; unchained: boolean } {
   // Only classes the character has levels in.
   const has = (re: RegExp) =>
-    c.classes.find((k) => c.levels.some((l) => l.classId === k.id) && re.test(k.presetId ?? k.name.toLowerCase()));
+    c.classes.find((k) => c.levels.some((l) => levelClassIds(c, l).includes(k.id)) && re.test(k.presetId ?? k.name.toLowerCase()));
   const pick = (kind: CompanionKind, k: { id: string } | undefined, label = '', unchained = false) => ({ kind, classId: k?.id ?? null, label, unchained });
   const drake = has(/drake/);
   if (drake) return pick('drake', drake);

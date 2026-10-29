@@ -9,6 +9,7 @@ import {
   type Size,
 } from '../model/types';
 import { hasFeat } from './featBonuses';
+import { gestaltConflicts, levelClassIds, classProgression } from './gestalt';
 import { BonusSet, stack, type Bonus, type Total } from './bonuses';
 import { findCondition } from './conditions';
 import { tryEvaluate, type Vars } from './expr';
@@ -23,7 +24,6 @@ import {
   COINS_PER_LB,
   LOAD_PENALTIES,
   SIZE_MODS,
-  babFor,
   bonusSpells,
   carryingCapacity,
   scaleCapacity,
@@ -31,7 +31,6 @@ import {
   iteratives,
   loadFor,
   reducedSpeed,
-  saveFor,
   xpForNextLevel,
   type Capacity,
   type Load,
@@ -118,6 +117,8 @@ export interface Derived {
   level: number;
   classLevels: Record<string, number>;
   xpNext: number | null;
+  /** Classes taken on both sides of a gestalt character (not allowed). */
+  gestaltConflicts: string[];
   abilities: Record<Ability, AbilityDerived>;
   /** Ability modifiers used everywhere else (temp-inclusive). */
   mods: Record<Ability, number>;
@@ -201,14 +202,19 @@ export function derive(c: Character): Derived {
   // --- Levels and classes -------------------------------------------------
   const classById = new Map<string, ClassDef>(c.classes.map((k) => [k.id, k]));
   const classLevels: Record<string, number> = Object.fromEntries(c.classes.map((k) => [k.id, 0]));
-  for (const l of c.levels) if (l.classId in classLevels) classLevels[l.classId]++;
+  // Gestalt levels advance two classes; otherwise this is just the level's class.
+  const levelClasses = c.levels.map((l) => levelClassIds(c, l));
+  for (const ids of levelClasses) for (const id of ids) if (id in classLevels) classLevels[id]++;
   // Caster levels: class levels plus prestige levels that advance that class's spellcasting.
   const castingLevels: Record<string, number> = { ...classLevels };
-  for (const l of c.levels) for (const id of l.spellAdvance ?? []) if (id in castingLevels && id !== l.classId) castingLevels[id]++;
+  c.levels.forEach((l, i) => {
+    for (const id of l.spellAdvance ?? []) if (id in castingLevels && !levelClasses[i].includes(id)) castingLevels[id]++;
+  });
   const level = c.levels.length;
-  const bab = c.classes.reduce((s, k) => s + babFor(k.bab, classLevels[k.id]), 0);
+  const progression = classProgression(c, classById);
+  const bab = progression.bab;
   const favored = new Set(c.favoredClassIds);
-  const favoredLevels = c.levels.filter((l) => favored.has(l.classId));
+  const favoredLevels = c.levels.filter((_, i) => levelClasses[i].some((id) => favored.has(id)));
   const fcbHp = favoredLevels.filter((l) => l.fcb.kind === 'hp').length;
   const fcbSkill = favoredLevels.filter((l) => l.fcb.kind === 'skill').length;
 
@@ -429,10 +435,7 @@ export function derive(c: Character): Derived {
 
   const saves = {} as Record<Save, Total>;
   for (const s of ['fort', 'ref', 'will'] as Save[]) {
-    const classBase = c.classes.reduce(
-      (sum, k) => sum + saveFor(k.goodSaves.includes(s), classLevels[k.id]),
-      0,
-    );
+    const classBase = progression.saves[s];
     saves[s] = sumTotal([
       base(`save.${s}`, classBase, 'Class'),
       base(`save.${s}`, mods[SAVE_ABILITY[s]], SAVE_ABILITY[s].toUpperCase()),
@@ -509,8 +512,11 @@ export function derive(c: Character): Derived {
   }
 
   // --- HP -----------------------------------------------------------------
+  // Gestalt levels use the larger hit die and skill ranks of their two classes.
+  const best = (i: number, pick: (k: ClassDef) => number) =>
+    Math.max(0, ...levelClasses[i].map((id) => classById.get(id)).filter((k): k is ClassDef => !!k).map(pick));
   const perLevel = c.levels.map((l, i) => {
-    const hd = classById.get(l.classId)?.hd ?? 0;
+    const hd = best(i, (k) => k.hd);
     const roll = i === 0 && c.maxHpFirstLevel ? hd : l.hpRoll;
     return Math.max(1, roll + mods.con);
   });
@@ -555,7 +561,7 @@ export function derive(c: Character): Derived {
   }
   const intMod = abilities.int.mod;
   const available =
-    c.levels.reduce((s, l) => s + Math.max(1, (classById.get(l.classId)?.skillRanks ?? 0) + intMod), 0) +
+    c.levels.reduce((s, _, i) => s + Math.max(1, best(i, (k) => k.skillRanks) + intMod), 0) +
     fcbSkill;
 
   // --- Spellcasting -------------------------------------------------------
@@ -619,6 +625,7 @@ export function derive(c: Character): Derived {
     classLevels,
     castingLevels,
     xpNext: xpForNextLevel(c.xp.track, level),
+    gestaltConflicts: gestaltConflicts(c),
     abilities,
     mods,
     bab,
