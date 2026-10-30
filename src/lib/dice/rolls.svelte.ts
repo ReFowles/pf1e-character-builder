@@ -1,6 +1,7 @@
 // Roll log store and the one entry point for rolling anything on the sheet.
 import { prefs } from '../prefs.svelte';
 import { app } from '../state.svelte';
+import { readJson } from '../storage/json';
 import { parseNotation } from './notation';
 import { buildResult, capLog, rollDice, throwNotation, type RollResult, type RollSpec } from './roll';
 
@@ -8,12 +9,8 @@ const KEY = 'pf1e:rolls';
 const THREE_D_SIDES = new Set([4, 6, 8, 10, 12, 20, 100]);
 
 function load(): RollResult[] {
-  try {
-    const raw = JSON.parse(localStorage.getItem(KEY) ?? '[]');
-    return Array.isArray(raw) ? capLog(raw.filter((r) => r && typeof r.total === 'number')) : [];
-  } catch {
-    return [];
-  }
+  const raw = readJson<unknown>(KEY, []);
+  return Array.isArray(raw) ? capLog(raw.filter((r) => r && typeof r.total === 'number')) : [];
 }
 
 class RollLog {

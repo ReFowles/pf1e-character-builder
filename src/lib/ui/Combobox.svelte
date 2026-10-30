@@ -10,7 +10,9 @@
 </script>
 
 <script lang="ts">
-  import { placeList, revealInList } from './popoverList';
+  import { uid } from '../model/id';
+  import PopoverList from './PopoverList.svelte';
+  import { placeList, revealInList, scrollAction } from './popoverList';
 
   interface Props {
     value: string;
@@ -28,9 +30,9 @@
   }
   let { value = $bindable(''), options, suggestions = [], placeholder = '', class: cls = '', title, 'aria-label': ariaLabel, oncommit, onopen }: Props = $props();
 
-  const id = `combo-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `combo-${uid()}`;
   let input: HTMLInputElement;
-  let list: HTMLDivElement;
+  let list = $state<HTMLDivElement>();
   let open = $state(false);
   let active = $state(-1);
   let committed = value;
@@ -49,9 +51,10 @@
       .map((x) => x.o)
       .slice(0, 200);
   });
+  const rows = $derived(matches.map((o) => ({ label: o.label ?? o.value, title: o.title, group: o.group })));
 
   function show() {
-    if (open || !matches.length) return;
+    if (open || !matches.length || !list) return;
     onopen?.();
     list.showPopover();
     open = true;
@@ -61,7 +64,7 @@
   }
   function hide() {
     if (!open) return;
-    list.hidePopover();
+    list?.hidePopover();
     open = false;
     active = -1;
   }
@@ -81,7 +84,7 @@
   function moveTo(i: number) {
     if (!matches.length) return;
     active = (i + matches.length) % matches.length;
-    revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
+    if (list) revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
   }
   function onKey(e: KeyboardEvent) {
     if (e.key === 'ArrowDown') {
@@ -116,7 +119,7 @@
   function onInput() {
     dismissed = false;
     if (!open) show();
-    else placeList(input, list);
+    else if (list) placeList(input, list);
     active = -1;
   }
   // Options can arrive after typing (lazy-loaded lists): open once there is something to show, close when there isn't.
@@ -127,10 +130,10 @@
   });
   // The list is fixed-position: close it instead of letting it drift when the page (or a container holding the input) scrolls.
   function onScroll(e: Event) {
-    const t = e.target as Node;
-    if (!open || list.contains(t) || !(t === document || t.contains(input))) return;
-    if (Date.now() - openedAt < 250) placeList(input, list);
-    else hide();
+    if (!open || !list) return;
+    const act = scrollAction(e, input, list, openedAt);
+    if (act === 'place') placeList(input, list);
+    else if (act === 'hide') hide();
   }
 </script>
 
@@ -168,22 +171,4 @@
   }}
 />
 <!-- pointerdown is cancelled so picking an option doesn't blur the input first. -->
-<div bind:this={list} {id} popover="manual" role="listbox" tabindex="-1" class="select-list" onpointerdown={(e) => e.preventDefault()}>
-  {#each matches as o, i (i)}
-    {#if o.group && o.group !== matches[i - 1]?.group}<div class="select-group" role="presentation">{o.group}</div>{/if}
-    <div
-      id="{id}-{i}"
-      data-index={i}
-      role="option"
-      tabindex="-1"
-      aria-selected={i === active}
-      class={['select-option', { active: i === active }]}
-      title={o.title}
-      onpointermove={() => (active = i)}
-      onclick={() => choose(i)}
-      onkeydown={(e) => e.key === 'Enter' && choose(i)}
-    >
-      {o.label ?? o.value}
-    </div>
-  {/each}
-</div>
+<PopoverList {id} options={rows} bind:active selected={active} popover="manual" bind:el={list} onchoose={choose} onpointerdown={(e) => e.preventDefault()} />

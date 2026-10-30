@@ -6,16 +6,14 @@ export interface Prefs {
   tourSeen: boolean;
 }
 
+import { readJson } from './storage/json';
+
 const KEY = 'pf1e:prefs';
 const DEFAULTS: Prefs = { dice: { threeD: false, color: '#7a1f1f', scale: 6 }, tourSeen: false };
 
 function load(): Prefs {
-  try {
-    const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Partial<Prefs>;
-    return { ...DEFAULTS, ...raw, dice: { ...DEFAULTS.dice, ...(raw.dice ?? {}) } };
-  } catch {
-    return structuredClone(DEFAULTS);
-  }
+  const raw = readJson<Partial<Prefs>>(KEY, {});
+  return { ...DEFAULTS, ...raw, dice: { ...DEFAULTS.dice, ...(raw.dice ?? {}) } };
 }
 
 class PrefsStore {

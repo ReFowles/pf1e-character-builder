@@ -1,4 +1,5 @@
 import { normalize } from '../model/normalize';
+import { readJson } from './json';
 import type { Character } from '../model/types';
 
 const ROSTER_KEY = 'pf1e:roster';
@@ -27,12 +28,8 @@ function write(key: string, value: string) {
 }
 
 export function loadRoster(): RosterEntry[] {
-  try {
-    const raw = JSON.parse(localStorage.getItem(ROSTER_KEY) ?? '[]');
-    return Array.isArray(raw) ? raw : [];
-  } catch {
-    return [];
-  }
+  const raw = readJson<unknown>(ROSTER_KEY, []);
+  return Array.isArray(raw) ? raw : [];
 }
 
 function saveRoster(roster: RosterEntry[]) {
@@ -40,13 +37,8 @@ function saveRoster(roster: RosterEntry[]) {
 }
 
 export function loadCharacter(id: string): Character | null {
-  const raw = localStorage.getItem(charKey(id));
-  if (!raw) return null;
-  try {
-    return normalize(JSON.parse(raw));
-  } catch {
-    return null;
-  }
+  const raw = readJson<unknown>(charKey(id), null);
+  return raw === null ? null : normalize(raw);
 }
 
 /** Save a character and upsert its roster entry. Returns the new roster. */

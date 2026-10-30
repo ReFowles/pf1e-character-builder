@@ -17,7 +17,10 @@
 
 <script lang="ts" generics="T">
   import type { Snippet } from 'svelte';
-  import { placeList, revealInList } from './popoverList';
+  import { uid } from '../model/id';
+  import Chevron from './Chevron.svelte';
+  import PopoverList from './PopoverList.svelte';
+  import { placeList, revealInList, scrollAction } from './popoverList';
 
   interface Props {
     value: T;
@@ -33,9 +36,9 @@
   }
   let { value = $bindable(), options, onchange, class: cls = '', placeholder = '', title, display, 'aria-label': ariaLabel }: Props = $props();
 
-  const id = `select-${Math.random().toString(36).slice(2, 8)}`;
+  const id = `select-${uid()}`;
   let button: HTMLButtonElement;
-  let list: HTMLDivElement;
+  let list = $state<HTMLDivElement>();
   let open = $state(false);
   let active = $state(-1);
   let openedAt = 0;
@@ -45,13 +48,14 @@
   const same = (a: unknown, b: unknown) => a === b || (a == null && b == null);
   const selected = $derived(options.findIndex((o) => same(o.value, value)));
   const current = $derived(options[selected]);
+  const rows = $derived(options.map((o) => ({ label: o.label || ' ', title: o.title, group: o.group })));
 
   function choose(i: number) {
     const o = options[i];
     if (!o) return;
     value = o.value;
     onchange?.(o.value);
-    list.hidePopover();
+    list?.hidePopover();
     button.focus();
   }
 
@@ -66,31 +70,31 @@
 
   // toggle fires once the list is showing and measurable.
   function onToggle(e: ToggleEvent) {
-    if (e.newState !== 'open') return;
+    if (e.newState !== 'open' || !list) return;
     placeList(button, list);
     revealInList(list, list.querySelector<HTMLElement>(`[data-index="${Math.max(0, selected)}"]`));
   }
 
   // The list is fixed-position, so close it rather than let it drift when the page (or a
-  // container holding the trigger) scrolls. Scrolls elsewhere, such as inside the list, are ignored.
+  // container holding the trigger) scrolls. A scroll right after opening is the trigger
+  // being scrolled into view: follow it instead.
   function onScroll(e: Event) {
-    const t = e.target as Node;
-    if (!open || list.contains(t) || !(t === document || t.contains(button))) return;
-    // A scroll right after opening is the trigger being scrolled into view: follow it instead.
-    if (Date.now() - openedAt < 250) placeList(button, list);
-    else list.hidePopover();
+    if (!open || !list) return;
+    const act = scrollAction(e, button, list, openedAt);
+    if (act === 'place') placeList(button, list);
+    else if (act === 'hide') list.hidePopover();
   }
 
   function moveTo(i: number) {
     active = Math.max(0, Math.min(options.length - 1, i));
-    revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
+    if (list) revealInList(list, list.querySelector<HTMLElement>(`[data-index="${active}"]`));
   }
 
   function onKey(e: KeyboardEvent) {
     if (!open) {
       if (['ArrowDown', 'ArrowUp', 'Enter', ' '].includes(e.key)) {
         e.preventDefault();
-        list.showPopover();
+        list?.showPopover();
       }
       return;
     }
@@ -99,7 +103,7 @@
     else if (e.key === 'Home') moveTo(0);
     else if (e.key === 'End') moveTo(options.length - 1);
     else if (e.key === 'Enter' || e.key === ' ') choose(active);
-    else if (e.key === 'Tab') return list.hidePopover();
+    else if (e.key === 'Tab') return list?.hidePopover();
     else if (e.key.length === 1) {
       // Type-ahead: jump to the first option starting with what was typed.
       const now = Date.now();
@@ -113,7 +117,7 @@
   }
 </script>
 
-<svelte:window onscrollcapture={onScroll} onresize={() => open && list.hidePopover()} />
+<svelte:window onscrollcapture={onScroll} onresize={() => open && list?.hidePopover()} />
 
 <button
   bind:this={button}
@@ -132,28 +136,7 @@
   <span class="min-w-0 flex-1 truncate">
     {#if display}{@render display(current)}{:else if current}{current.label}{:else}<span class="opacity-50">{placeholder}</span>{/if}
   </span>
-  <svg viewBox="0 0 20 20" fill="currentColor" class="select-chevron" aria-hidden="true"
-    ><path d="M5.3 7.3a1 1 0 0 1 1.4 0L10 10.6l3.3-3.3a1 1 0 1 1 1.4 1.4l-4 4a1 1 0 0 1-1.4 0l-4-4a1 1 0 0 1 0-1.4Z" /></svg
-  >
+  <Chevron open class="select-chevron" />
 </button>
 <!-- Clicks are cancelled so a wrapping <label> doesn't re-click the trigger and reopen the list. -->
-<!-- svelte-ignore a11y_click_events_have_key_events -->
-<div bind:this={list} {id} popover="auto" role="listbox" tabindex="-1" class="select-list" onbeforetoggle={onBeforeToggle} ontoggle={onToggle} onclick={(e) => e.preventDefault()}>
-  {#each options as o, i (i)}
-    {#if o.group && o.group !== options[i - 1]?.group}<div class="select-group" role="presentation">{o.group}</div>{/if}
-    <div
-      id="{id}-{i}"
-      data-index={i}
-      role="option"
-      tabindex="-1"
-      aria-selected={i === selected}
-      class={['select-option', { active: i === active }]}
-      title={o.title}
-      onpointermove={() => (active = i)}
-      onclick={() => choose(i)}
-      onkeydown={(e) => e.key === 'Enter' && choose(i)}
-    >
-      {o.label || ' '}
-    </div>
-  {/each}
-</div>
+<PopoverList {id} options={rows} bind:active {selected} popover="auto" bind:el={list} onchoose={choose} onbeforetoggle={onBeforeToggle} ontoggle={onToggle} onclick={(e) => e.preventDefault()} />

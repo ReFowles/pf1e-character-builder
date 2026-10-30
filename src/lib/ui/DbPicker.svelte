@@ -2,6 +2,7 @@
   import type { Snippet } from 'svelte';
   import { loadDb, searchByName, type DbKind } from '../db';
   import type { DbData } from '../db/types';
+  import { uid } from '../model/id';
   import { useSection } from './sectionContext';
 
   type Entry = DbData[K][number];
@@ -22,7 +23,7 @@
   let data = $state<Entry[] | null>(null);
   let error = $state('');
   let active = $state(0);
-  const listId = `db-results-${Math.random().toString(36).slice(2, 8)}`;
+  const listId = `db-results-${uid()}`;
 
   const results = $derived.by(() => {
     if (!data) return [];
