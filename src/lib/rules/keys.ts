@@ -1,19 +1,10 @@
-import { ABILITIES } from '../model/types';
+import { ABILITIES, ABILITY_NAMES } from '../model/types';
 import { KNOWLEDGES, SKILLS } from './skills';
 
 export interface KeyDef {
   key: string;
   label: string;
 }
-
-const ABILITY_NAMES = {
-  str: 'Strength',
-  dex: 'Dexterity',
-  con: 'Constitution',
-  int: 'Intelligence',
-  wis: 'Wisdom',
-  cha: 'Charisma',
-};
 
 /** Every bonus key derive() reads, for pickers and validation. */
 export const BONUS_KEYS: KeyDef[] = [

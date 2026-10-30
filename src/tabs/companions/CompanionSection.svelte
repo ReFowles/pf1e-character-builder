@@ -4,7 +4,7 @@
   import { roll } from '../../lib/dice/rolls.svelte';
   import { damageNotation } from '../../lib/dice/notation';
   import { make } from '../../lib/model/defaults';
-  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, EIDOLON_BASE_FORMS, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
+  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, EIDOLON_BASE_FORMS, SAVES, SAVE_NAMES, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
   import { CREATURE_PROGRESSION, KIND_LABELS, deriveCompanion } from '../../lib/rules/companions';
   import { COMPANION_LABELS, DRAKE_POWERS, DRAKE_SUBTYPES, EIDOLON_BASE_FORMS as BASE_FORMS, EIDOLON_SUBTYPES, PHANTOM_FOCI } from '../../lib/rules/companionTables';
   import type { DbCompanion } from '../../lib/db/types';
@@ -31,11 +31,6 @@
 
   const c = $derived(app.char);
   const cd = $derived(deriveCompanion(c, app.d, x));
-  const SAVES: [Save, string][] = [
-    ['fort', 'Fortitude'],
-    ['ref', 'Reflex'],
-    ['will', 'Will'],
-  ];
   let amount = $state(0);
 
   /** Changing the creature type resets the good saves to that type's defaults. */
@@ -103,7 +98,7 @@
         { label: 'AC', total: cd.ac.normal, signed: false },
         { label: 'Touch AC', total: cd.ac.touch, signed: false },
         { label: 'Flat-footed AC', total: cd.ac.flatFooted, signed: false },
-        ...SAVES.map(([s, label]) => ({ label, total: cd.saves[s] })),
+        ...SAVES.map((s) => ({ label: SAVE_NAMES[s], total: cd.saves[s] })),
         { label: 'CMB', total: cd.cmb },
         { label: 'CMD', total: cd.cmd, signed: false },
         ...x.attacks.filter((a) => cd.attacks[a.id]).map((a) => ({ label: a.name || 'Attack', total: cd.attacks[a.id].attack })),
@@ -130,7 +125,7 @@
           </Field>
           <div class="field">
             <div class="flex h-7 items-center gap-0.5">
-              {#each SAVES as [s] (s)}
+              {#each SAVES as s (s)}
                 <button
                   type="button"
                   class="rounded-sm border px-1 text-xs uppercase"
@@ -282,7 +277,7 @@
             <Stat label="Flat-footed" value={cd.ac.flatFooted} signed={false} />
           </div>
           <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-            {#each SAVES as [s, label] (s)}<Stat {label} value={cd.saves[s]} size="md" roll={{ title: `${label} save`, subtitle: x.name || 'Companion' }} />{/each}
+            {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={cd.saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save`, subtitle: x.name || 'Companion' }} />{/each}
           </div>
           <div class="grid grid-cols-4 gap-1">
             <Stat label="BAB" value={cd.bab} />

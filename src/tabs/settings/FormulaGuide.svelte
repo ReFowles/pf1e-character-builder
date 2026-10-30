@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ABILITIES, BONUS_TYPES } from '../../lib/model/types';
+  import { ABILITIES, ABILITY_NAMES, BONUS_TYPES } from '../../lib/model/types';
   import { checkExpr, tryEvaluate } from '../../lib/rules/expr';
   import { BONUS_KEYS } from '../../lib/rules/keys';
   import { STACKING_TYPES } from '../../lib/rules/bonuses';
@@ -8,8 +8,6 @@
 
   const vars = $derived(app.d.vars);
   const show = (k: string) => (Object.hasOwn(vars, k) ? String(vars[k]) : '—');
-
-  const ABILITY_NAMES = { str: 'Strength', dex: 'Dexterity', con: 'Constitution', int: 'Intelligence', wis: 'Wisdom', cha: 'Charisma' };
 
   const REFS = $derived([
     { ref: '@level', meaning: 'Total character level', key: 'level' },

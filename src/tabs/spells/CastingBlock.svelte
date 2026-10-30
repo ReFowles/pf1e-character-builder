@@ -7,7 +7,7 @@
   import { spellDamageNotation, spellLevels } from '../../lib/dice/notation';
   import { ABILITIES, type SpellEntry, type Spellcasting } from '../../lib/model/types';
   import { SPELL_TABLES, spellRanges } from '../../lib/rules/spellTables';
-  import { slug } from '../../lib/rules/derive';
+  import { slug } from '../../lib/slug';
   import type { DbSpell } from '../../lib/db/types';
   import { app } from '../../lib/state.svelte';
   import Field from '../../lib/ui/Field.svelte';

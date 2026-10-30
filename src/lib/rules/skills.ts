@@ -1,4 +1,5 @@
 import type { Ability } from '../model/types';
+import { slug } from '../slug';
 
 export interface SkillDef {
   key: string;
@@ -67,9 +68,7 @@ export const KNOWLEDGES = [
 ];
 
 /** Normalize a subtype into a key fragment: "Arcana" -> "arcana". */
-export function subtypeKey(subtype: string | undefined): string {
-  return (subtype ?? '').trim().toLowerCase().replace(/[^a-z0-9]+/g, '-');
-}
+export const subtypeKey = (subtype: string | undefined) => slug(subtype ?? '');
 
 /**
  * Class skill lists hold either a skill key ("stealth", "knowledge" for all

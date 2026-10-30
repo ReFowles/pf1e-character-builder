@@ -2,7 +2,8 @@
 // existing arcane spellcasting class"). Keyed by the class id (slug of its
 // name). Levels are the prestige class's own levels 1–10 that advance; the
 // Prestigious Spellcaster feat is "tick one more level" on the sheet.
-import type { Ability, Character, ClassDef } from '../model/types';
+import type { Character, ClassDef } from '../model/types';
+import { slug } from '../slug';
 import { levelClassIds } from './gestalt';
 
 export type SpellType = 'arcane' | 'divine' | 'psychic';
@@ -83,17 +84,11 @@ export const PRESET_SPELL_TYPE: Record<string, SpellType> = {
   medium: 'psychic',
 };
 
-export const slugOf = (name: string) =>
-  name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
 export function castingAdvanceFor(k: Pick<ClassDef, 'name' | 'presetId'>): CastingAdvance | undefined {
-  return CASTING_ADVANCE[k.presetId ?? ''] ?? CASTING_ADVANCE[slugOf(k.name)];
+  return CASTING_ADVANCE[k.presetId ?? ''] ?? CASTING_ADVANCE[slug(k.name)];
 }
 
-export const spellTypeOf = (k: ClassDef): SpellType | undefined => k.spellType ?? PRESET_SPELL_TYPE[k.presetId ?? ''] ?? PRESET_SPELL_TYPE[slugOf(k.name)];
+export const spellTypeOf = (k: ClassDef): SpellType | undefined => k.spellType ?? PRESET_SPELL_TYPE[k.presetId ?? ''] ?? PRESET_SPELL_TYPE[slug(k.name)];
 
 /** Casting classes (ones with a spell block) this advancement can apply to. */
 export function eligibleCastingClasses(c: Character, adv: CastingAdvance): ClassDef[] {
@@ -133,5 +128,3 @@ export function levelSpellAdvance(c: Character, i: number): string[] {
   });
   return [...new Set(ids)].filter((id) => !own.includes(id));
 }
-
-export const CASTING_ABILITY_DEFAULT: Record<SpellType, Ability> = { arcane: 'int', divine: 'wis', psychic: 'int' };

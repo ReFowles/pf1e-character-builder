@@ -2,6 +2,7 @@
 // to the matching section's bonus list (c.bonuses), where it stays editable.
 // Conditional feats (Power Attack, Deadly Aim…) stay macros.
 import type { BonusType, ManualBonus } from '../model/types';
+import { slug } from '../slug';
 
 export interface FeatBonus {
   key: string;
@@ -36,13 +37,7 @@ export function bonusRowsFor(name: string, uid: () => string): ManualBonus[] {
 
 export const hasFeat = (feats: { name: string }[], key: string) => feats.some((f) => featKey(f.name) === key);
 
-/** Old macro library ids that became feat bonuses (schema 7). */
-export const RETIRED_MACRO_FEATS: Record<string, string> = {
-  'improved-initiative': 'Improved Initiative',
-  'iron-will': 'Iron Will',
-  'great-fortitude': 'Great Fortitude',
-  'lightning-reflexes': 'Lightning Reflexes',
-  dodge: 'Dodge',
-  'weapon-focus': 'Weapon Focus',
-  toughness: 'Toughness',
-};
+/** Old macro library ids (the feat name's slug) that became feat bonuses (schema 7). */
+export const RETIRED_MACRO_FEATS: Record<string, string> = Object.fromEntries(
+  [...Object.keys(FEAT_BONUSES), ...SCALING_FEATS].map((name) => [slug(name), name]),
+);

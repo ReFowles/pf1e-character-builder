@@ -3,6 +3,14 @@
 
 export const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 export type Ability = (typeof ABILITIES)[number];
+export const ABILITY_NAMES: Record<Ability, string> = {
+  str: 'Strength',
+  dex: 'Dexterity',
+  con: 'Constitution',
+  int: 'Intelligence',
+  wis: 'Wisdom',
+  cha: 'Charisma',
+};
 
 export const SIZES = [
   'fine',
@@ -20,7 +28,9 @@ export type Size = (typeof SIZES)[number];
 /** 'milestone' levels up by GM decision, so no experience is tracked. */
 export type XpTrack = 'slow' | 'medium' | 'fast' | 'milestone';
 export type BabProgression = 'full' | '3/4' | '1/2';
-export type Save = 'fort' | 'ref' | 'will';
+export const SAVES = ['fort', 'ref', 'will'] as const;
+export type Save = (typeof SAVES)[number];
+export const SAVE_NAMES: Record<Save, string> = { fort: 'Fortitude', ref: 'Reflex', will: 'Will' };
 
 /** PF1 bonus types. Same-typed bonuses don't stack (highest wins), except the
  * ones listed in STACKING_TYPES in rules/bonuses.ts. */
@@ -303,12 +313,8 @@ export const MAGIC_SLOTS = [
 ] as const;
 export type MagicSlot = (typeof MAGIC_SLOTS)[number];
 
-export interface Coins {
-  pp: number;
-  gp: number;
-  sp: number;
-  cp: number;
-}
+export const COIN_KINDS = ['pp', 'gp', 'sp', 'cp'] as const;
+export type Coins = Record<(typeof COIN_KINDS)[number], number>;
 
 export interface CoinLocation extends Identified {
   name: string;

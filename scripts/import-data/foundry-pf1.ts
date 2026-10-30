@@ -12,6 +12,8 @@ import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { parse } from 'yaml';
 import type { DbClass, DbCompanion, DbEvolution, DbFeat, DbItem, DbSpell } from '../../src/lib/db/types.ts';
+import { ABILITIES, SAVES } from '../../src/lib/model/types.ts';
+import { slug } from '../../src/lib/slug.ts';
 
 const { values: opts, positionals } = parseArgs({
   allowPositionals: true,
@@ -76,7 +78,6 @@ const firstSentence = (s: string) => (s.match(/^.*?[.!?](?=\s|$)/)?.[0] ?? s.spl
 
 const source = (sys: Record<string, any>) => (sys.sources ?? []).map((x: any) => x.id + (x.pages ? ` p${x.pages}` : '')).join(', ');
 const firstAction = (sys: Record<string, any>) => Object.values(sys.actions ?? {})[0] as Record<string, any> | undefined;
-const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 const RANGE: Record<string, string> = { close: 'close', medium: 'medium', long: 'long', touch: 'touch', personal: 'personal', melee: 'melee', reach: 'reach', unlimited: 'unlimited', seeText: 'see text' };
 function range(r: any): string {
@@ -207,6 +208,7 @@ const items: DbItem[] = ['items', 'ultimate-equipment', 'weapons-and-ammo', 'arm
 // system pack uses full names ("knowledge.arcana"); pf1e-archetypes uses
 // Foundry's three-letter codes. Note "kno" is Knowledge (nobility) in that
 // data (verified against the class descriptions), not "all knowledges".
+// Keys of SKILLS in src/lib/rules/skills.ts (that module's imports have no extensions, so Node can't load it here).
 const APP_SKILLS = new Set(['acrobatics', 'appraise', 'bluff', 'climb', 'craft', 'diplomacy', 'disableDevice', 'disguise', 'escapeArtist', 'fly', 'handleAnimal', 'heal', 'intimidate', 'knowledge', 'linguistics', 'perception', 'perform', 'profession', 'ride', 'senseMotive', 'sleightOfHand', 'spellcraft', 'stealth', 'survival', 'swim', 'useMagicDevice']);
 const SKILL_CODES: Record<string, string> = {
   acr: 'acrobatics', apr: 'appraise', blf: 'bluff', clm: 'climb', crf: 'craft', dev: 'disableDevice', dip: 'diplomacy', dis: 'disguise',
@@ -233,7 +235,7 @@ const NPC_CLASSES = new Set(['adept', 'aristocrat', 'commoner', 'expert', 'warri
 
 function cls(d: Doc, kind: DbClass['kind']): DbClass {
   const s = d.system;
-  const saves = (['fort', 'ref', 'will'] as const).filter((k) => s.savingThrows?.[k]?.value === 'high');
+  const saves = SAVES.filter((k) => s.savingThrows?.[k]?.value === 'high');
   const c: DbClass = {
     id: slug(d.name),
     name: d.name,
@@ -264,7 +266,6 @@ const SIZES: Record<string, string> = { fine: 'fine', dim: 'diminutive', tiny: '
 /** Size from the AC line's size modifier. */
 const SIZE_MOD: Record<string, string> = { '+8': 'fine', '+4': 'diminutive', '+2': 'tiny', '+1': 'small', '+0': 'medium', '-1': 'large', '-2': 'huge', '-4': 'gargantuan', '-8': 'colossal' };
 const SENSES: Record<string, string> = { ll: 'low-light vision', dv: 'darkvision', sc: 'scent', ts: 'tremorsense', bs: 'blindsense', bse: 'blindsense', bl: 'blindsight', si: 'see invisibility', sid: 'see in darkness', tr: 'true seeing' };
-const ABILITIES = ['str', 'dex', 'con', 'int', 'wis', 'cha'] as const;
 
 /** Plain text of an actor's notes. pf-content familiars end with a "RAW INPUT" copy of the stat block; it is the most complete part. */
 function notes(d: Doc): { base: string; raw: string; advancement: string } {

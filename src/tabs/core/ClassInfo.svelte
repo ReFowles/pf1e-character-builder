@@ -1,6 +1,6 @@
 <script lang="ts">
   import { classKnowledges, make } from '../../lib/model/defaults';
-  import type { ClassDef, LevelEntry, Save } from '../../lib/model/types';
+  import { SAVES, type ClassDef, type LevelEntry, type Save } from '../../lib/model/types';
   import { CLASS_PRESETS, findPreset, presetFromDb, type ClassPreset } from '../../lib/rules/classPresets';
   import { eligibleCastingClasses, levelSpellAdvance, prestigeLevelOf } from '../../lib/rules/prestige';
   import { levelClassIds } from '../../lib/rules/gestalt';
@@ -252,7 +252,7 @@
                 />
               </td>
               <td class="text-center whitespace-nowrap">
-                {#each ['fort', 'ref', 'will'] as const as s (s)}
+                {#each SAVES as s (s)}
                   <button
                     type="button"
                     class="mx-px rounded-sm border px-1 text-xs uppercase"

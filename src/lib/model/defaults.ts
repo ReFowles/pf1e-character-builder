@@ -1,5 +1,7 @@
 import { uid } from './id';
 import { KNOWLEDGES, SKILLS } from '../rules/skills';
+import { EIDOLON_BASE_FORMS } from '../rules/companionTables';
+import { ABILITIES } from './types';
 import type {
   Ability,
   AbilityScore,
@@ -57,7 +59,8 @@ export const coins = (): Coins => ({ pp: 0, gp: 0, sp: 0, cp: 0 });
 const COMPANION_SEEDS: Record<CompanionKind, { type: CreatureType; goodSaves: Save[]; size: Size; speed: string; scores: number[]; natural: number; attacks: Partial<CompanionAttack>[] }> = {
   animal: { type: 'animal', goodSaves: ['fort', 'ref'], size: 'medium', speed: '30 ft', scores: [10, 10, 10, 2, 10, 6], natural: 0, attacks: [] },
   familiar: { type: 'animal', goodSaves: ['fort', 'ref'], size: 'tiny', speed: '30 ft', scores: [10, 10, 10, 2, 10, 6], natural: 0, attacks: [] },
-  eidolon: { type: 'outsider', goodSaves: ['fort', 'will'], size: 'medium', speed: '30 ft', scores: [16, 12, 13, 7, 10, 11], natural: 2, attacks: [{ name: '2 claws', damage: '1d4' }] },
+  // A new eidolon starts as the biped base form.
+  eidolon: { type: 'outsider', ...EIDOLON_BASE_FORMS.biped, scores: ABILITIES.map((a) => EIDOLON_BASE_FORMS.biped.abilities[a]) },
   phantom: { type: 'outsider', goodSaves: ['fort', 'will'], size: 'medium', speed: '30 ft', scores: [12, 14, 13, 7, 10, 13], natural: 0, attacks: [{ name: 'Slam', damage: '1d6' }, { name: 'Slam', damage: '1d6' }] },
   drake: { type: 'dragon', goodSaves: ['fort', 'ref', 'will'], size: 'tiny', speed: '20 ft', scores: [8, 17, 11, 4, 10, 7], natural: 0, attacks: [{ name: 'Bite', damage: '1d3' }, { name: 'Tail', damage: '1d3', primary: false }] },
   other: { type: 'other', goodSaves: ['fort', 'ref'], size: 'medium', speed: '30 ft', scores: [10, 10, 10, 10, 10, 10], natural: 0, attacks: [] },

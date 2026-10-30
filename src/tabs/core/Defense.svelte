@@ -1,5 +1,6 @@
 <script lang="ts">
   import { make } from '../../lib/model/defaults';
+  import { SAVES, SAVE_NAMES } from '../../lib/model/types';
   import { parseGp } from '../../lib/model/migrate';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -39,9 +40,7 @@
         { label: 'AC', total: d.ac.normal, signed: false },
         { label: 'Touch AC', total: d.ac.touch, signed: false },
         { label: 'Flat-footed AC', total: d.ac.flatFooted, signed: false },
-        { label: 'Fortitude', total: d.saves.fort },
-        { label: 'Reflex', total: d.saves.ref },
-        { label: 'Will', total: d.saves.will },
+        ...SAVES.map((s) => ({ label: SAVE_NAMES[s], total: d.saves[s] })),
         { label: 'CMD', total: d.cmd, signed: false },
       ]}
     />
@@ -142,9 +141,7 @@
     <Stat label="Flat-footed" value={d.ac.flatFooted} signed={false} />
   </div>
   <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    <Stat label="Fortitude" value={d.saves.fort} size="md" roll={{ title: 'Fortitude save' }} />
-    <Stat label="Reflex" value={d.saves.ref} size="md" roll={{ title: 'Reflex save' }} />
-    <Stat label="Will" value={d.saves.will} size="md" roll={{ title: 'Will save' }} />
+    {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={d.saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save` }} />{/each}
   </div>
   <div class="grid grid-cols-3 gap-1 px-1">
     <div class="stat" title="Flat-footed CMD: {d.cmdFlatFooted}">
