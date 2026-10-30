@@ -1,6 +1,7 @@
 <script lang="ts">
   import { app } from '../state.svelte';
   import Select from './Select.svelte';
+  import TrashIcon from './TrashIcon.svelte';
 
   // Import and export live in Settings → Help & data.
   const ACTIONS: { label: string; title?: string; run: () => void }[] = [
@@ -28,7 +29,7 @@
     <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><rect x="7" y="7" width="9" height="9" rx="1.5"/><path d="M13 7V5.5A1.5 1.5 0 0 0 11.5 4h-6A1.5 1.5 0 0 0 4 5.5v6A1.5 1.5 0 0 0 5.5 13H7"/></svg>
   </button>
   <button type="button" class="btn p-1.5 hover:text-accent" title="Delete character" aria-label="Delete character" onclick={() => app.remove()}>
-    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-4" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5A1 1 0 0 0 7.7 16.5h4.6a1 1 0 0 0 1-.9L14 6M8.5 9v4.5M11.5 9v4.5"/></svg>
+    <TrashIcon />
   </button>
   <div class="ml-auto flex flex-wrap gap-2">
     {#each ACTIONS as a (a.label)}

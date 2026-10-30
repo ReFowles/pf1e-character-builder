@@ -9,6 +9,7 @@
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
   import { breakdown, fmt } from '../../lib/ui/format';
+  import { rollable } from '../../lib/dice/rollable';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import type { DbItem } from '../../lib/db/types';
   import { parseGp } from '../../lib/model/migrate';
@@ -127,14 +128,7 @@
             <!-- Dice (adjusted for size changes) with the modifier right after: 2d6+8. -->
             <div class="flex items-center gap-0.5 px-1 leading-7 font-bold whitespace-nowrap tabular-nums" title={wd && wd.damageDice !== w.damage ? `${w.damage} before size change` : undefined}>
               {#if wd}
-                <span
-                  class="rollable"
-                  role="button"
-                  tabindex="0"
-                  title="Roll {weaponName(w)} damage"
-                  aria-label="Roll {weaponName(w)} damage"
-                  onclick={() => rollDamage(w, wd)}
-                  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), rollDamage(w, wd))}>{wd.damageDice || '—'}{wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}</span>
+                <span use:rollable={{ title: `${weaponName(w)} damage`, roll: () => rollDamage(w, wd) }}>{wd.damageDice || '—'}{wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}</span>
                 <button type="button" class="icon-btn h-5 px-1 text-[0.6rem] font-normal print:hidden" title="Roll critical damage (×{critMultiplier(w.crit)})" aria-label="Roll {weaponName(w)} critical damage" onclick={() => rollDamage(w, wd, true)}>crit</button>
               {/if}
             </div>

@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { moveItem } from '../../lib/arrays';
   import { make } from '../../lib/model/defaults';
   import { SAVES, SAVE_NAMES } from '../../lib/model/types';
   import { parseGp } from '../../lib/model/migrate';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
-  import Stat from '../../lib/ui/Stat.svelte';
+  import DefenseStats from '../../lib/ui/DefenseStats.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
@@ -18,11 +19,6 @@
   const c = $derived(app.char);
   const d = $derived(app.d);
   const KEYS = ['ac', 'save', 'save.fort', 'save.ref', 'save.will', 'cmd'];
-
-  function moveResistance(from: number, to: number) {
-    const [r] = c.resistances.splice(from, 1);
-    c.resistances.splice(to, 0, r);
-  }
 </script>
 
 {#snippet naturalRow()}
@@ -135,14 +131,7 @@
     <option value="buckler"></option><option value="light shield"></option><option value="heavy shield"></option><option value="tower"></option>
   </datalist>
 
-  <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    <Stat label="AC" value={d.ac.normal} signed={false} size="md" />
-    <Stat label="Touch" value={d.ac.touch} signed={false} />
-    <Stat label="Flat-footed" value={d.ac.flatFooted} signed={false} />
-  </div>
-  <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-    {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={d.saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save` }} />{/each}
-  </div>
+  <DefenseStats ac={d.ac} saves={d.saves} />
   <div class="grid grid-cols-3 gap-1 px-1">
     <div class="stat" title="Flat-footed CMD: {d.cmdFlatFooted}">
       <div class="stat-value text-2xl">{d.cmd.total}</div>
@@ -168,7 +157,7 @@
 
       <div class="mt-auto flex flex-col border-t border-ink/30 pt-1">
         <span class="field-label">Resistances & immunities</span>
-        <div class="flex flex-wrap items-center gap-1" use:sortable={{ onmove: moveResistance }}>
+        <div class="flex flex-wrap items-center gap-1" use:sortable={{ onmove: (from, to) => moveItem(c.resistances, from, to) }}>
           {#each c.resistances as r, i (r.id)}
             {#if editing}
               <span class="chip" data-sort-index={i}>

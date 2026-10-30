@@ -1,6 +1,7 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { fmt } from '../ui/format';
+  import TrashIcon from '../ui/TrashIcon.svelte';
   import { roll, rolls } from './rolls.svelte';
 
   const DICE = [4, 6, 8, 10, 12, 20, 100];
@@ -103,7 +104,7 @@
             {#if r.subtitle}<span class="text-xs opacity-60">{r.subtitle}</span>{/if}
             <time class="ml-auto text-xs opacity-50" datetime={new Date(r.at).toISOString()}>{time(r.at)}</time>
             <button type="button" class="icon-btn size-5 text-accent" aria-label="Delete roll {r.title}" title="Delete this roll" onclick={() => rolls.remove(r.id)}>
-              <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="size-3.5" aria-hidden="true"><path d="M4 6h12M8 6V4.5h4V6M6 6l.7 9.5A1 1 0 0 0 7.7 16.5h4.6a1 1 0 0 0 1-.9L14 6M8.5 9v4.5M11.5 9v4.5" /></svg>
+              <TrashIcon class="size-3.5" />
             </button>
           </div>
           <div class="flex flex-wrap items-center gap-1">

@@ -6,7 +6,7 @@
   import Chips from '../../lib/ui/Chips.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
-  import { breakdown } from '../../lib/ui/format';
+  import HpBox from '../../lib/ui/HpBox.svelte';
 
   const c = $derived(app.char);
   const hp = $derived(app.d.hp);
@@ -61,28 +61,7 @@
     </label>
   </div>
 
-  <!-- Max HP in a small box on the left; current HP (tracked in play) fills the rest. -->
-  <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border border-ink p-1.5">
-    <div class="flex min-w-16 flex-col items-center rounded-sm border border-ink/40 px-2 py-1" title={breakdown(hp.max)}>
-      <span class="text-2xl leading-tight font-bold tabular-nums" data-hp-max>{hp.max.total}</span>
-      <span class="field-label">Max HP</span>
-    </div>
-    <div class="flex flex-col items-center">
-      <input
-        class="h-11 w-full border-0 bg-transparent text-center text-4xl leading-none font-bold tabular-nums print:invisible"
-        class:text-accent={hp.current <= hp.max.total / 4}
-        inputmode="numeric"
-        aria-label="Current hit points"
-        value={hp.current}
-        onchange={(e) => {
-          const v = Number(e.currentTarget.value);
-          if (Number.isFinite(v)) c.hp.damage = hp.max.total + c.hp.temp - v;
-          e.currentTarget.value = String(app.d.hp.current);
-        }}
-      />
-      <span class="field-label">Current HP{status ? ` — ${status}` : ''}</span>
-    </div>
-  </div>
+  <HpBox max={hp.max} current={hp.current} hp={c.hp} {status} />
 
   <div class="flex items-center gap-1 print:hidden">
     <NumInput class="w-14" bind:value={amount} aria-label="Damage or healing amount" />

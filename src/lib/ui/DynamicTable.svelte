@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from 'svelte';
+  import { moveItem } from '../arrays';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -33,13 +34,6 @@
   }: Props = $props();
 
   const section = useSection();
-
-  function move(i: number, by: number) {
-    const j = i + by;
-    if (j < 0 || j >= items.length) return;
-    const [x] = items.splice(i, 1);
-    items.splice(j, 0, x);
-  }
 </script>
 
 <div>
@@ -58,8 +52,8 @@
           <td class="row-actions print:hidden">
             <div class="flex">
               {#if reorder}
-                <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
-                <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>
+                <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => moveItem(items, i, i - 1)}>↑</button>
+                <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => moveItem(items, i, i + 1)}>↓</button>
               {/if}
               <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => (onremove ? onremove(item) : items.splice(i, 1))}>✕</button>
             </div>

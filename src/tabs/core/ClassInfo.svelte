@@ -1,6 +1,7 @@
 <script lang="ts">
   import { classKnowledges, make } from '../../lib/model/defaults';
-  import { SAVES, type ClassDef, type LevelEntry, type Save } from '../../lib/model/types';
+  import { toggle } from '../../lib/arrays';
+  import type { ClassDef, LevelEntry } from '../../lib/model/types';
   import { CLASS_PRESETS, findPreset, presetFromDb, type ClassPreset } from '../../lib/rules/classPresets';
   import { eligibleCastingClasses, levelSpellAdvance, prestigeLevelOf } from '../../lib/rules/prestige';
   import { levelClassIds } from '../../lib/rules/gestalt';
@@ -10,6 +11,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Chevron from '../../lib/ui/Chevron.svelte';
+  import SaveToggles from '../../lib/ui/SaveToggles.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Combobox from '../../lib/ui/Combobox.svelte';
@@ -90,7 +92,7 @@
     const eligible = eligibleCastingClasses(c, k.castingAdvance);
     return { eligible, byTable: k.castingAdvance.levels.includes(prestigeLevelOf(c, i, k.id)), k };
   }
-  const toggleAdvance = (l: LevelEntry, id: string) => (l.spellAdvance = l.spellAdvance.includes(id) ? l.spellAdvance.filter((x) => x !== id) : [...l.spellAdvance, id]);
+  const toggleAdvance = (l: LevelEntry, id: string) => (l.spellAdvance = toggle(l.spellAdvance, id));
   const hasPrestigeCasting = $derived(c.classes.some((k) => k.castingAdvance) && c.spellcasting.some((b) => b.classId));
 
   function addClass() {
@@ -121,12 +123,8 @@
   /** Gestalt side choices: none, or any class other than the level's own. */
   const gestaltOptions = (mainId: string) => [{ value: '', label: '—' }, ...c.classes.filter((k) => k.id !== mainId).map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))];
 
-  function toggleSave(k: ClassDef, s: Save) {
-    k.goodSaves = k.goodSaves.includes(s) ? k.goodSaves.filter((x) => x !== s) : [...k.goodSaves, s];
-  }
-
   const className = (id: string) => c.classes.find((k) => k.id === id)?.name || '—';
-  const toggleFavored = (id: string) => (c.favoredClassIds = c.favoredClassIds.includes(id) ? c.favoredClassIds.filter((x) => x !== id) : [...c.favoredClassIds, id]);
+  const toggleFavored = (id: string) => (c.favoredClassIds = toggle(c.favoredClassIds, id));
 
   // Named "other" FCBs already used, offered as choices on every favored level.
   const knownOther = $derived.by(() => {
@@ -251,18 +249,7 @@
                   aria-label="BAB progression"
                 />
               </td>
-              <td class="text-center whitespace-nowrap">
-                {#each SAVES as s (s)}
-                  <button
-                    type="button"
-                    class="mx-px rounded-sm border px-1 text-xs uppercase"
-                    class:bg-ink={k.goodSaves.includes(s)}
-                    class:text-paper={k.goodSaves.includes(s)}
-                    aria-pressed={k.goodSaves.includes(s)}
-                    onclick={() => toggleSave(k, s)}>{s[0]}</button
-                  >
-                {/each}
-              </td>
+              <td class="text-center whitespace-nowrap"><SaveToggles bind:saves={k.goodSaves} /></td>
               <td class="w-12"><NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" /></td>
               <td><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
             {:else}

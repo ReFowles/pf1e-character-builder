@@ -229,14 +229,7 @@
           {#if s.damage}
             <span class="inline-flex items-baseline gap-1">
               {#if damageText(s)}
-                <span
-                  class="rollable"
-                  role="button"
-                  tabindex="0"
-                  title="Roll {spellName(s)} damage"
-                  aria-label="Roll {spellName(s)} damage"
-                  onclick={() => rollSpellDamage(s)}
-                  onkeydown={(e) => (e.key === 'Enter' || e.key === ' ') && (e.preventDefault(), rollSpellDamage(s))}>{damageText(s)}</span>
+                <span use:rollable={{ title: `${spellName(s)} damage`, roll: () => rollSpellDamage(s) }}>{damageText(s)}</span>
               {:else}
                 <span class="text-accent" title="Not rollable dice; use a form like 1d6 or 2d8+3">{s.damage}</span>
               {/if}

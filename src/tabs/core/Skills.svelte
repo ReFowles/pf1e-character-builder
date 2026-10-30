@@ -1,6 +1,7 @@
 <script lang="ts">
   import { partsOf } from '../../lib/dice/roll';
   import { rollable } from '../../lib/dice/rollable';
+  import { moveItem } from '../../lib/arrays';
   import { make } from '../../lib/model/defaults';
   import type { SkillEntry } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
@@ -35,8 +36,7 @@
 
   function moveFavorite(from: number, to: number) {
     const ids = favorites.map((f) => f.id);
-    const [x] = ids.splice(from, 1);
-    ids.splice(to, 0, x);
+    moveItem(ids, from, to);
     c.favoriteOrder = ids;
   }
 

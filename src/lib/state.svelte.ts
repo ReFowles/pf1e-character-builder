@@ -1,3 +1,4 @@
+import { moveItem } from './arrays';
 import { newCharacter } from './model/defaults';
 import { uid } from './model/id';
 import { normalize } from './model/normalize';
@@ -71,9 +72,8 @@ class AppState {
 
   moveSection(tab: Tab, from: number, to: number) {
     const order = this.mobileOrder(tab);
-    if (from === to || to < 0 || to >= order.length) return;
-    const [id] = order.splice(from, 1);
-    order.splice(to, 0, id);
+    if (from === to) return;
+    moveItem(order, from, to);
     this.char.ui.mobileOrder[tab] = order;
   }
 

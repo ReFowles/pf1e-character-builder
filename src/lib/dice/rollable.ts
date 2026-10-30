@@ -7,11 +7,14 @@ import type { RollPart } from './roll';
 
 export interface RollableOptions {
   title: string;
-  bonus: number;
+  /** Added to the die (default 0). */
+  bonus?: number;
   parts?: RollPart[];
   /** Die to roll (default d20). */
   sides?: number;
   subtitle?: string;
+  /** Run this instead of rolling a die (damage rolls build their own notation). */
+  roll?: () => void;
   disabled?: boolean;
 }
 
@@ -36,7 +39,8 @@ export const rollable: Action<HTMLElement, RollableOptions> = (node, opts) => {
     if (current.disabled) return;
     e.preventDefault();
     e.stopPropagation();
-    void roll({ title: current.title, subtitle: current.subtitle, notation: `1d${current.sides ?? 20}${fmt(current.bonus)}`, parts: current.parts });
+    if (current.roll) return current.roll();
+    void roll({ title: current.title, subtitle: current.subtitle, notation: `1d${current.sides ?? 20}${fmt(current.bonus ?? 0)}`, parts: current.parts });
   };
   const key = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') fire(e);

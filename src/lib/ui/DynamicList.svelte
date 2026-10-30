@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from 'svelte';
+  import { moveItem } from '../arrays';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -27,22 +28,13 @@
 
   const section = useSection();
 
-  function move(i: number, by: number) {
-    const j = i + by;
-    if (j < 0 || j >= items.length) return;
-    const [x] = items.splice(i, 1);
-    items.splice(j, 0, x);
-  }
-
   let dragId = $state<string | null>(null);
   let overId = $state<string | null>(null);
 
   function drop(target: number) {
     const from = items.findIndex((x) => x.id === dragId);
     dragId = overId = null;
-    if (from < 0 || from === target) return;
-    const [x] = items.splice(from, 1);
-    items.splice(target, 0, x);
+    moveItem(items, from, target);
   }
 </script>
 
@@ -81,8 +73,8 @@
           ondragend={() => (dragId = overId = null)}
         >⠿</span>
         <button type="button" class="icon-btn text-accent" aria-label="Remove" onclick={() => items.splice(i, 1)}>✕</button>
-        <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => move(i, -1)}>↑</button>
-        <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => move(i, 1)}>↓</button>
+        <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => moveItem(items, i, i - 1)}>↑</button>
+        <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => moveItem(items, i, i + 1)}>↓</button>
       </div>
       {/if}
     </div>

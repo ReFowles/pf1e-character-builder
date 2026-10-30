@@ -4,7 +4,7 @@
   import { roll } from '../../lib/dice/rolls.svelte';
   import { damageNotation } from '../../lib/dice/notation';
   import { make } from '../../lib/model/defaults';
-  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, EIDOLON_BASE_FORMS, SAVES, SAVE_NAMES, SIZES, type Companion, type CreatureType, type Save } from '../../lib/model/types';
+  import { ABILITIES, COMPANION_KINDS, CREATURE_TYPES, EIDOLON_BASE_FORMS, SAVES, SAVE_NAMES, SIZES, type Companion, type CreatureType } from '../../lib/model/types';
   import { CREATURE_PROGRESSION, KIND_LABELS, deriveCompanion } from '../../lib/rules/companions';
   import { COMPANION_LABELS, DRAKE_POWERS, DRAKE_SUBTYPES, EIDOLON_BASE_FORMS as BASE_FORMS, EIDOLON_SUBTYPES, PHANTOM_FOCI } from '../../lib/rules/companionTables';
   import type { DbCompanion } from '../../lib/db/types';
@@ -18,6 +18,10 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Stat from '../../lib/ui/Stat.svelte';
+  import AbilityTable from '../../lib/ui/AbilityTable.svelte';
+  import HpBox from '../../lib/ui/HpBox.svelte';
+  import DefenseStats from '../../lib/ui/DefenseStats.svelte';
+  import SaveToggles from '../../lib/ui/SaveToggles.svelte';
   import PortraitEditor from '../../lib/ui/PortraitEditor.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
@@ -38,7 +42,6 @@
     x.creatureType = t;
     x.goodSaves = [...CREATURE_PROGRESSION[t].goodSaves];
   }
-  const toggleSave = (s: Save) => (x.goodSaves = x.goodSaves.includes(s) ? x.goodSaves.filter((g) => g !== s) : [...x.goodSaves, s]);
   /** A phantom's emotional focus fixes its good saves. */
   function setFocus(f: string) {
     x.phantom.focus = f;
@@ -124,19 +127,7 @@
             <Select value={x.creatureType} onchange={setType} options={CREATURE_TYPES.map((t) => ({ value: t, label: CREATURE_PROGRESSION[t].label }))} aria-label="Creature type" />
           </Field>
           <div class="field">
-            <div class="flex h-7 items-center gap-0.5">
-              {#each SAVES as s (s)}
-                <button
-                  type="button"
-                  class="rounded-sm border px-1 text-xs uppercase"
-                  class:bg-ink={x.goodSaves.includes(s)}
-                  class:text-paper={x.goodSaves.includes(s)}
-                  aria-pressed={x.goodSaves.includes(s)}
-                  aria-label="Good {s} save"
-                  onclick={() => toggleSave(s)}>{s[0]}</button
-                >
-              {/each}
-            </div>
+            <div class="flex h-7 items-center gap-0.5"><SaveToggles bind:saves={x.goodSaves} /></div>
             <span class="field-label">Good saves</span>
           </div>
           {#if x.kind !== 'familiar'}
@@ -197,31 +188,7 @@
         <div class="flex flex-col gap-2">
           <div class="flex items-stretch gap-2">
           <PortraitEditor bind:portrait={x.portrait} name={x.name} class="h-[11.75rem] shrink-0 self-start rounded-sm border border-ink/30" />
-          <table class="ability-table compact w-full min-w-0 flex-1 text-center text-sm">
-            <thead>
-              <tr class="h-5">
-                <th></th>
-                <th class="text-center">Score</th>
-                <th class="text-center">Mod</th>
-                <th class="text-center">Temp</th>
-                <th class="text-center">Temp mod</th>
-                <th class="text-center" title="Temporary change to the score (damage, drain, enhancement…)">±</th>
-              </tr>
-            </thead>
-            <tbody>
-              {#each ABILITIES as a (a)}
-                {@const s = cd.abilities[a]}
-                <tr title={breakdown(s.breakdown)}>
-                  <th class="w-11 bg-head py-0.5 text-center text-xs text-head-ink opacity-100" style="print-color-adjust: exact">{a.toUpperCase()}</th>
-                  <td class="text-lg font-bold tabular-nums">{s.score}</td>
-                  <td class="text-lg font-bold tabular-nums">{fmt(s.mod)}</td>
-                  <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? s.tempScore : ''}</div></td>
-                  <td class="px-1"><div class="write-box h-6 leading-6 tabular-nums">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>
-                  <td class="px-1"><div class="h-6 print:rounded-sm print:border print:border-ink/30"><NumInput class="h-full w-full bg-field print:invisible" bind:value={x.abilities[a].temp} signed aria-label="{x.name || 'Companion'} {a} temporary change" /></div></td>
-                </tr>
-              {/each}
-            </tbody>
-          </table>
+          <AbilityTable abilities={cd.abilities} scores={x.abilities} owner={x.name || 'Companion'} compact />
           </div>
           {#if editing}
             <div class="grid grid-cols-[auto_repeat(6,minmax(0,1fr))] items-center gap-x-1 gap-y-0.5 text-xs print:hidden">
@@ -243,27 +210,7 @@
             </div>
           {/if}
 
-          <div class="grid grid-cols-[auto_1fr] items-center gap-2 rounded-sm border border-ink p-1.5">
-            <div class="flex min-w-14 flex-col items-center rounded-sm border border-ink/40 px-2 py-0.5" title={breakdown(cd.hp.max)}>
-              <span class="text-xl leading-tight font-bold tabular-nums">{cd.hp.max.total}</span>
-              <span class="field-label">Max HP</span>
-            </div>
-            <div class="flex flex-col items-center">
-              <input
-                class="h-9 w-full border-0 bg-transparent text-center text-3xl leading-none font-bold tabular-nums print:invisible"
-                class:text-accent={cd.hp.current <= cd.hp.max.total / 4}
-                inputmode="numeric"
-                aria-label="{x.name || 'Companion'} current hit points"
-                value={cd.hp.current}
-                onchange={(e) => {
-                  const v = Number(e.currentTarget.value);
-                  if (Number.isFinite(v)) x.hp.damage = cd.hp.max.total + x.hp.temp - v;
-                  e.currentTarget.value = String(cd.hp.current);
-                }}
-              />
-              <span class="field-label">Current HP</span>
-            </div>
-          </div>
+          <HpBox max={cd.hp.max} current={cd.hp.current} hp={x.hp} owner={x.name || 'Companion'} compact />
           <div class="flex flex-wrap items-center gap-1 print:hidden">
             <NumInput class="w-12" bind:value={amount} aria-label="Damage or healing amount" />
             <button type="button" class="btn" onclick={() => ((x.hp.damage += amount), (amount = 0))}>Damage</button>
@@ -271,14 +218,7 @@
             <label class="ml-auto flex items-center gap-1"><span class="field-label">Temp</span><NumInput class="w-12" bind:value={x.hp.temp} aria-label="Temporary hit points" /></label>
           </div>
 
-          <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-            <Stat label="AC" value={cd.ac.normal} signed={false} size="md" />
-            <Stat label="Touch" value={cd.ac.touch} signed={false} />
-            <Stat label="Flat-footed" value={cd.ac.flatFooted} signed={false} />
-          </div>
-          <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-            {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={cd.saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save`, subtitle: x.name || 'Companion' }} />{/each}
-          </div>
+          <DefenseStats ac={cd.ac} saves={cd.saves} subtitle={x.name || 'Companion'} />
           <div class="grid grid-cols-4 gap-1">
             <Stat label="BAB" value={cd.bab} />
             <Stat label="CMB" value={cd.cmb} roll={{ title: 'Combat maneuver', subtitle: x.name || 'Companion' }} />
