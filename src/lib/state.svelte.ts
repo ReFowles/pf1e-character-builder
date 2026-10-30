@@ -4,7 +4,7 @@ import { uid } from './model/id';
 import { normalize } from './model/normalize';
 import type { Character, SectionUi } from './model/types';
 import { derive } from './rules/derive';
-import { SECTIONS } from './sections';
+import { SECTIONS, TABS, TAB_DEFS, type Tab } from './sections';
 import { exportJson, parseImport, pickJsonFile } from './storage/io';
 import {
   StorageFullError,
@@ -16,9 +16,6 @@ import {
   setActiveId,
   type RosterEntry,
 } from './storage/local';
-
-export const TABS = ['core', 'character', 'companions', 'spells', 'mythic', 'notes', 'settings'] as const;
-export type Tab = (typeof TABS)[number];
 
 const tabFromHash = (): Tab => {
   const raw = location.hash.slice(1);
@@ -33,9 +30,7 @@ class AppState {
   char = $state<Character>(newCharacter());
   d = $derived(derive(this.char));
   /** Tabs this character uses; Spells, Companions and Mythic only once enabled in Settings. */
-  tabs = $derived(
-    TABS.filter((t) => (t !== 'mythic' || this.char.mythic.enabled) && (t !== 'spells' || this.char.spellsTab) && (t !== 'companions' || this.char.companionTab)),
-  );
+  tabs = $derived(TABS.filter((t) => TAB_DEFS[t].enabled?.(this.char) ?? true));
   tab = $state<Tab>(tabFromHash());
   toast = $state<string | null>(null);
 

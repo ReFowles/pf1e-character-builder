@@ -4,6 +4,7 @@
 // favored. A class can't be taken on both sides.
 import type { Character, ClassDef, LevelEntry, Save } from '../model/types';
 import { babFor, saveFor } from './tables';
+import { classLabel } from '../ui/options';
 
 type Rules = Pick<Character, 'gestalt' | 'classes'>;
 
@@ -34,5 +35,5 @@ export function gestaltConflicts(c: Rules & Pick<Character, 'levels'>): string[]
   if (!c.gestalt) return [];
   const main = new Set(c.levels.map((l) => l.classId));
   const side = new Set(c.levels.map((l) => l.gestaltClassId).filter(Boolean));
-  return c.classes.filter((k) => main.has(k.id) && side.has(k.id)).map((k) => k.name || 'Unnamed class');
+  return c.classes.filter((k) => main.has(k.id) && side.has(k.id)).map(classLabel);
 }

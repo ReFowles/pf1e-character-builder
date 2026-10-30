@@ -6,6 +6,7 @@
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select from '../../lib/ui/Select.svelte';
+  import { classOptions } from '../../lib/ui/options';
 
   const c = $derived(app.char);
 
@@ -37,7 +38,7 @@
     {/snippet}
     {#snippet row(a)}
       <td data-label="Class" class="w-24">
-        <Select bind:value={a.classId} options={[{ value: '', label: '—' }, ...c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed' }))]} aria-label="Class" />
+        <Select bind:value={a.classId} options={classOptions(c.classes, { value: '', label: '—' })} aria-label="Class" />
       </td>
       <td data-label="Lvl" class="w-10"><NumInput bind:value={a.level} aria-label="Class level gained" /></td>
       <td data-label="Ability" class="w-2/5"><input class="font-semibold" bind:value={a.name} aria-label="Ability name" /></td>

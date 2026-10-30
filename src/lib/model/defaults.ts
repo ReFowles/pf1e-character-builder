@@ -305,6 +305,12 @@ export function classKnowledges(classSkills: string[]): string[] {
   return classSkills.filter((s) => s.startsWith('knowledge:')).map((s) => s.slice('knowledge:'.length));
 }
 
+/** Section toggles for a new character: macros and notes stay off the printed sheet. */
+export const defaultUi = (): Character['ui'] => ({
+  sections: { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } },
+  mobileOrder: {},
+});
+
 export function newCharacter(): Character {
   const skills = defaultSkills();
   return {
@@ -391,6 +397,6 @@ export function newCharacter(): Character {
       spells: [],
       notes: '',
     },
-    ui: { sections: { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } }, mobileOrder: {} },
+    ui: defaultUi(),
   };
 }

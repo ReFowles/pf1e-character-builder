@@ -15,6 +15,7 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Combobox from '../../lib/ui/Combobox.svelte';
+  import { classOptions } from '../../lib/ui/options';
 
   // Base and unchained presets are built in; prestige (and any extra base) classes come from the bundled database on first open.
   let dbPresets = $state<ClassPreset[]>([]);
@@ -40,6 +41,8 @@
   let showLog = $state(false);
   let newLevelClass = $state('');
   let newGestaltClass = $state('');
+  /** Class the + Level button adds: the chosen one, else the favored class, else the first. */
+  const newLevelId = $derived(newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id);
   const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
 
   /** Add Knowledge rows for any knowledge class skills not already on the sheet. */
@@ -112,7 +115,7 @@
   }
 
   function addLevel() {
-    const id = newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id;
+    const id = newLevelId;
     if (!id) return;
     const l = make.level(id);
     if (c.gestalt && newGestaltClass !== id) l.gestaltClassId = newGestaltClass;
@@ -121,7 +124,7 @@
   }
   const onLevelClass = (l: LevelEntry, i: number) => (l.spellAdvance = levelSpellAdvance(c, i));
   /** Gestalt side choices: none, or any class other than the level's own. */
-  const gestaltOptions = (mainId: string) => [{ value: '', label: '—' }, ...c.classes.filter((k) => k.id !== mainId).map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))];
+  const gestaltOptions = (mainId: string | undefined) => classOptions(c.classes.filter((k) => k.id !== mainId), { value: '', label: '—' });
 
   const className = (id: string) => c.classes.find((k) => k.id === id)?.name || '—';
   const toggleFavored = (id: string) => (c.favoredClassIds = toggle(c.favoredClassIds, id));
@@ -270,8 +273,8 @@
     {#if editing || !c.classes.length}<button type="button" class="add-btn" onclick={addClass}>+ Class</button>{/if}
     {#if c.classes.length && (editing || !c.levels.length)}
       <Select
-        bind:value={() => newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id, (v) => (newLevelClass = v ?? '')}
-        options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))}
+        bind:value={() => newLevelId, (v) => (newLevelClass = v ?? '')}
+        options={classOptions(c.classes)}
         aria-label="Class for new level"
         class="text-sm"
       />
@@ -279,7 +282,7 @@
         <span class="text-sm opacity-60">//</span>
         <Select
           bind:value={newGestaltClass}
-          options={gestaltOptions(newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id)}
+          options={gestaltOptions(newLevelId)}
           aria-label="Gestalt class for new level"
           class="text-sm"
         />
@@ -312,7 +315,7 @@
             <tr>
               <td data-label="#" class="align-middle tabular-nums">{i + 1}</td>
               <td data-label="Class" class="w-28">
-                <Select class="w-full" bind:value={l.classId} onchange={() => onLevelClass(l, i)} options={c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed class' }))} aria-label="Class for level {i + 1}" />
+                <Select class="w-full" bind:value={l.classId} onchange={() => onLevelClass(l, i)} options={classOptions(c.classes)} aria-label="Class for level {i + 1}" />
               </td>
               {#if c.gestalt}
                 <td data-label="Gestalt" class="w-28">

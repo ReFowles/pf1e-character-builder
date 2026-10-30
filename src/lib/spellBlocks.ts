@@ -4,13 +4,14 @@ import { make } from './model/defaults';
 import type { Character, Spellcasting } from './model/types';
 import { PRESET_BY_ID } from './rules/classPresets';
 import { PRESET_SPELL_TABLE, SPELL_TABLE_BY_ID } from './rules/spellTables';
+import { classLabel } from './ui/options';
 
 export const spellSectionId = (b: Spellcasting) => `spells-${b.id}`;
 
 /** The class name, or the label for blocks without a class ("Racial"). */
 export function spellSectionTitle(c: Character, b: Spellcasting): string {
   const k = c.classes.find((x) => x.id === b.classId);
-  return `${k ? k.name || 'Unnamed' : b.label.trim() || 'Other'}`;
+  return k ? classLabel(k) : b.label.trim() || 'Other';
 }
 
 export function addSpellBlock(c: Character): Spellcasting {

@@ -5,7 +5,7 @@
   import { rollable } from '../../lib/dice/rollable';
   import { roll } from '../../lib/dice/rolls.svelte';
   import { spellDamageNotation, spellLevels } from '../../lib/dice/notation';
-  import { ABILITIES, type SpellEntry, type Spellcasting } from '../../lib/model/types';
+  import type { SpellEntry, Spellcasting } from '../../lib/model/types';
   import { SPELL_TABLES, spellRanges } from '../../lib/rules/spellTables';
   import { slug } from '../../lib/slug';
   import type { DbSpell } from '../../lib/db/types';
@@ -20,6 +20,7 @@
   import { removeSpellBlock, spellSectionId, spellSectionTitle } from '../../lib/spellBlocks';
   import { fmt } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import { ABILITY_OPTIONS, classOptions } from '../../lib/ui/options';
 
   interface Props {
     block: Spellcasting;
@@ -28,6 +29,7 @@
 
   const c = $derived(app.char);
   const d = $derived(app.d.spellcasting[b.id]);
+  const title = $derived(spellSectionTitle(c, b));
   const ranges = $derived(spellRanges(d?.casterLevel ?? 0));
   const manual = $derived(!b.table);
   let showAll = $state(false);
@@ -117,7 +119,7 @@
     const base = s.damageBonus;
     void roll({
       title: `${spellName(s)} damage`,
-      subtitle: spellSectionTitle(c, b),
+      subtitle: title,
       notation,
       parts: [
         ...(s.damageBonusPerLevel ? [{ source: `${fmt(s.damageBonusPerLevel)} × ${levels} caster level${levels === 1 ? '' : 's'}`, value: s.damageBonusPerLevel * levels }] : []),
@@ -222,7 +224,7 @@
         <div class="flex flex-wrap items-center gap-x-2 gap-y-0.5 text-sm font-bold whitespace-nowrap tabular-nums">
           {#if s.attack !== 'none'}
             <span class="inline-flex items-baseline gap-1">
-              <span use:rollable={{ title: `${spellName(s)} attack`, subtitle: spellSectionTitle(c, b), bonus: attackBonus(s), parts: attackParts(s) }}>{fmt(attackBonus(s))}</span>
+              <span use:rollable={{ title: `${spellName(s)} attack`, subtitle: title, bonus: attackBonus(s), parts: attackParts(s) }}>{fmt(attackBonus(s))}</span>
               <span class="text-[0.65rem] font-normal opacity-70">{touch(s)}</span>
             </span>
           {/if}
@@ -286,7 +288,7 @@
   </DynamicTable>
 {/snippet}
 
-<Section id={spellSectionId(b)} title={spellSectionTitle(c, b)} editable>
+<Section id={spellSectionId(b)} title={title} editable>
   {#snippet actions()}
     <button
       type="button"
@@ -328,14 +330,14 @@
       {#if editing}
         <div class="flex flex-wrap items-end gap-2 print:hidden">
           <Field label="Class" class="w-36">
-            <Select class="font-semibold" bind:value={b.classId} options={[{ value: null, label: 'Other' }, ...c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed' }))]} aria-label="Class" />
+            <Select class="font-semibold" bind:value={b.classId} options={classOptions(c.classes, { value: null, label: 'Other' })} aria-label="Class" />
           </Field>
           {#if !b.classId}<Field label="Label" class="w-32"><input bind:value={b.label} placeholder="e.g. Racial" aria-label="Label" /></Field>{/if}
           <Field label="Casting" class="w-32">
             <Select bind:value={b.kind} options={opts(['prepared', 'spontaneous'] as const)} aria-label="Casting" />
           </Field>
           <Field label="Ability" class="w-20">
-            <Select bind:value={b.ability} options={opts(ABILITIES, (a) => a.toUpperCase())} aria-label="Ability" />
+            <Select bind:value={b.ability} options={ABILITY_OPTIONS} aria-label="Ability" />
           </Field>
           <Field label="Spell table" class="w-56">
             <Select bind:value={b.table} options={[{ value: '', label: 'Manual' }, ...SPELL_TABLES.map((t) => ({ value: t.id, label: t.name }))]} aria-label="Spell table" />
@@ -347,7 +349,7 @@
         <div class="flex w-16 flex-col gap-0.5">
           {#if b.classId}
             <div class="stat" title="Class level{b.classId && app.d.castingLevels[b.classId] !== app.d.classLevels[b.classId] ? ` ${app.d.classLevels[b.classId]} + ${app.d.castingLevels[b.classId] - app.d.classLevels[b.classId]} prestige` : ''} + misc + caster level bonuses">
-              <div class="stat-value" use:rollable={{ title: 'Caster level check', subtitle: spellSectionTitle(c, b), bonus: d?.casterLevel ?? 0, parts: [{ source: 'Caster level', value: d?.casterLevel ?? 0 }] }}>{d?.casterLevel ?? 0}</div>
+              <div class="stat-value" use:rollable={{ title: 'Caster level check', subtitle: title, bonus: d?.casterLevel ?? 0, parts: [{ source: 'Caster level', value: d?.casterLevel ?? 0 }] }}>{d?.casterLevel ?? 0}</div>
               <div class="field-label">CL</div>
             </div>
           {:else}
@@ -361,14 +363,14 @@
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + {b.ability.toUpperCase()} modifier + misc + concentration bonuses">
-            <div class="stat-value" use:rollable={{ title: 'Concentration', subtitle: spellSectionTitle(c, b), bonus: d?.concentration ?? 0, parts: d ? partsOf(d.concentrationBreakdown) : [] }}>{fmt(d?.concentration ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Concentration', subtitle: title, bonus: d?.concentration ?? 0, parts: d ? partsOf(d.concentrationBreakdown) : [] }}>{fmt(d?.concentration ?? 0)}</div>
             <div class="field-label">Cnc</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.concentrationMisc} signed aria-label="Concentration misc" /></Field>
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + misc + spell penetration bonuses, vs spell resistance">
-            <div class="stat-value" use:rollable={{ title: 'Caster level check vs SR', subtitle: spellSectionTitle(c, b), bonus: d?.spellPen ?? 0, parts: d ? partsOf(d.spellPenBreakdown) : [] }}>{fmt(d?.spellPen ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Caster level check vs SR', subtitle: title, bonus: d?.spellPen ?? 0, parts: d ? partsOf(d.spellPenBreakdown) : [] }}>{fmt(d?.spellPen ?? 0)}</div>
             <div class="field-label">Pen</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.spellPenMisc} signed aria-label="Spell penetration misc" /></Field>

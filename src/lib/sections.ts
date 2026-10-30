@@ -1,6 +1,25 @@
-import type { Tab } from './state.svelte';
+import type { Character } from './model/types';
 
-export const TAB_LABELS: Record<Tab, string> = { core: 'Core', character: 'Character', companions: 'Companions', spells: 'Spells', mythic: 'Mythic', notes: 'Notes', settings: 'Settings' };
+export const TABS = ['core', 'character', 'companions', 'spells', 'mythic', 'notes', 'settings'] as const;
+export type Tab = (typeof TABS)[number];
+
+export interface TabDef {
+  label: string;
+  /** Shown only once the character turns it on (Settings); always when absent. */
+  enabled?: (c: Character) => boolean;
+  /** Printed only when this holds (a tab with nothing on it skips its page); always when absent. */
+  printable?: (c: Character) => boolean;
+}
+
+export const TAB_DEFS: Record<Tab, TabDef> = {
+  core: { label: 'Core' },
+  character: { label: 'Character' },
+  companions: { label: 'Companions', enabled: (c) => c.companionTab, printable: (c) => c.companions.length > 0 },
+  spells: { label: 'Spells', enabled: (c) => c.spellsTab, printable: (c) => c.spellcasting.length > 0 },
+  mythic: { label: 'Mythic', enabled: (c) => c.mythic.enabled },
+  notes: { label: 'Notes' },
+  settings: { label: 'Settings', printable: () => false },
+};
 
 export interface SectionDef {
   id: string;

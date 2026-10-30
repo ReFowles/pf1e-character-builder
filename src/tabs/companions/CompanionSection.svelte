@@ -17,6 +17,7 @@
   import Field from '../../lib/ui/Field.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import { ABILITY_OPTIONS, classOptions } from '../../lib/ui/options';
   import Stat from '../../lib/ui/Stat.svelte';
   import AbilityTable from '../../lib/ui/AbilityTable.svelte';
   import HpBox from '../../lib/ui/HpBox.svelte';
@@ -35,6 +36,7 @@
 
   const c = $derived(app.char);
   const cd = $derived(deriveCompanion(c, app.d, x));
+  const who = $derived(x.name || 'Companion');
   let amount = $state(0);
 
   /** Changing the creature type resets the good saves to that type's defaults. */
@@ -118,7 +120,7 @@
           <Field label="Master class" class="w-36">
             <Select
               bind:value={x.masterClassId}
-              options={[{ value: null, label: 'Character level' }, ...c.classes.map((k) => ({ value: k.id, label: k.name || 'Unnamed' }))]}
+              options={classOptions(c.classes, { value: null, label: 'Character level' })}
               aria-label="Master class"
             />
           </Field>
@@ -188,7 +190,7 @@
         <div class="flex flex-col gap-2">
           <div class="flex items-stretch gap-2">
           <PortraitEditor bind:portrait={x.portrait} name={x.name} class="h-[11.75rem] shrink-0 self-start rounded-sm border border-ink/30" />
-          <AbilityTable abilities={cd.abilities} scores={x.abilities} owner={x.name || 'Companion'} compact />
+          <AbilityTable abilities={cd.abilities} scores={x.abilities} owner={who} compact />
           </div>
           {#if editing}
             <div class="grid grid-cols-[auto_repeat(6,minmax(0,1fr))] items-center gap-x-1 gap-y-0.5 text-xs print:hidden">
@@ -204,13 +206,13 @@
             <div class="flex flex-wrap items-end gap-2 print:hidden">
               {#each cd.increaseLevels as lvl, i (lvl)}
                 <Field label="Level {lvl} +1" class="w-20">
-                  <Select bind:value={x.abilityIncreases[i]} options={[{ value: null, label: '—' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} aria-label="Ability increase at level {lvl}" />
+                  <Select bind:value={x.abilityIncreases[i]} options={[{ value: null, label: '—' }, ...ABILITY_OPTIONS]} aria-label="Ability increase at level {lvl}" />
                 </Field>
               {/each}
             </div>
           {/if}
 
-          <HpBox max={cd.hp.max} current={cd.hp.current} hp={x.hp} owner={x.name || 'Companion'} compact />
+          <HpBox max={cd.hp.max} current={cd.hp.current} hp={x.hp} owner={who} compact />
           <div class="flex flex-wrap items-center gap-1 print:hidden">
             <NumInput class="w-12" bind:value={amount} aria-label="Damage or healing amount" />
             <button type="button" class="btn" onclick={() => ((x.hp.damage += amount), (amount = 0))}>Damage</button>
@@ -218,12 +220,12 @@
             <label class="ml-auto flex items-center gap-1"><span class="field-label">Temp</span><NumInput class="w-12" bind:value={x.hp.temp} aria-label="Temporary hit points" /></label>
           </div>
 
-          <DefenseStats ac={cd.ac} saves={cd.saves} subtitle={x.name || 'Companion'} />
+          <DefenseStats ac={cd.ac} saves={cd.saves} subtitle={who} />
           <div class="grid grid-cols-4 gap-1">
             <Stat label="BAB" value={cd.bab} />
-            <Stat label="CMB" value={cd.cmb} roll={{ title: 'Combat maneuver', subtitle: x.name || 'Companion' }} />
+            <Stat label="CMB" value={cd.cmb} roll={{ title: 'Combat maneuver', subtitle: who }} />
             <Stat label="CMD" value={cd.cmd} signed={false} />
-            <Stat label="Init" value={cd.init} roll={{ title: 'Initiative', subtitle: x.name || 'Companion' }} />
+            <Stat label="Init" value={cd.init} roll={{ title: 'Initiative', subtitle: who }} />
           </div>
           {#if editing}
             <div class="grid grid-cols-4 gap-2 sm:grid-cols-7 print:hidden">
@@ -259,7 +261,7 @@
                 <td data-label="Fin" class="w-8 text-center align-middle"><input type="checkbox" bind:checked={a.finesse} aria-label="Weapon Finesse" /></td>
               {/if}
               <td data-label="Bonus" class="w-12 text-center align-middle font-bold tabular-nums" title={ad ? breakdown(ad.attack) : ''}>
-                {#if ad}<span use:rollable={{ title: `${a.name || 'Attack'} attack`, subtitle: x.name || 'Companion', bonus: ad.attack.total, parts: partsOf(ad.attack) }}>{fmt(ad.attack.total)}</span>{/if}
+                {#if ad}<span use:rollable={{ title: `${a.name || 'Attack'} attack`, subtitle: who, bonus: ad.attack.total, parts: partsOf(ad.attack) }}>{fmt(ad.attack.total)}</span>{/if}
               </td>
               <td data-label="Damage" class="w-28 align-middle">
                 <div class="flex items-center gap-0.5">
@@ -273,7 +275,7 @@
                       aria-label="Roll {a.name || 'attack'} damage"
                       onclick={() => {
                         const n = damageNotation(a.damage, ad.damageBonus);
-                        if (n) void roll({ title: `${a.name || 'Attack'} damage`, subtitle: x.name || 'Companion', notation: n, parts: ad.damageBonus ? [{ source: 'Damage bonus', value: ad.damageBonus }] : [] });
+                        if (n) void roll({ title: `${a.name || 'Attack'} damage`, subtitle: who, notation: n, parts: ad.damageBonus ? [{ source: 'Damage bonus', value: ad.damageBonus }] : [] });
                         else app.notify('Enter damage dice (e.g. 1d6) to roll.');
                       }}>⚄</button
                     >
@@ -318,7 +320,7 @@
               <td data-label="CS" class="cell-fit w-6 text-center align-middle"><input type="checkbox" bind:checked={sk.classSkill} aria-label="{sk.name} is a class skill" /></td>
               <td data-label="Skill" class="cell-grow align-middle"><input class="w-full" bind:value={sk.name} aria-label="Skill name" /></td>
               <td data-label="Abil" class="cell-fit w-16 text-center align-middle text-xs uppercase">
-                {#if editing}<Select class="h-6 w-full text-xs" bind:value={sk.ability} options={opts(ABILITIES, (a) => a.toUpperCase())} aria-label="{sk.name} ability" />{:else}<span class="opacity-60">{sk.ability}</span>{/if}
+                {#if editing}<Select class="h-6 w-full text-xs" bind:value={sk.ability} options={ABILITY_OPTIONS} aria-label="{sk.name} ability" />{:else}<span class="opacity-60">{sk.ability}</span>{/if}
               </td>
               <td data-label="Total" class="cell-fit w-12 text-center align-middle font-bold tabular-nums" title={sd ? breakdown(sd.total) : ''}>{sd ? fmt(sd.total.total) : ''}</td>
               <td data-label="Ranks" class="cell-fit w-14 align-middle">

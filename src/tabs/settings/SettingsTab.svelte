@@ -1,8 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { app, type Tab } from '../../lib/state.svelte';
+  import { app } from '../../lib/state.svelte';
   import { theme } from '../../lib/theme.svelte';
-  import { SECTION_BY_ID, SECTIONS, TAB_LABELS } from '../../lib/sections';
+  import { SECTION_BY_ID, SECTIONS, TAB_DEFS, type Tab } from '../../lib/sections';
+  import { defaultUi } from '../../lib/model/defaults';
   import { addSpellBlock, removeSpellBlock, spellSectionId, spellSectionTitle } from '../../lib/spellBlocks';
   import { addCompanion, companionSectionId, companionTitle, removeCompanion } from '../../lib/companions';
   import Section from '../../lib/ui/Section.svelte';
@@ -30,6 +31,23 @@
   const sheetTabs = $derived(app.tabs.filter((t) => t !== 'settings'));
 </script>
 
+<!-- Sections the character adds and removes (spellcasting blocks, companions): a list with a remove button each, and an add button. -->
+{#snippet sectionList(id: string, title: string, rows: { key: string; title: string }[], noun: string, addLabel: string, onremove: (key: string) => void, onadd: () => void)}
+  <Section {id} {title}>
+    <ul class="flex flex-col gap-1 text-sm">
+      {#each rows as r (r.key)}
+        <li class="flex items-center gap-1">
+          {r.title}
+          <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {r.title}" title="Remove {noun}" onclick={() => onremove(r.key)}>✕</button>
+        </li>
+      {:else}
+        <li class="italic opacity-60">None yet.</li>
+      {/each}
+    </ul>
+    <button type="button" class="add-btn self-start" onclick={onadd}>+ {addLabel}</button>
+  </Section>
+{/snippet}
+
 <!-- Device and character settings as cards; never printed (see App.svelte). -->
 <div class="grid items-start gap-3 sm:grid-cols-2">
   <div class="flex flex-col gap-3">
@@ -56,42 +74,14 @@
       Companions tab (familiars, animal companions, eidolons…)
     </label>
   </Section>
-  <Section id="settings-spells" title="Spellcasting sections">
-    <ul class="flex flex-col gap-1 text-sm">
-      {#each c.spellcasting as b (b.id)}
-        <li class="flex items-center gap-1">
-          {spellSectionTitle(c, b)}
-          <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {spellSectionTitle(c, b)}" title="Remove section" onclick={() => removeSpellBlock(c, b.id)}>✕</button>
-        </li>
-      {:else}
-        <li class="italic opacity-60">None yet.</li>
-      {/each}
-    </ul>
-    <button type="button" class="add-btn self-start" onclick={() => {
-        c.spellsTab = true;
-        addSpellBlock(c);
-      }}>+ Spellcasting section</button>
-  </Section>
-  <Section id="settings-companions" title="Companions">
-    <ul class="flex flex-col gap-1 text-sm">
-      {#each c.companions as x (x.id)}
-        <li class="flex items-center gap-1">
-          {companionTitle(x)}
-          <button type="button" class="icon-btn size-5 text-accent" aria-label="Remove {companionTitle(x)}" title="Remove companion" onclick={() => removeCompanion(c, x.id)}>✕</button>
-        </li>
-      {:else}
-        <li class="italic opacity-60">None yet.</li>
-      {/each}
-    </ul>
-    <button
-      type="button"
-      class="add-btn self-start"
-      onclick={() => {
-        c.companionTab = true;
-        addCompanion(c);
-      }}>+ Companion</button
-    >
-  </Section>
+  {@render sectionList('settings-spells', 'Spellcasting sections', c.spellcasting.map((b) => ({ key: b.id, title: spellSectionTitle(c, b) })), 'section', 'Spellcasting section', (id) => removeSpellBlock(c, id), () => {
+    c.spellsTab = true;
+    addSpellBlock(c);
+  })}
+  {@render sectionList('settings-companions', 'Companions', c.companions.map((x) => ({ key: x.id, title: companionTitle(x) })), 'companion', 'Companion', (id) => removeCompanion(c, id), () => {
+    c.companionTab = true;
+    addCompanion(c);
+  })}
   </div>
   <div class="flex flex-col gap-3">
   <Section id="settings-dice" title="Dice">
@@ -158,10 +148,7 @@
         type="button"
         class="head-btn px-2"
         title="Show every section on screen and in print again, in the default order"
-        onclick={() => {
-          c.ui.sections = { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } };
-          c.ui.mobileOrder = {};
-        }}>Reset layout</button
+        onclick={() => (c.ui = defaultUi())}>Reset layout</button
       >
     {/snippet}
     <p class="text-sm opacity-70">Hide a section on screen or leave it out of the printed sheet. Collapse sections with the chevron in their header. Drag ⠿ (or focus it and press ↑/↓) to change the order on phones and small screens.</p>
@@ -170,7 +157,7 @@
         <table class="w-full self-start text-sm">
           <thead>
             <tr>
-              <th>{TAB_LABELS[tab]} tab</th>
+              <th>{TAB_DEFS[tab].label} tab</th>
               <th class="w-14 text-center">Screen</th>
               <th class="w-14 text-center">Print</th>
             </tr>

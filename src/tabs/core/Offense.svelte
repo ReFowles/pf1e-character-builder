@@ -1,6 +1,5 @@
 <script lang="ts">
   import { make } from '../../lib/model/defaults';
-  import { ABILITIES } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import Stat from '../../lib/ui/Stat.svelte';
@@ -18,6 +17,7 @@
   import Iterative from '../../lib/ui/Iterative.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
+  import { ABILITY_OPTIONS } from '../../lib/ui/options';
   import { partsOf } from '../../lib/dice/roll';
   import { roll } from '../../lib/dice/rolls.svelte';
   import { critMultiplier, damageNotation, multiplyNotation, parseNotation, formatNotation } from '../../lib/dice/notation';
@@ -197,11 +197,11 @@
             <Select bind:value={w.kind} options={opts(['melee', 'ranged'] as const)} />
           </Field>
           <Field label="Atk abil">
-            <Select bind:value={w.attackAbility} options={opts(ABILITIES, (a) => a.toUpperCase())} />
+            <Select bind:value={w.attackAbility} options={ABILITY_OPTIONS} />
           </Field>
           <Field label="Atk misc"><NumInput bind:value={w.attackMisc} signed /></Field>
           <Field label="Dmg abil">
-            <Select bind:value={w.damageAbility} options={[{ value: 'none' as const, label: 'None' }, ...opts(ABILITIES, (a) => a.toUpperCase())]} />
+            <Select bind:value={w.damageAbility} options={[{ value: 'none' as const, label: 'None' }, ...ABILITY_OPTIONS]} />
           </Field>
           <Field label="× abil">
             <Select
