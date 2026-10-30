@@ -1,11 +1,12 @@
 <script lang="ts">
+  import { COIN_KINDS } from '../../lib/model/types';
+  import { round2 } from '../../lib/rules/math';
+  import { coinsToGp } from '../../lib/rules/tables';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
 
-  const COINS = ['pp', 'gp', 'sp', 'cp'] as const;
   const carried = $derived(app.char.currency.carried);
-  const gpValue = $derived(carried.pp * 10 + carried.gp + carried.sp / 10 + carried.cp / 100);
 </script>
 
 <Section id="currency">
@@ -15,7 +16,7 @@
     <p>1 pp = 10 gp, 1 gp = 10 sp, 1 sp = 10 cp.</p>
   {/snippet}
   <div class="grid grid-cols-[auto_1fr] items-center gap-x-2 gap-y-0.5">
-    {#each COINS as coin (coin)}
+    {#each COIN_KINDS as coin (coin)}
       <span class="field-label text-xs">{coin}</span>
       <!-- On paper the amount is blanked and the box stays, to be filled in by hand. -->
       <div class="rounded-sm print:border print:border-ink/40">
@@ -24,6 +25,6 @@
     {/each}
   </div>
   <div class="text-xs opacity-70 print:hidden" title="Coins weigh 50 to the pound. Stored coins live on the Character tab.">
-    ≈ {Math.round(gpValue * 100) / 100} gp on hand
+    ≈ {round2(coinsToGp(carried))} gp on hand
   </div>
 </Section>

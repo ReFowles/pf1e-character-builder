@@ -1,5 +1,6 @@
 import {
   ABILITIES,
+  SAVES,
   type Ability,
   type Character,
   type ClassDef,
@@ -8,12 +9,13 @@ import {
   type SkillEntry,
   type Size,
 } from '../model/types';
+import { slug } from '../slug';
 import { hasFeat } from './featBonuses';
 import { gestaltConflicts, levelClassIds, classProgression } from './gestalt';
-import { BonusSet, stack, type Bonus, type Total } from './bonuses';
+import { BonusSet, bonus, stack, type Total } from './bonuses';
 import { findCondition } from './conditions';
 import { tryEvaluate, type Vars } from './expr';
-import { abilityMod } from './math';
+import { abilityMod, round2 } from './math';
 import { SKILL_BY_KEY, isClassSkill, subtypeKey, type SkillDef } from './skills';
 import { SPELL_TABLE_BY_ID } from './spellTables';
 import { scaleDice } from './dice';
@@ -23,9 +25,12 @@ import { addFractions, formatFraction, parseFraction } from './fraction';
 import {
   COINS_PER_LB,
   LOAD_PENALTIES,
+  SAVE_ABILITY,
   SIZE_MODS,
   bonusSpells,
   carryingCapacity,
+  coinCount,
+  coinsToGp,
   scaleCapacity,
   shiftSize,
   iteratives,
@@ -67,7 +72,8 @@ export interface WeaponDerived {
   extraDamage: { notation: string; type: string; macro?: string }[];
 }
 
-export interface WeightDerived {
+/** Per-category sums for carried weight (lb) or owned value (gp). */
+export interface GearTotals {
   weapons: number;
   armor: number;
   items: number;
@@ -96,14 +102,6 @@ export interface SpellcastingDerived {
   spellPenBreakdown: Total;
 }
 
-export interface WealthDerived {
-  weapons: number;
-  armor: number;
-  items: number;
-  coins: number;
-  total: number;
-}
-
 export interface FcbSummary {
   hp: number;
   skill: number;
@@ -129,6 +127,8 @@ export interface Derived {
   cmdFlatFooted: number;
   init: Total;
   saves: Record<Save, Total>;
+  /** Class base saves before ability modifiers and bonuses (familiars borrow these). */
+  baseSaves: Record<Save, number>;
   ac: { normal: Total; touch: Total; flatFooted: Total };
   maxDex: number | null;
   acp: number;
@@ -139,8 +139,8 @@ export interface Derived {
   skillRanks: { spent: number; available: number };
   classSkills: Set<string>;
   weapons: Record<string, WeaponDerived>;
-  weight: WeightDerived;
-  wealth: WealthDerived;
+  weight: GearTotals;
+  wealth: GearTotals;
   fcb: FcbSummary;
   /** Level-up ability increases: one every four levels vs the +1s entered. */
   abilityIncreases: { expected: number; used: number };
@@ -160,15 +160,6 @@ export interface Derived {
   conditionNotes: string[];
 }
 
-export const slug = (s: string) =>
-  s
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-|-$/g, '');
-
-const SAVE_ABILITY: Record<Save, Ability> = { fort: 'con', ref: 'dex', will: 'wis' };
-
 /** CMD counts these AC bonus types (plus penalties), but not armor/shield/natural/size. */
 const CMD_AC_TYPES = new Set([
   'circumstance',
@@ -180,15 +171,6 @@ const CMD_AC_TYPES = new Set([
   'profane',
   'sacred',
 ]);
-
-const base = (key: string, value: number, source: string): Bonus => ({
-  key,
-  value,
-  type: 'untyped',
-  source,
-});
-
-const sumTotal = (parts: Bonus[]): Total => stack(parts);
 
 export function skillLabel(def: SkillDef, entry: SkillEntry): string {
   return def.multi ? `${def.name}${entry.subtype ? ` (${entry.subtype})` : ''}` : def.name;
@@ -283,7 +265,7 @@ export function derive(c: Character): Derived {
   // --- Abilities (pre-macro, so macro formulas can reference them) --------
   const scoreOf = (a: Ability, withTemp: boolean): Total => {
     const parts = set.list([`ability.${a}`], (b) => withTemp || !b.temp);
-    return sumTotal([base(`ability.${a}`, c.abilities[a].base, 'Base'), ...parts]);
+    return stack([bonus(`ability.${a}`, c.abilities[a].base, 'Base'), ...parts]);
   };
 
   const classVars: Vars = {};
@@ -371,7 +353,7 @@ export function derive(c: Character): Derived {
 
   // --- Encumbrance --------------------------------------------------------
   const carried = carriedItems(c.items);
-  const weight: WeightDerived = {
+  const weight: GearTotals = {
     weapons: c.weapons.reduce((s, w) => s + w.weight, 0),
     armor: c.armor.reduce((s, a) => s + a.weight, 0),
     items: carried.reduce((s, i) => s + i.weight * i.quantity, 0),
@@ -381,13 +363,11 @@ export function derive(c: Character): Derived {
   weight.total = round2(
     weight.weapons + weight.armor + weight.items + weight.coins,
   );
-  const coinsGp = (k: { pp: number; gp: number; sp: number; cp: number }) =>
-    k.pp * 10 + k.gp + k.sp / 10 + k.cp / 100;
-  const wealth: WealthDerived = {
+  const wealth: GearTotals = {
     weapons: c.weapons.reduce((s, w) => s + w.price, 0),
     armor: c.armor.reduce((s, a) => s + a.price, 0),
     items: c.items.reduce((s, i) => s + i.price * i.quantity, 0),
-    coins: coinsGp(c.currency.carried) + c.currency.locations.reduce((s, l) => s + coinsGp(l.coins), 0),
+    coins: coinsToGp(c.currency.carried) + c.currency.locations.reduce((s, l) => s + coinsToGp(l.coins), 0),
     total: 0,
   };
   wealth.total = round2(wealth.weapons + wealth.armor + wealth.items + wealth.coins);
@@ -416,56 +396,49 @@ export function derive(c: Character): Derived {
 
   // --- Defense ------------------------------------------------------------
   const dexToAc = maxDex === null ? mods.dex : Math.min(mods.dex, maxDex);
-  const dexPart = base('ac', loseDex ? Math.min(dexToAc, 0) : dexToAc, 'Dex');
+  const dexPart = bonus('ac', loseDex ? Math.min(dexToAc, 0) : dexToAc, 'Dex');
   const acBonuses = set.list(['ac']).filter((b) => !(loseDex && b.type === 'dodge' && b.value > 0));
   const touchTypes = new Set(['armor', 'shield', 'natural']);
+  const ten = bonus('ac', 10, 'Base');
   const ac = {
-    normal: sumTotal([base('ac', 10, 'Base'), dexPart, ...acBonuses]),
-    touch: sumTotal([
-      base('ac', 10, 'Base'),
-      dexPart,
-      ...acBonuses.filter((b) => !touchTypes.has(b.type)),
-    ]),
-    flatFooted: sumTotal([
-      base('ac', 10, 'Base'),
-      base('ac', Math.min(dexPart.value, 0), 'Dex'),
-      ...acBonuses.filter((b) => !(b.type === 'dodge' && b.value > 0)),
-    ]),
+    normal: stack([ten, dexPart, ...acBonuses]),
+    touch: stack([ten, dexPart, ...acBonuses.filter((b) => !touchTypes.has(b.type))]),
+    flatFooted: stack([ten, bonus('ac', Math.min(dexPart.value, 0), 'Dex'), ...acBonuses.filter((b) => !(b.type === 'dodge' && b.value > 0))]),
   };
 
   const saves = {} as Record<Save, Total>;
-  for (const s of ['fort', 'ref', 'will'] as Save[]) {
+  for (const s of SAVES) {
     const classBase = progression.saves[s];
-    saves[s] = sumTotal([
-      base(`save.${s}`, classBase, 'Class'),
-      base(`save.${s}`, mods[SAVE_ABILITY[s]], SAVE_ABILITY[s].toUpperCase()),
+    saves[s] = stack([
+      bonus(`save.${s}`, classBase, 'Class'),
+      bonus(`save.${s}`, mods[SAVE_ABILITY[s]], SAVE_ABILITY[s].toUpperCase()),
       ...set.list(['save', `save.${s}`]),
     ]);
   }
 
   // --- Offense ------------------------------------------------------------
-  const babPart = base('attack', bab, 'BAB');
+  const babPart = bonus('attack', bab, 'BAB');
   const attack = {
-    melee: sumTotal([babPart, base('attack', mods.str, 'STR'), ...set.list(['attack', 'attack.melee'])]),
-    ranged: sumTotal([
+    melee: stack([babPart, bonus('attack', mods.str, 'STR'), ...set.list(['attack', 'attack.melee'])]),
+    ranged: stack([
       babPart,
-      base('attack', mods.dex, 'DEX'),
+      bonus('attack', mods.dex, 'DEX'),
       ...set.list(['attack', 'attack.ranged']),
     ]),
   };
   const smallSize = ['fine', 'diminutive', 'tiny'].includes(effectiveSize);
   const cmbAbility: Ability = smallSize ? 'dex' : 'str';
-  const cmb = sumTotal([
-    base('cmb', bab, 'BAB'),
-    base('cmb', mods[cmbAbility], cmbAbility.toUpperCase()),
+  const cmb = stack([
+    bonus('cmb', bab, 'BAB'),
+    bonus('cmb', mods[cmbAbility], cmbAbility.toUpperCase()),
     ...set.list(['cmb']),
   ]);
   const cmdAcParts = acBonuses.filter((b) => b.value < 0 || CMD_AC_TYPES.has(b.type));
-  const cmd = sumTotal([
-    base('cmd', 10, 'Base'),
-    base('cmd', bab, 'BAB'),
-    base('cmd', mods.str, 'STR'),
-    base('cmd', loseDex ? Math.min(mods.dex, 0) : mods.dex, 'DEX'),
+  const cmd = stack([
+    bonus('cmd', 10, 'Base'),
+    bonus('cmd', bab, 'BAB'),
+    bonus('cmd', mods.str, 'STR'),
+    bonus('cmd', loseDex ? Math.min(mods.dex, 0) : mods.dex, 'DEX'),
     ...set.list(['cmd']),
     ...cmdAcParts.filter((b) => b.type !== 'size'),
   ]);
@@ -474,24 +447,24 @@ export function derive(c: Character): Derived {
     Math.max(loseDex ? 0 : mods.dex, 0) -
     cmd.parts.filter((p) => p.applied && p.type === 'dodge' && p.value > 0).reduce((s, p) => s + p.value, 0);
 
-  const init = sumTotal([base('init', mods.dex, 'DEX'), ...set.list(['init'])]);
+  const init = stack([bonus('init', mods.dex, 'DEX'), ...set.list(['init'])]);
 
   const weapons: Record<string, WeaponDerived> = {};
   for (const w of c.weapons) {
     const keys = ['attack', `attack.${w.kind}`];
-    const attackBreakdown = sumTotal([
+    const attackBreakdown = stack([
       babPart,
-      base('attack', mods[w.attackAbility], w.attackAbility.toUpperCase()),
+      bonus('attack', mods[w.attackAbility], w.attackAbility.toUpperCase()),
       { key: 'attack', value: w.enhancement, type: 'enhancement', source: 'Enhancement' },
-      base('attack', w.attackMisc, 'Misc'),
+      bonus('attack', w.attackMisc, 'Misc'),
       ...set.list(keys),
     ]);
     const offset = attackBreakdown.total - bab;
     const dmgMod = w.damageAbility === 'none' ? 0 : Math.floor(mods[w.damageAbility] * w.damageMultiplier);
-    const damageBreakdown = sumTotal([
-      base('damage', dmgMod, w.damageAbility === 'none' ? 'No ability' : `${w.damageAbility.toUpperCase()}${w.damageMultiplier !== 1 ? ` (×${w.damageMultiplier})` : ''}`),
+    const damageBreakdown = stack([
+      bonus('damage', dmgMod, w.damageAbility === 'none' ? 'No ability' : `${w.damageAbility.toUpperCase()}${w.damageMultiplier !== 1 ? ` (×${w.damageMultiplier})` : ''}`),
       { key: 'damage', value: w.enhancement, type: 'enhancement', source: 'Enhancement' },
-      base('damage', w.damageMisc, 'Misc'),
+      bonus('damage', w.damageMisc, 'Misc'),
       ...set.list(['damage', `damage.${w.kind}`]),
     ]);
     const damageBonus = damageBreakdown.total;
@@ -520,9 +493,9 @@ export function derive(c: Character): Derived {
     const roll = i === 0 && c.maxHpFirstLevel ? hd : l.hpRoll;
     return Math.max(1, roll + mods.con);
   });
-  const hpMax = sumTotal([
-    base('hp.max', perLevel.reduce((s, n) => s + n, 0), 'Hit dice + CON'),
-    base('hp.max', fcbHp, 'Favored class'),
+  const hpMax = stack([
+    bonus('hp.max', perLevel.reduce((s, n) => s + n, 0), 'Hit dice + CON'),
+    bonus('hp.max', fcbHp, 'Favored class'),
     ...set.list(['hp.max']),
   ]);
   const hp = {
@@ -542,12 +515,12 @@ export function derive(c: Character): Derived {
     const cs = e.classSkill ?? isClassSkill(classSkills, e.skill, e.subtype);
     const keys = ['skills', `skill.${e.skill}`];
     if (e.subtype) keys.push(`skill.${e.skill}.${subtypeKey(e.subtype)}`);
-    const breakdown = sumTotal([
-      base('skill', e.ranks, 'Ranks'),
-      base('skill', mods[def.ability], def.ability.toUpperCase()),
-      base('skill', cs && e.ranks > 0 ? 3 : 0, 'Class skill'),
-      base('skill', def.acp ? acp : 0, 'Armor check'),
-      base('skill', e.misc, 'Misc'),
+    const breakdown = stack([
+      bonus('skill', e.ranks, 'Ranks'),
+      bonus('skill', mods[def.ability], def.ability.toUpperCase()),
+      bonus('skill', cs && e.ranks > 0 ? 3 : 0, 'Class skill'),
+      bonus('skill', def.acp ? acp : 0, 'Armor check'),
+      bonus('skill', e.misc, 'Misc'),
       ...set.list(keys),
     ]);
     skills[e.id] = {
@@ -582,27 +555,27 @@ export function derive(c: Character): Derived {
       : b.slots.map((s, lvl) => (s === null && (b.slotsMisc[lvl] ?? 0) > 0 ? 0 : s));
     const known = (table ? tableRow(table.known) : undefined) ?? b.known;
     const misc = b.slotsMisc;
-    const bonus = baseSlots.map((s, lvl) => (s === null ? 0 : bonusSpells(mod, lvl)));
+    const bonusSlots = baseSlots.map((s, lvl) => (s === null ? 0 : bonusSpells(mod, lvl)));
     const domain = baseSlots.map((s, lvl) => (b.domainSlot && lvl > 0 && s !== null ? 1 : 0));
     const preparedAt = (lvl: number, isDomain: boolean) =>
       b.spells.filter((sp) => sp.level === lvl && !!sp.domain === isDomain).reduce((s, sp) => s + sp.prepared, 0);
-    const concentrationBreakdown = sumTotal([
-      base('concentration', casterLevel, 'Caster level'),
-      base('concentration', mod, b.ability.toUpperCase()),
-      base('concentration', b.concentrationMisc, 'Misc'),
+    const concentrationBreakdown = stack([
+      bonus('concentration', casterLevel, 'Caster level'),
+      bonus('concentration', mod, b.ability.toUpperCase()),
+      bonus('concentration', b.concentrationMisc, 'Misc'),
       ...set.list(['concentration']),
     ]);
-    const spellPenBreakdown = sumTotal([base('spell.pen', casterLevel, 'Caster level'), base('spell.pen', b.spellPenMisc, 'Misc'), ...set.list(['spell.pen'])]);
+    const spellPenBreakdown = stack([bonus('spell.pen', casterLevel, 'Caster level'), bonus('spell.pen', b.spellPenMisc, 'Misc'), ...set.list(['spell.pen'])]);
     spellcasting[b.id] = {
       casterLevel,
       abilityMod: mod,
       concentration: concentrationBreakdown.total,
       concentrationBreakdown,
       dcs: baseSlots.map((_, lvl) => 10 + lvl + mod + dcBonus),
-      slots: baseSlots.map((s, lvl) => (s === null ? null : s + bonus[lvl] + (misc[lvl] ?? 0))),
+      slots: baseSlots.map((s, lvl) => (s === null ? null : s + bonusSlots[lvl] + (misc[lvl] ?? 0))),
       base: baseSlots,
       known,
-      bonus,
+      bonus: bonusSlots,
       domain,
       prepared: baseSlots.map((_, lvl) => preparedAt(lvl, false)),
       domainPrepared: baseSlots.map((_, lvl) => preparedAt(lvl, true)),
@@ -635,6 +608,7 @@ export function derive(c: Character): Derived {
     cmdFlatFooted,
     init,
     saves,
+    baseSaves: progression.saves,
     ac,
     maxDex,
     acp,
@@ -665,8 +639,6 @@ export function derive(c: Character): Derived {
   };
 }
 
-const round2 = (n: number) => Math.round(n * 100) / 100;
-
 /** Items whose weight counts: not inside a weightless or uncarried container. */
 export function carriedItems(items: Item[]): Item[] {
   const byId = new Map(items.map((i) => [i.id, i]));
@@ -685,10 +657,6 @@ export function carriedItems(items: Item[]): Item[] {
 }
 
 function coinWeight(c: Character): number {
-  const count = (k: { pp: number; gp: number; sp: number; cp: number }) =>
-    k.pp + k.gp + k.sp + k.cp;
-  const coins =
-    count(c.currency.carried) +
-    c.currency.locations.filter((l) => !l.weightless).reduce((s, l) => s + count(l.coins), 0);
+  const coins = coinCount(c.currency.carried) + c.currency.locations.filter((l) => !l.weightless).reduce((s, l) => s + coinCount(l.coins), 0);
   return round2(coins / COINS_PER_LB);
 }

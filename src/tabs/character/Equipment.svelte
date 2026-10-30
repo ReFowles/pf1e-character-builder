@@ -1,7 +1,8 @@
 <script lang="ts">
   import { make } from '../../lib/model/defaults';
   import { parseGp } from '../../lib/model/migrate';
-  import { MAGIC_SLOTS, type Item, type MagicSlot } from '../../lib/model/types';
+  import { COIN_KINDS, MAGIC_SLOTS, type Item, type MagicSlot } from '../../lib/model/types';
+  import { round2 } from '../../lib/rules/math';
   import { carriedItems } from '../../lib/rules/derive';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -14,7 +15,6 @@
 
   const c = $derived(app.char);
   const d = $derived(app.d);
-  const COINS = ['pp', 'gp', 'sp', 'cp'] as const;
 
   // The database picker finds gear, or builds potions, scrolls and wands from the spell list.
   let pickerMode = $state<'gear' | ConsumableKind>('gear');
@@ -146,8 +146,8 @@
               </td>
               {#if editing}<td data-label="Wt ea." class="w-12 align-middle"><NumInput bind:value={it.weight} aria-label="Weight each" /></td>{/if}
               <td data-label={editing ? 'Total' : 'Wt'} class="w-14 text-center align-middle text-xs whitespace-nowrap tabular-nums">
-                {Math.round(it.weight * it.quantity * 100) / 100}
-                {#if it.isContainer}<div class="opacity-60" title="Contents">+{Math.round(contentsWeight(it.id) * 100) / 100}</div>{/if}
+                {round2(it.weight * it.quantity)}
+                {#if it.isContainer}<div class="opacity-60" title="Contents">+{round2(contentsWeight(it.id))}</div>{/if}
               </td>
               <td data-label="gp ea." class="w-16 align-middle"><NumInput bind:value={it.price} aria-label="Value each in gp" /></td>
               {#if anyCharges || editing}<td data-label="Ch." class="w-12 align-middle"><NumInput bind:value={it.charges} aria-label="{it.name || 'Item'} charges" /></td>{/if}
@@ -193,7 +193,7 @@
         {#each tree as { item: it, depth } (it.id)}
           <li class="flex break-inside-avoid justify-between border-b border-ink/15 py-0.5" style:padding-left="{depth}rem" class:opacity-60={!counted.has(it.id)}>
             <span>{it.equipped ? '✓ ' : ''}{it.quantity !== 1 ? `${it.quantity}× ` : ''}{it.name}{it.charges ? ` (${it.charges} ch.)` : ''}</span>
-            <span class="tabular-nums">{Math.round(it.weight * it.quantity * 100) / 100} lb</span>
+            <span class="tabular-nums">{round2(it.weight * it.quantity)} lb</span>
           </li>
         {/each}
         {#each { length: 4 }, i (i)}<li class="h-5 break-inside-avoid border-b border-ink/25"></li>{/each}
@@ -267,19 +267,19 @@
             <thead>
               <tr>
                 <th>Where</th>
-                {#each COINS as coin (coin)}<th class="text-center">{coin}</th>{/each}
+                {#each COIN_KINDS as coin (coin)}<th class="text-center">{coin}</th>{/each}
                 {#if editing}<th title="Weightless (bank, bag of holding)" class="print:hidden">∅wt</th><th class="print:hidden"></th>{/if}
               </tr>
             </thead>
             <tbody>
               <tr>
                 <td class="text-xs font-semibold">Carried</td>
-                {#each COINS as coin (coin)}<td><NumInput bind:value={c.currency.carried[coin]} aria-label="{coin} carried" /></td>{/each}
+                {#each COIN_KINDS as coin (coin)}<td><NumInput bind:value={c.currency.carried[coin]} aria-label="{coin} carried" /></td>{/each}
               </tr>
               {#each c.currency.locations as loc, i (loc.id)}
                 <tr>
                   <td><input class="w-full text-xs" bind:value={loc.name} placeholder="Location" aria-label="Location" /></td>
-                  {#each COINS as coin (coin)}<td><NumInput bind:value={loc.coins[coin]} aria-label="{coin} at {loc.name}" /></td>{/each}
+                  {#each COIN_KINDS as coin (coin)}<td><NumInput bind:value={loc.coins[coin]} aria-label="{coin} at {loc.name}" /></td>{/each}
                   {#if editing}
                     <td class="text-center print:hidden"><input type="checkbox" bind:checked={loc.weightless} aria-label="Weightless" /></td>
                     <td class="print:hidden"><button type="button" class="icon-btn text-accent" aria-label="Remove location" onclick={() => c.currency.locations.splice(i, 1)}>✕</button></td>

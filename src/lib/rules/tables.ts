@@ -1,4 +1,4 @@
-import { SIZES, type BabProgression, type Size, type XpTrack } from '../model/types';
+import { SIZES, type Ability, type BabProgression, type Coins, type Save, type Size, type XpTrack } from '../model/types';
 
 /** XP required to reach each level (index 0 = level 1). Core Rulebook table 3-1. */
 export const XP_TABLE: Record<Exclude<XpTrack, 'milestone'>, number[]> = {
@@ -125,6 +125,9 @@ export function babFor(progression: BabProgression, level: number): number {
   return Math.floor(level / 2);
 }
 
+/** Ability modifier each save adds. */
+export const SAVE_ABILITY: Record<Save, Ability> = { fort: 'con', ref: 'dex', will: 'wis' };
+
 export function saveFor(good: boolean, level: number): number {
   if (level <= 0) return 0;
   return good ? 2 + Math.floor(level / 2) : Math.floor(level / 3);
@@ -153,3 +156,8 @@ export function iterativeText(bab: number, total: number): string {
 
 /** Coins weigh 50 to the pound. */
 export const COINS_PER_LB = 50;
+
+/** Value of a purse in gp (1 pp = 10 gp, 1 gp = 10 sp = 100 cp). */
+export const coinsToGp = (k: Coins) => k.pp * 10 + k.gp + k.sp / 10 + k.cp / 100;
+
+export const coinCount = (k: Coins) => k.pp + k.gp + k.sp + k.cp;

@@ -19,6 +19,9 @@ export interface Total {
   parts: Part[];
 }
 
+/** A bonus row; untyped unless a type is given. */
+export const bonus = (key: string, value: number, source: string, type: BonusType = 'untyped'): Bonus => ({ key, value, type, source });
+
 /** Bonus types that stack with themselves. Penalties (negative values) always stack. */
 export const STACKING_TYPES = new Set<BonusType>(['untyped', 'dodge', 'circumstance']);
 

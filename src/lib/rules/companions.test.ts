@@ -51,6 +51,20 @@ describe('companions', () => {
     expect(f.special).toContain('Speak with master');
     expect(f.skillRanks.available).toBeNull();
   });
+
+  it("borrows the master's gestalt base saves", () => {
+    const { c, k } = withClass('Wizard', 5, { hd: 6, bab: '1/2', goodSaves: ['will'] });
+    const ftr = { ...make.classDef(), name: 'Fighter', hd: 10, bab: 'full' as const, goodSaves: ['fort' as const] };
+    c.classes.push(ftr);
+    c.gestalt = true;
+    for (const l of c.levels) l.gestaltClassId = ftr.id;
+    const cat = { ...make.companion('familiar'), masterClassId: k.id };
+    const f = deriveCompanion(c, derive(c), cat);
+    // Fighter 5 gives Fort +4 (own Fort at 5 HD is +4 too), Wizard 5 gives Will +4.
+    expect([f.saves.fort.total, f.saves.will.total]).toEqual([4, 4]);
+    expect(f.saves.fort.parts[0].source).toBe('Base save');
+    expect(f.saves.will.parts[0].source).toBe("Master's base save");
+  });
 });
 
 describe('companion temporary ability changes', () => {

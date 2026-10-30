@@ -2,6 +2,8 @@ import { uid } from './id';
 import { splitCrit } from './crit';
 import { isClassSkill } from '../rules/skills';
 import { RETIRED_MACRO_FEATS, bonusRowsFor, featKey } from '../rules/featBonuses';
+import { round2 } from '../rules/math';
+import { coinsToGp } from '../rules/tables';
 
 type Plain = Record<string, any>;
 
@@ -13,8 +15,8 @@ export function parseGp(raw: unknown): number {
   if (typeof raw !== 'string') return 0;
   const m = raw.replace(/,/g, '').match(/(\d+(?:\.\d+)?)\s*(pp|gp|sp|cp)?/i);
   if (!m) return 0;
-  const rate = { pp: 10, gp: 1, sp: 0.1, cp: 0.01 }[(m[2] ?? 'gp').toLowerCase() as 'gp'];
-  return Math.round(Number(m[1]) * rate * 100) / 100;
+  const unit = (m[2] ?? 'gp').toLowerCase() as 'pp' | 'gp' | 'sp' | 'cp';
+  return round2(coinsToGp({ pp: 0, gp: 0, sp: 0, cp: 0, [unit]: Number(m[1]) }));
 }
 
 /** "+ 1/3 Damage to Channel" -> { amount: '1/3', label: 'Damage to Channel' }. */

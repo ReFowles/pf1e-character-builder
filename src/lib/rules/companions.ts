@@ -2,12 +2,12 @@
 // their progression tables (rules/companionTables.ts) from the master's class
 // level; familiars borrow from the master; other creatures use hit dice with
 // creature-type math.
-import { ABILITIES, type Ability, type Character, type Companion, type CreatureType, type Save, type Size } from '../model/types';
-import { stack, type Bonus, type Total } from './bonuses';
+import { ABILITIES, SAVES, type Ability, type Character, type Companion, type CreatureType, type Save, type Size } from '../model/types';
+import { bonus, stack, type Total } from './bonuses';
 import type { Derived } from './derive';
 import { abilityMod } from './math';
 import { SKILLS } from './skills';
-import { SIZE_MODS, babFor, saveFor, shiftSize } from './tables';
+import { SAVE_ABILITY, SIZE_MODS, babFor, saveFor, shiftSize } from './tables';
 import {
   ANIMAL_TABLE,
   DRAKE_POWER_LEVELS,
@@ -121,14 +121,7 @@ export interface CompanionDerived {
   increaseLevels: number[];
 }
 
-const part = (key: string, value: number, source: string, type: Bonus['type'] = 'untyped'): Bonus => ({ key, value, type, source });
-
 const clampLevel = (lvl: number) => Math.max(0, Math.min(20, lvl));
-
-/** The master's base saves (class progressions only, no ability modifiers). */
-function masterBaseSave(c: Character, d: Derived, s: Save): number {
-  return c.classes.reduce((sum, k) => sum + saveFor(k.goodSaves.includes(s), d.classLevels[k.id] ?? 0), 0);
-}
 
 /** Master's ranks in a skill with the same name (familiars use the better of the two). */
 function masterRanks(c: Character, name: string): number {
@@ -163,25 +156,25 @@ export function deriveCompanion(c: Character, d: Derived, comp: Companion): Comp
   const abilities = {} as CompanionDerived['abilities'];
   for (const a of ABILITIES) {
     const s = comp.abilities[a];
-    const parts = [part(a, s.base, 'Base'), part(a, s.misc, 'Misc')];
-    if ((a === 'str' || a === 'dex') && strDex) parts.push(part(a, strDex, 'Companion bonus'));
-    if ((a === 'dex' || a === 'cha') && dexCha) parts.push(part(a, dexCha, 'Phantom bonus'));
+    const parts = [bonus(a, s.base, 'Base'), bonus(a, s.misc, 'Misc')];
+    if ((a === 'str' || a === 'dex') && strDex) parts.push(bonus(a, strDex, 'Companion bonus'));
+    if ((a === 'dex' || a === 'cha') && dexCha) parts.push(bonus(a, dexCha, 'Phantom bonus'));
     if (growth) {
       const per = a === 'str' ? 4 : a === 'dex' ? -2 : a === 'con' ? 2 : 0;
-      if (per) parts.push(part(a, per * growth, `Growth ×${growth}`));
+      if (per) parts.push(bonus(a, per * growth, `Growth ×${growth}`));
     }
     const delta = focus?.abilities?.[a];
-    if (delta) parts.push(part(a, delta, `${comp.phantom.focus} focus`));
+    if (delta) parts.push(bonus(a, delta, `${comp.phantom.focus} focus`));
     table?.increaseLevels.forEach((lvl, i) => {
-      if (level >= lvl && comp.abilityIncreases[i] === a) parts.push(part(a, 1, `Level ${lvl} increase`));
+      if (level >= lvl && comp.abilityIncreases[i] === a) parts.push(bonus(a, 1, `Level ${lvl} increase`));
     });
     if (familiar && a === 'int') {
       const floor = 5 + Math.ceil(Math.max(1, level) / 2);
       const have = stack(parts).total;
-      if (have < floor) parts.push(part(a, floor - have, `Familiar Int ${floor}`));
+      if (have < floor) parts.push(bonus(a, floor - have, `Familiar Int ${floor}`));
     }
     const perm = stack(parts);
-    const temp = stack([...parts, part(a, s.temp, 'Temporary')]);
+    const temp = stack([...parts, bonus(a, s.temp, 'Temporary')]);
     abilities[a] = {
       score: perm.total,
       mod: abilityMod(perm.total),
@@ -198,9 +191,9 @@ export function deriveCompanion(c: Character, d: Derived, comp: Companion): Comp
 
   // Hit points: average per hit die + Con, or half the master's for familiars.
   const hpParts = familiar
-    ? [part('hp', Math.floor(d.hp.max.total / 2), "Half master's HP")]
-    : [part('hp', Math.floor(hd * (type.hd / 2 + 0.5)), `${hd}d${type.hd} (average)`), part('hp', mod('con') * hd, 'CON')];
-  hpParts.push(part('hp', comp.hpMisc, 'Misc'));
+    ? [bonus('hp', Math.floor(d.hp.max.total / 2), "Half master's HP")]
+    : [bonus('hp', Math.floor(hd * (type.hd / 2 + 0.5)), `${hd}d${type.hd} (average)`), bonus('hp', mod('con') * hd, 'CON')];
+  hpParts.push(bonus('hp', comp.hpMisc, 'Misc'));
   const hpMax = stack(hpParts);
 
   // Armor class. The eidolon and ectoplasmic-phantom armor column is natural armor;
@@ -215,54 +208,53 @@ export function deriveCompanion(c: Character, d: Derived, comp: Companion): Comp
         : eidolon || (phantom && !incorporeal)
           ? col(table!.armor)
           : 0;
-  const dex = part('ac', mod('dex'), 'DEX');
-  const sizeAc = part('ac', size.ac, 'Size', 'size');
-  const natural = part('ac', comp.naturalArmor + tableNatural, tableNatural ? 'Natural armor (incl. companion)' : 'Natural armor', 'natural');
-  const armor = part('ac', comp.armorBonus, 'Armor / barding', 'armor');
-  const deflection = part('ac', incorporeal ? col(table!.armor) + mod('cha') : 0, 'Deflection (incorporeal)', 'deflection');
-  const misc = part('ac', comp.acMisc, 'Misc');
-  const ten = part('ac', 10, 'Base');
+  const dex = bonus('ac', mod('dex'), 'DEX');
+  const sizeAc = bonus('ac', size.ac, 'Size', 'size');
+  const natural = bonus('ac', comp.naturalArmor + tableNatural, tableNatural ? 'Natural armor (incl. companion)' : 'Natural armor', 'natural');
+  const armor = bonus('ac', comp.armorBonus, 'Armor / barding', 'armor');
+  const deflection = bonus('ac', incorporeal ? col(table!.armor) + mod('cha') : 0, 'Deflection (incorporeal)', 'deflection');
+  const misc = bonus('ac', comp.acMisc, 'Misc');
+  const ten = bonus('ac', 10, 'Base');
   const ac = {
     normal: stack([ten, dex, sizeAc, natural, armor, deflection, misc]),
     touch: stack([ten, dex, sizeAc, deflection, misc]),
-    flatFooted: stack([ten, part('ac', Math.min(0, mod('dex')), 'DEX'), sizeAc, natural, armor, deflection, misc]),
+    flatFooted: stack([ten, bonus('ac', Math.min(0, mod('dex')), 'DEX'), sizeAc, natural, armor, deflection, misc]),
   };
 
-  const SAVE_ABILITY: Record<Save, Ability> = { fort: 'con', ref: 'dex', will: 'wis' };
   const saves = {} as Record<Save, Total>;
-  for (const s of ['fort', 'ref', 'will'] as const) {
+  for (const s of SAVES) {
     const good = drake || comp.goodSaves.includes(s);
     const own = saveFor(good, hd);
-    const fromMaster = familiar ? masterBaseSave(c, d, s) : 0;
+    const fromMaster = familiar ? d.baseSaves[s] : 0;
     saves[s] = stack([
-      part(s, Math.max(own, fromMaster), fromMaster > own ? "Master's base save" : 'Base save'),
-      part(s, mod(SAVE_ABILITY[s]), SAVE_ABILITY[s].toUpperCase()),
-      part(s, comp.saveMisc[s], 'Misc'),
+      bonus(s, Math.max(own, fromMaster), fromMaster > own ? "Master's base save" : 'Base save'),
+      bonus(s, mod(SAVE_ABILITY[s]), SAVE_ABILITY[s].toUpperCase()),
+      bonus(s, comp.saveMisc[s], 'Misc'),
     ]);
   }
 
   const tiny = ['fine', 'diminutive', 'tiny'].includes(effectiveSize);
   const cmbAbility: Ability = tiny ? 'dex' : 'str';
-  const cmb = stack([part('cmb', bab, 'BAB'), part('cmb', mod(cmbAbility), cmbAbility.toUpperCase()), part('cmb', size.cm, 'Size', 'size')]);
+  const cmb = stack([bonus('cmb', bab, 'BAB'), bonus('cmb', mod(cmbAbility), cmbAbility.toUpperCase()), bonus('cmb', size.cm, 'Size', 'size')]);
   const cmd = stack([
-    part('cmd', 10, 'Base'),
-    part('cmd', bab, 'BAB'),
-    part('cmd', mod('str'), 'STR'),
-    part('cmd', mod('dex'), 'DEX'),
-    part('cmd', size.cm, 'Size', 'size'),
+    bonus('cmd', 10, 'Base'),
+    bonus('cmd', bab, 'BAB'),
+    bonus('cmd', mod('str'), 'STR'),
+    bonus('cmd', mod('dex'), 'DEX'),
+    bonus('cmd', size.cm, 'Size', 'size'),
   ]);
-  const init = stack([part('init', mod('dex'), 'DEX')]);
+  const init = stack([bonus('init', mod('dex'), 'DEX')]);
 
   const attacks: Record<string, CompanionAttackDerived> = {};
   for (const atk of comp.attacks) {
     const ability: Ability = atk.finesse ? 'dex' : 'str';
     attacks[atk.id] = {
       attack: stack([
-        part('attack', bab, 'BAB'),
-        part('attack', mod(ability), ability.toUpperCase()),
-        part('attack', size.ac, 'Size', 'size'),
-        part('attack', atk.primary ? 0 : -5, 'Secondary attack'),
-        part('attack', atk.attackMisc, 'Misc'),
+        bonus('attack', bab, 'BAB'),
+        bonus('attack', mod(ability), ability.toUpperCase()),
+        bonus('attack', size.ac, 'Size', 'size'),
+        bonus('attack', atk.primary ? 0 : -5, 'Secondary attack'),
+        bonus('attack', atk.attackMisc, 'Misc'),
       ]),
       damageBonus: Math.floor(mod('str') * (atk.primary ? 1 : 0.5)) + atk.damageMisc,
     };
@@ -277,11 +269,11 @@ export function deriveCompanion(c: Character, d: Derived, comp: Companion): Comp
     skills[sk.id] = {
       ranks,
       total: stack([
-        part('skill', ranks, ranks > sk.ranks ? "Master's ranks" : 'Ranks'),
-        part('skill', mod(sk.ability), sk.ability.toUpperCase()),
-        part('skill', sk.classSkill && ranks > 0 ? 3 : 0, 'Class skill'),
-        part('skill', name === 'fly' ? size.fly : name === 'stealth' ? size.stealth : 0, 'Size', 'size'),
-        part('skill', sk.misc, 'Misc'),
+        bonus('skill', ranks, ranks > sk.ranks ? "Master's ranks" : 'Ranks'),
+        bonus('skill', mod(sk.ability), sk.ability.toUpperCase()),
+        bonus('skill', sk.classSkill && ranks > 0 ? 3 : 0, 'Class skill'),
+        bonus('skill', name === 'fly' ? size.fly : name === 'stealth' ? size.stealth : 0, 'Size', 'size'),
+        bonus('skill', sk.misc, 'Misc'),
       ]),
     };
   }
