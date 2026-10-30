@@ -3,6 +3,7 @@
 import { readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { chromium, type Locator, type Page } from 'playwright';
+import { seedCharacter } from './seed.ts';
 
 const { values: args } = parseArgs({ options: { url: { type: 'string', default: 'http://localhost:5173' } } });
 const fixture = JSON.parse(readFileSync('scripts/fixtures/valeros.json', 'utf8'));
@@ -11,15 +12,7 @@ const browser = await chromium.launch({ channel: 'chrome' });
 const page = await browser.newPage({ viewport: { width: 1280, height: 900 }, acceptDownloads: true });
 const errors: string[] = [];
 page.on('pageerror', (e) => errors.push(e.message));
-await page.addInitScript((c) => {
-  if (sessionStorage.getItem('seeded')) return;
-  sessionStorage.setItem('seeded', '1');
-  localStorage.clear();
-  localStorage.setItem(`pf1e:char:${c.id}`, JSON.stringify(c));
-  localStorage.setItem('pf1e:roster', JSON.stringify([{ id: c.id, name: c.info.name, updatedAt: 0 }]));
-  localStorage.setItem('pf1e:active', c.id);
-  localStorage.setItem('pf1e:prefs', JSON.stringify({ tourSeen: true }));
-}, fixture);
+await seedCharacter(page, fixture);
 
 let failed = 0;
 async function expectStat(label: string, want: string, p: Page = page) {
@@ -44,13 +37,15 @@ function check(desc: string, ok: boolean, detail = '') {
   console.log(`${ok ? 'ok  ' : 'FAIL'} ${desc}${detail ? `: ${detail}` : ''}`);
 }
 const hpMax = () => page.locator('[data-section=hp] [data-hp-max]');
-/** Toggle a section's Edit mode (structural controls only show while editing). */
-const openSettings = () => page.locator('nav').getByRole('button', { name: 'Settings', exact: true }).click();
+/** Switch to a sheet tab by its label (the gear tab is "Settings"). */
+const goTab = (name: string) => page.locator('nav').getByRole('button', { name, exact: true }).click();
+const openSettings = () => goTab('Settings');
 /** Open the classes section's Level history table (a toggle, so only click when it's closed). */
 const openLevelHistory = async () => {
   const btn = page.getByRole('button', { name: /^Level history/ });
   if ((await btn.getAttribute('aria-expanded')) !== 'true') await btn.click();
 };
+/** Toggle a section's Edit mode (structural controls only show while editing). */
 const toggleEdit = (section: string) => page.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
 /** Choose an option from a custom Select (combobox button + popover listbox). */
 const pick = async (combo: Locator, option: string) => {
@@ -85,7 +80,7 @@ await con.blur();
 await expectText('Max HP', hpMax(), /^59$/);
 
 console.log('— language combobox');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await toggleEdit('info');
 const addLang = page.getByLabel('Add language');
 await addLang.fill('Elv');
@@ -135,18 +130,16 @@ await expectStat('AC', '21');
 await expectText('Max HP', hpMax(), /^59$/);
 
 console.log('— export and re-import');
-await page.locator('nav').getByRole('button', { name: 'Settings' }).click();
+await goTab('Settings');
 const [download] = await Promise.all([page.waitForEvent('download'), page.getByRole('button', { name: 'Export JSON' }).click()]);
 const path = await download.path();
 const chooser = page.waitForEvent('filechooser');
 await page.getByRole('button', { name: 'Import JSON' }).click();
 await (await chooser).setFiles(path!);
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await page.waitForTimeout(300);
 const options = await page.locator('#app > header .select-list').first().locator('[role=option]').allTextContents().then((t) => t.map((x) => x.trim()));
-const twoValeros = options.filter((o) => o === 'Valeros').length === 2;
-if (!twoValeros) failed++;
-console.log(`${twoValeros ? 'ok  ' : 'FAIL'} roster after import: ${options.join(', ')}`);
+check('roster after import', options.filter((o) => o === 'Valeros').length === 2, options.join(', '));
 await expectStat('AC', '21');
 
 console.log('— database pickers');
@@ -158,7 +151,7 @@ const gs = page.locator('[data-section=offense] .group').last();
 // Str +3 × 1.5 = +4, Power Attack +4 at BAB 4.
 const dice = await gs.getByLabel('Damage dice').inputValue();
 await expectText(`Greatsword damage (${dice})`, gs.locator('.field').nth(2), /^\+8/);
-if (dice !== '2d6') (failed++, console.log(`FAIL greatsword dice: ${dice}`));
+check('greatsword dice', dice === '2d6', dice);
 await page.goto(`${args.url}/#character`);
 await toggleEdit('feats');
 await page.getByRole('button', { name: '⌕ Find feat' }).click();
@@ -166,9 +159,7 @@ await page.getByLabel('Find feat').fill('cleave');
 await page.locator('[role=listbox]:not(.select-list) [role=option]').first().waitFor();
 await page.keyboard.press('Enter');
 const feats = await page.locator('[data-section=feats] input[aria-label="Feat name"]').evaluateAll((els) => els.map((e) => (e as HTMLInputElement).value));
-const hasCleave = feats.filter((f) => f === 'Cleave').length === 2;
-if (!hasCleave) failed++;
-console.log(`${hasCleave ? 'ok  ' : 'FAIL'} feat picked: ${feats.at(-1)}`);
+check('feat picked', feats.filter((f) => f === 'Cleave').length === 2, feats.at(-1));
 await page.goto(`${args.url}/#core`);
 await toggleEdit('defense');
 await page.getByRole('button', { name: '⌕ Find armor or shield' }).click();
@@ -176,8 +167,7 @@ await page.getByLabel('Find armor or shield').fill('breastplate');
 await page.locator('[role=listbox]:not(.select-list) [role=option]').first().waitFor();
 await page.keyboard.press('Enter');
 const armorCount = await page.locator('[data-section=defense] tbody tr').filter({ has: page.locator('input[aria-label="Name"]') }).count();
-if (armorCount !== 3) failed++;
-console.log(`${armorCount === 3 ? 'ok  ' : 'FAIL'} armor rows after pick: ${armorCount}`);
+check('armor rows after pick', armorCount === 3, String(armorCount));
 
 console.log('— extra speed');
 await toggleEdit('readiness');
@@ -190,25 +180,23 @@ await expectStat('fly', '60ft');
 console.log('— mythic');
 await openSettings();
 await page.getByLabel('Mythic tab').check();
-await page.locator('nav').getByRole('button', { name: 'Mythic', exact: true }).click();
+await goTab('Mythic');
 await pick(page.getByLabel('Tier', { exact: true }), '3');
 await pick(page.getByLabel('Path', { exact: true }), 'Champion (5 hp/tier)');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await expectText('Max HP (+15 mythic)', hpMax(), /^74$/);
 await expectStat('Initiative', '+5');
-await page.locator('nav').getByRole('button', { name: 'Mythic', exact: true }).click();
+await goTab('Mythic');
 await page.getByLabel('Mythic Paragon').check();
 await expectText('Mythic power with paragon', page.locator('[data-section=mythicOverview] .stat', { hasText: 'Mythic power' }).locator('.stat-value'), /^9\/9$/);
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await expectStat('Initiative', '+7');
 
 console.log('— collapse');
 const macros = page.locator('[data-section=macros]');
 await macros.locator('.section-head button').first().click();
 const box = await macros.boundingBox();
-const collapsedOk = !!box && box.height < 40 && (await macros.locator('.section-body').isHidden());
-if (!collapsedOk) failed++;
-console.log(`${collapsedOk ? 'ok  ' : 'FAIL'} collapsed macros height: ${box?.height}`);
+check('collapsed macros height', !!box && box.height < 40 && (await macros.locator('.section-body').isHidden()), String(box?.height));
 
 console.log('— other favored class bonus');
 await toggleEdit('classes');
@@ -244,7 +232,7 @@ await toggleEdit('classes');
 const addSpellSection = async () => {
   await openSettings();
   await page.getByRole('button', { name: '+ Spellcasting section' }).click();
-  await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+  await goTab('Spells');
 };
 await addSpellSection();
 const summoner = page.locator('[data-section^=spells-]').first();
@@ -280,12 +268,12 @@ await page.emulateMedia({ media: 'screen' });
 await page.getByLabel('Dark mode').uncheck();
 
 console.log('— other caster with a spell table');
-await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await goTab('Spells');
 await pick(other.getByLabel('Spell table'), 'Wizard / Witch');
 await expectText('Other caster 3rd level (CL 5 wizard table)', other.getByText(/^3rd level$/i), /3rd level/i);
 
 console.log('— enlarge person');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await expectText('BAB single number', page.locator('.stat', { has: page.locator('.field-label', { hasText: /^BAB$/ }) }).first().locator('.stat-value'), /^\+\d+$/);
 const offenseEdit = page.locator('[data-section=offense] .section-head').getByRole('button', { name: /^(Edit|Done editing) / });
 if ((await offenseEdit.getAttribute('aria-pressed')) === 'true') await offenseEdit.click();
@@ -302,14 +290,14 @@ await page.getByLabel('Activate Enlarge Person').uncheck({ force: true });
 await expectText('Longsword damage back to normal', longswordDamage, /^1d8/);
 
 console.log('— equipped checkbox');
-await page.locator('nav').getByRole('button', { name: 'Character', exact: true }).click();
+await goTab('Character');
 const eqp = page.locator('[data-section=equipment] tbody tr').first().getByRole('checkbox').first();
 const wasEquipped = await eqp.isChecked();
 await eqp.click();
 check('Eqp toggles outside edit mode', (await eqp.isChecked()) !== wasEquipped);
 
 console.log('— prestige class advancing spellcasting');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await toggleEdit('classes');
 await page.getByRole('button', { name: '+ Class' }).click();
 const prestigeName = page.getByLabel('Class name').last();
@@ -326,9 +314,9 @@ const advance = page.getByLabel(/^Level \d+ advances Summoner spellcasting/);
 check('first EK level does not advance casting', !(await advance.first().isChecked()));
 check('second EK level advances casting', await advance.last().isChecked());
 await toggleEdit('classes');
-await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await goTab('Spells');
 await expectText('Summoner CL (no class levels) with one prestige advancement', summoner.locator('.stat', { hasText: 'CL' }).locator('.stat-value').first(), /^1$/);
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await toggleEdit('classes');
 await openLevelHistory();
 await page.getByLabel(/^Remove level \d+$/).last().click();
@@ -337,7 +325,7 @@ await page.getByLabel('Remove class').last().click();
 await toggleEdit('classes');
 
 console.log('— wand built from a spell');
-await page.locator('nav').getByRole('button', { name: 'Character', exact: true }).click();
+await goTab('Character');
 await toggleEdit('equipment');
 await pick(page.getByLabel('What to search for'), 'Wands (by spell)');
 await page.getByRole('button', { name: '⌕ Find wand spell' }).click();
@@ -351,7 +339,7 @@ await wandRow.getByLabel(/^Remove /).click();
 await toggleEdit('equipment');
 
 console.log('— dice');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 const initText = await page.locator('.stat', { has: page.locator('.field-label', { hasText: /^Initiative$/ }) }).locator('.stat-value').innerText();
 await page.getByRole('button', { name: 'Roll Initiative' }).click();
 await page.getByRole('button', { name: /^Roll log/ }).click();
@@ -373,7 +361,7 @@ await expectStat('Initiative', initText); // rollables add no text
 await page.getByRole('button', { name: 'Close', exact: true }).click();
 
 console.log('— spell rolls');
-await page.locator('nav').getByRole('button', { name: 'Spells', exact: true }).click();
+await goTab('Spells');
 await other.getByRole('button', { name: /1st-level spell/ }).first().click();
 await other.getByLabel('Spell name').first().fill('Fireball');
 await other.getByRole('button', { name: /Set up Fireball attack and damage rolls/ }).click();
@@ -402,7 +390,7 @@ check(`spell attack = d20 ${atkBonus >= 0 ? '+' : ''}${atkBonus}`, Number(await 
 await page.getByRole('button', { name: 'Close', exact: true }).click();
 
 console.log('— campaign notes');
-await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
+await goTab('Notes');
 const prose = page.locator('[data-section=notes] .ProseMirror');
 await prose.click();
 await page.keyboard.type('# Session 1');
@@ -411,7 +399,7 @@ await page.keyboard.type('Met the **baron**.');
 await expectText('Heading from markdown shortcut', page.locator('[data-section=notes] .ProseMirror h1'), /^Session 1$/);
 await page.waitForTimeout(600); // autosave debounce
 await page.reload();
-await page.locator('nav').getByRole('button', { name: 'Notes', exact: true }).click();
+await goTab('Notes');
 await expectText('Notes persist after reload', page.locator('[data-section=notes] .ProseMirror strong'), /^baron$/);
 await page.emulateMedia({ media: 'print' });
 check('notes hidden in print by default', await page.locator('[data-section=notes]').isHidden());
@@ -421,7 +409,7 @@ console.log('— companions');
 await openSettings();
 await page.getByLabel(/Companions tab/).check();
 await page.getByRole('button', { name: '+ Companion' }).click();
-await page.locator('nav').getByRole('button', { name: 'Companions', exact: true }).click();
+await goTab('Companions');
 const comp = page.locator('[data-section^=companion-]').first();
 await expectText('Companion title', comp.locator('.section-head h2'), /animal companion/i);
 // Linked to Fighter 4: animal companion level 4 = 4 HD, BAB +3.
@@ -429,7 +417,7 @@ await expectText('Companion summary', comp.locator('p.text-sm').first(), /4 HD �
 await expectText('Companion BAB', comp.locator('.stat', { has: page.locator('.field-label', { hasText: /^BAB$/ }) }).locator('.stat-value'), /^\+3$/);
 
 console.log('— first-run walkthrough');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await page.evaluate(() => localStorage.removeItem('pf1e:prefs'));
 await page.reload();
 const tourDialog = page.getByRole('dialog', { name: 'Edit mode' });
@@ -448,15 +436,15 @@ check('print stays in the header', await page.locator('#app > header').getByRole
 
 console.log('— small-screen section order');
 const top = async (id: string) => (await page.locator(`[data-section="${id}"]`).boundingBox())!.y;
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 check('currency comes last on small screens', (await top('currency')) > (await top('special')));
 await openSettings();
 await page.getByRole('button', { name: 'Move Special Abilities (small-screen order)' }).press('ArrowUp');
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 check('reordered section moves up', (await top('special')) < (await top('defense')));
 await openSettings();
 await page.getByRole('button', { name: 'Reset layout' }).click();
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 check('reset restores the default order', (await top('special')) > (await top('defense')));
 await page.setViewportSize({ width: 1280, height: 900 });
 
@@ -465,7 +453,7 @@ const will = async () => Number((await page.locator('.stat').filter({ has: page.
 const willBefore = await will();
 await openSettings();
 await page.getByLabel(/Gestalt \(each level/).check();
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 await toggleEdit('classes');
 await page.getByRole('button', { name: '+ Class' }).click();
 const wizName = page.getByLabel('Class name').last();
@@ -480,7 +468,7 @@ const willGestalt = await will();
 check('gestalt Wizard side raises Will (good save track)', willGestalt > willBefore, `${willBefore} → ${willGestalt}`);
 await openSettings();
 await page.getByLabel(/Gestalt \(each level/).uncheck();
-await page.locator('nav').getByRole('button', { name: 'Core', exact: true }).click();
+await goTab('Core');
 check('turning gestalt off restores Will', (await will()) === willBefore, String(await will()));
 
 if (errors.length) {

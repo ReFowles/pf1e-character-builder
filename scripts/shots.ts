@@ -5,6 +5,7 @@
 import { mkdirSync, readFileSync } from 'node:fs';
 import { parseArgs } from 'node:util';
 import { chromium } from 'playwright';
+import { seedCharacter } from './seed.ts';
 
 const { values: args } = parseArgs({
   options: {
@@ -36,18 +37,7 @@ async function open(width: number) {
   const page = await browser.newPage({ viewport: { width, height: 900 }, colorScheme: args.dark ? 'dark' : 'light' });
   page.on('pageerror', (e) => console.error('pageerror:', e.message));
   page.on('console', (m) => m.type() === 'error' && console.error('console:', m.text()));
-  if (args.fixture) {
-    const c = JSON.parse(readFileSync(args.fixture, 'utf8'));
-    await page.addInitScript((c) => {
-      if (sessionStorage.getItem('seeded')) return;
-      sessionStorage.setItem('seeded', '1');
-      localStorage.clear();
-      localStorage.setItem(`pf1e:char:${c.id}`, JSON.stringify(c));
-      localStorage.setItem('pf1e:roster', JSON.stringify([{ id: c.id, name: c.info.name, updatedAt: 0 }]));
-      localStorage.setItem('pf1e:active', c.id);
-      localStorage.setItem('pf1e:prefs', JSON.stringify({ tourSeen: true }));
-    }, c);
-  }
+  if (args.fixture) await seedCharacter(page, JSON.parse(readFileSync(args.fixture, 'utf8')));
   return page;
 }
 

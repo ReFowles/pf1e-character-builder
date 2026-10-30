@@ -87,7 +87,8 @@
   <Section id="settings-dice" title="Dice">
     <p class="text-sm opacity-70">Click initiative, saves, attacks, skills, ability modifiers or caster level to roll; weapons roll damage and criticals. Results go to the roll log (the d20 button in the header). Saved on this device.</p>
     <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={prefs.dice.threeD} />
+      <!-- Switching 3D off drops the dice scene and its canvas. -->
+      <input type="checkbox" bind:checked={prefs.dice.threeD} onchange={(e) => !e.currentTarget.checked && import('../../lib/dice/three-d').then((m) => m.dispose3d())} />
       3D dice (physics-based, loads about 2 MB the first time)
     </label>
     <div class="flex flex-wrap items-end gap-3">
