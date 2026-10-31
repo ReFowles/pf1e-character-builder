@@ -85,7 +85,7 @@
 </script>
 
 {#if rolls.open}
-  <div class="fixed inset-0 z-40 bg-ink/40 print:hidden" role="presentation" onclick={() => rolls.toggle(false)}></div>
+  <div class="fixed inset-0 z-40 bg-scrim print:hidden" role="presentation" onclick={() => rolls.toggle(false)}></div>
   <aside class="fixed inset-y-0 right-0 z-50 flex w-full max-w-md flex-col bg-paper shadow-xl print:hidden" aria-label="Roll log">
     <div class="flex items-center gap-2 border-b border-ink/20 px-4 py-2">
       <h2 class="font-display text-lg font-bold">Rolls</h2>

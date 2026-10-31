@@ -11,6 +11,8 @@
   --color-field: #ffffff;
   --color-head: #1f1a17;
   --color-head-ink: #fffdf8;
+  /* Scrim behind dialogs, the roll log and the walkthrough: black in both themes. */
+  --color-scrim: rgb(0 0 0 / 0.45);
   --font-display: 'Palatino Linotype', Palatino, 'Book Antiqua', Georgia, serif;
 }
 
@@ -108,7 +110,7 @@
     @apply m-auto max-h-[80vh] w-[min(28rem,92vw)] overflow-y-auto rounded-sm border border-ink/40 bg-paper p-4 text-ink shadow-xl;
   }
   .info-popover::backdrop {
-    @apply bg-ink/30;
+    @apply bg-scrim;
   }
   .section-head h2 {
     @apply font-display text-sm font-bold tracking-widest uppercase;
@@ -283,7 +285,7 @@
     @apply m-auto rounded-md border border-ink/40 bg-paper p-4 text-ink shadow-xl;
   }
   .crop-dialog::backdrop {
-    @apply bg-ink/40;
+    @apply bg-scrim;
   }
   /* Class progression cells, joined by bullets. */
   .dyn-table td.progression {

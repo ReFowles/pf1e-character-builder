@@ -58,7 +58,7 @@
     style:top="{ring.y}px"
     style:width="{ring.w}px"
     style:height="{ring.h}px"
-    style:box-shadow="0 0 0 9999px rgb(0 0 0 / 0.45)"
+    style:box-shadow="0 0 0 9999px var(--color-scrim)"
   ></div>
   <div
     role="dialog"

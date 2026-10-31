@@ -19,7 +19,7 @@
 
 <dialog
   bind:this={dialog}
-  class="m-auto max-h-[85vh] w-full max-w-2xl rounded-sm bg-paper p-0 text-ink shadow-xl backdrop:bg-ink/50"
+  class="m-auto max-h-[85vh] w-full max-w-2xl rounded-sm bg-paper p-0 text-ink shadow-xl backdrop:bg-scrim"
   aria-labelledby="about-title"
 >
   <div class="flex flex-col gap-3 p-4">
