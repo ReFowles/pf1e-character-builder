@@ -13,6 +13,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import { prefs } from '../../lib/prefs.svelte';
   import { roll } from '../../lib/dice/rolls.svelte';
+  import { POINT_BUY_BUDGETS } from '../../lib/rules/pointBuy';
   import { tour } from '../../lib/tour.svelte';
 
   let about: AboutDialog;
@@ -124,6 +125,26 @@
     </label>
     {#if c.gestalt}
       <p class="text-xs opacity-70">Pick each level's second class in Classes → Level history. A level takes the better hit die, BAB, saves and skill ranks of its two classes.</p>
+    {/if}
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.pointBuy.enabled} />
+      Point buy for base ability scores
+    </label>
+    {#if c.pointBuy.enabled}
+      <div class="flex flex-wrap items-end gap-3">
+        <label class="field w-56">
+          <Select bind:value={c.pointBuy.budget} options={POINT_BUY_BUDGETS} aria-label="Point buy budget" />
+          <span class="field-label">Point buy budget</span>
+        </label>
+        <label class="flex items-center gap-2 text-sm">
+          <input type="checkbox" bind:checked={c.pointBuy.freeEighteen} />
+          One free 18
+        </label>
+        <label class="flex items-center gap-2 text-sm" title="11-14 cost 1 point each, 15-16 cost 2, 17-18 cost 3">
+          <input type="checkbox" bind:checked={c.pointBuy.richard} />
+          Richard's Point Buy
+        </label>
+      </div>
     {/if}
     <label class="field">
       <Select

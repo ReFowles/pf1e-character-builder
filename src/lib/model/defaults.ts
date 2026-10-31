@@ -381,6 +381,7 @@ export function newCharacter(): Character {
     spellsTab: false,
     companionTab: false,
     critMode: 'total',
+    pointBuy: { enabled: false, budget: 15, freeEighteen: false, richard: false },
     notes: { html: '' },
     companions: [],
     mythic: {

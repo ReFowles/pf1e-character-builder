@@ -554,6 +554,8 @@ export interface Character {
   companionTab: boolean;
   /** Critical hits: multiply the total of a normal roll, or roll the dice multiplied. */
   critMode: 'total' | 'dice';
+  /** Optional point-buy rule for the base ability scores (Rules in Settings). */
+  pointBuy: { enabled: boolean; budget: number; freeEighteen: boolean; richard: boolean };
   /** Campaign notes: HTML from the Notes tab's editor. */
   notes: { html: string };
   companions: Companion[];

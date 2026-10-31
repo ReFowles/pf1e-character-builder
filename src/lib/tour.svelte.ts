@@ -28,7 +28,7 @@ export const TOUR_STEPS: TourStep[] = [
   {
     target: '[data-tour="settings"]',
     title: 'Settings',
-    text: 'The Spells, Companions, and Mythic tabs start hidden. Open Settings to turn them on and add sections. It also has character exports and imports, sections to exclude in printing, and more.',
+    text: 'The Spells, Companions, and Mythic tabs start hidden. Open Settings to turn them on and add sections. It also has character exports and imports, sections to exclude in printing, point buy option, and more.',
   },
 ];
 

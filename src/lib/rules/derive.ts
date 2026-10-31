@@ -11,6 +11,7 @@ import {
 } from '../model/types';
 import { slug } from '../slug';
 import { hasFeat } from './featBonuses';
+import { pointBuy } from './pointBuy';
 import { gestaltConflicts, levelClassIds, classProgression } from './gestalt';
 import { BonusSet, bonus, stack, type Total } from './bonuses';
 import { findCondition } from './conditions';
@@ -144,6 +145,8 @@ export interface Derived {
   fcb: FcbSummary;
   /** Level-up ability increases: one every four levels vs the +1s entered. */
   abilityIncreases: { expected: number; used: number };
+  /** Points spent on the base scores under the point-buy rule, and what's left of the budget. */
+  pointBuy: { spent: number; remaining: number; costs: Record<Ability, number> };
   mythic: { tier: number; effectiveTier: number; paragon: boolean; powerMax: number; surgeDie: string; hp: number } | null;
   capacity: Capacity;
   /** Size after size-changing effects, and the steps applied. */
@@ -623,6 +626,7 @@ export function derive(c: Character): Derived {
     wealth,
     fcb,
     abilityIncreases: { expected: Math.floor(level / 4), used: ABILITIES.reduce((s, a) => s + c.abilities[a].level, 0) },
+    pointBuy: pointBuy(c),
     mythic: mythicOn
       ? { tier, effectiveTier, paragon: c.mythic.paragon, powerMax: mythicPowerMax(tier), surgeDie: surgeDie(tier, c.mythic.surgeUpgrades), hp: mythicHp }
       : null,

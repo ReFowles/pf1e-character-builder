@@ -4,6 +4,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import Field from '../../lib/ui/Field.svelte';
   import Chips from '../../lib/ui/Chips.svelte';
+  import Combobox from '../../lib/ui/Combobox.svelte';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const ALIGNMENTS: [string, string][] = [
@@ -15,6 +16,14 @@
     'Common', 'Abyssal', 'Aklo', 'Aquan', 'Auran', 'Celestial', 'Draconic', 'Druidic', 'Dwarven',
     'Elven', 'Giant', 'Gnome', 'Goblin', 'Gnoll', 'Halfling', 'Ignan', 'Infernal', 'Orc', 'Sylvan',
     'Terran', 'Undercommon',
+  ];
+  // Official races to pick from; the field still accepts any text for homebrew.
+  const RACES = [
+    'Dwarf', 'Elf', 'Gnome', 'Half-Elf', 'Half-Orc', 'Halfling', 'Human',
+    'Aasimar', 'Catfolk', 'Dhampir', 'Drow', 'Fetchling', 'Goblin', 'Hobgoblin', 'Ifrit', 'Kobold',
+    'Orc', 'Oread', 'Ratfolk', 'Sylph', 'Tengu', 'Tiefling', 'Undine',
+    'Changeling', 'Duergar', 'Gillman', 'Grippli', 'Kitsune', 'Merfolk', 'Nagaji', 'Samsaran',
+    'Strix', 'Suli', 'Svirfneblin', 'Vanara', 'Vishkanya', 'Wayang',
   ];
   const ci = $derived(app.char.info);
   // Size-changing effects (Enlarge/Reduce Person) move the effective size; the select sets the base.
@@ -39,7 +48,7 @@
         options={[{ value: '', label: '—' }, ...ALIGNMENTS.map(([a, name]) => ({ value: a, label: a, title: name }))]}
       />
     </Field>
-    <Field label="Race"><input bind:value={ci.race} /></Field>
+    <Field label="Race"><Combobox bind:value={ci.race} suggestions={RACES} placeholder="Race" aria-label="Race" /></Field>
     <Field label="Size">
       <!-- Closed, the select shows just the effective size letter; the open list sets the base size. -->
       <Select bind:value={ci.size} options={opts(SIZES)} aria-label="Size" title={shifted ? `${effective} (base ${ci.size})` : effective}>
