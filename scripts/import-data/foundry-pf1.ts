@@ -11,9 +11,10 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSy
 import { join } from 'node:path';
 import { parseArgs } from 'node:util';
 import { parse } from 'yaml';
-import type { DbClass, DbCompanion, DbEvolution, DbFeat, DbItem, DbSpell } from '../../src/lib/db/types.ts';
+import type { DbArchetype, DbArchetypeFeature, DbClass, DbClassFeature, DbCompanion, DbEvolution, DbFeat, DbItem, DbSpell } from '../../src/lib/db/types.ts';
 import { ABILITIES, SAVES } from '../../src/lib/model/types.ts';
 import { slug } from '../../src/lib/slug.ts';
+import { archetypeFeatureName, baseName, boldParagraphs, featureKey, featureLevels, prestigeTable, replacements, specialKey } from './progression.ts';
 
 const { values: opts, positionals } = parseArgs({
   allowPositionals: true,
@@ -29,7 +30,7 @@ if (!root) throw new Error('usage: node scripts/import-data/foundry-pf1.ts <pack
 const out = 'public/data';
 mkdirSync(out, { recursive: true });
 
-type Doc = { name: string; type: string; system: Record<string, any>; items?: Doc[] };
+type Doc = { _id?: string; name: string; type: string; system: Record<string, any>; items?: Doc[] };
 
 function* walk(dir: string): Generator<string> {
   for (const f of readdirSync(dir)) {
@@ -233,10 +234,73 @@ function classSkill(code: string): string | null {
 const BAB: Record<string, DbClass['bab']> = { high: 'full', med: '3/4', low: '1/2' };
 const NPC_CLASSES = new Set(['adept', 'aristocrat', 'commoner', 'expert', 'warrior']);
 
-function cls(d: Doc, kind: DbClass['kind']): DbClass {
+/** Foundry's class-feature links: `{ level, uuid }`, the uuid ending in the feature's id. */
+const supplements = (d: Doc): { level: number; id: string }[] =>
+  (d.system.links?.supplements ?? [])
+    .map((s: any) => ({ level: Number(s.level) || 1, id: String(s.uuid ?? '').split('.').pop() ?? '' }))
+    .filter((s: { id: string }) => s.id);
+
+/** Features by id from every pack that class and archetype links point into. */
+const featureDocs = new Map<string, Doc>();
+for (const d of [
+  ...load('class-abilities'),
+  ...(opts.archetypes ? [...load('pf-arch-features', opts.archetypes), ...load('pf-prestige-features', opts.archetypes)] : []),
+])
+  if (d._id) featureDocs.set(d._id, d);
+
+const FEATURE_TEXT = 1500;
+
+/** A linked feature at its first level, with the levels it improves or repeats at. */
+function linkedFeature(f: Doc, level: number, max: number, archetype = false): DbClassFeature & { id?: string } {
+  const name = archetype ? archetypeFeatureName(f.name) : baseName(f.name);
+  const description = text(f.system.description?.value, FEATURE_TEXT);
+  return { id: f._id, name, ...featureLevels(name, f.system, description, level, max), summary: text(firstSentence(description), 200), description };
+}
+
+function baseFeatures(d: Doc): (DbClassFeature & { id?: string })[] {
+  const out: (DbClassFeature & { id?: string })[] = [];
+  for (const s of supplements(d)) {
+    const f = featureDocs.get(s.id);
+    if (!f) {
+      fallback('class feature link not found');
+      continue;
+    }
+    out.push(linkedFeature(f, s.level, 20));
+  }
+  return out.sort((a, b) => a.levels[0] - b.levels[0]);
+}
+
+/** Prestige features from the class table's Special column, described by the bold-named paragraphs below it. */
+function prestigeFeatures(html: string, rows: ReturnType<typeof prestigeTable>): DbClassFeature[] {
+  const described = boldParagraphs(html, (h) => text(h, FEATURE_TEXT));
+  const byKey = new Map<string, DbClassFeature>();
+  rows.forEach((r, i) => {
+    for (const entry of r.special) {
+      const key = specialKey(entry);
+      if (!key) continue;
+      let f = byKey.get(key);
+      if (!f) {
+        const doc = described.get(key) ?? [...described].find(([k]) => k.startsWith(key) || key.startsWith(k))?.[1];
+        const name = doc ? doc.name.replace(/\s*\((?:Ex|Su|Sp)\)/i, '') : entry.replace(/\s+[+−-]?\d+(?:d\d+)?$/, '');
+        const description = doc?.text.slice(0, FEATURE_TEXT) ?? '';
+        if (!doc) fallback('prestige feature without a description');
+        f = { name: name[0].toUpperCase() + name.slice(1), levels: [], labels: [], summary: text(firstSentence(description), 200), description };
+        byKey.set(key, f);
+      }
+      f.levels.push(i + 1);
+      f.labels!.push(entry[0].toUpperCase() + entry.slice(1));
+    }
+  });
+  const out = [...byKey.values()];
+  // Labels are only worth keeping where some level's text differs from the name.
+  for (const f of out) if (f.labels!.every((l) => l.toLowerCase() === f.name.toLowerCase())) delete f.labels;
+  return out;
+}
+
+function cls(d: Doc, kind: DbClass['kind']): DbClass & { linked?: (DbClassFeature & { id?: string })[] } {
   const s = d.system;
   const saves = SAVES.filter((k) => s.savingThrows?.[k]?.value === 'high');
-  const c: DbClass = {
+  const c: DbClass & { linked?: (DbClassFeature & { id?: string })[] } = {
     id: slug(d.name),
     name: d.name,
     kind,
@@ -247,19 +311,69 @@ function cls(d: Doc, kind: DbClass['kind']): DbClass {
     classSkills: [...new Set<string>((s.classSkills ?? []).map(classSkill).filter((x: string | null): x is string => !!x))],
     summary: text(s.description?.summary, 200),
     source: source(s),
+    maxLevel: 20,
+    features: [],
   };
   if (!BAB[s.bab]) fallback('class bab');
   if (s.casting?.ability) c.castingAbility = s.casting.ability;
   if (s.casting) c.casting = { type: String(s.casting.type ?? ''), progression: String(s.casting.progression ?? ''), spells: String(s.casting.spells ?? '') };
+  if (kind === 'prestige') {
+    const html = String(s.description?.value ?? '');
+    const rows = prestigeTable(html);
+    if (rows.length) {
+      c.maxLevel = rows.length;
+      c.table = rows;
+      c.features = prestigeFeatures(html, rows);
+    } else fallback('prestige class without a table');
+  } else {
+    c.linked = baseFeatures(d);
+    c.features = c.linked.map(({ id: _, ...f }) => f);
+  }
   return c;
 }
 
-const classes: DbClass[] = [
+const classes = [
   ...load('classes')
     .filter((d) => d.type === 'class' && d.system.subType !== 'npc' && !NPC_CLASSES.has(slug(d.name)))
     .map((d) => cls(d, /unchained/i.test(d.name) ? 'unchained' : 'base')),
   ...(opts.archetypes ? load('pf-prestige-classes', opts.archetypes).filter((d) => d.type === 'class').map((d) => cls(d, 'prestige')) : []),
 ];
+
+// --- Archetypes ----------------------------------------------------------------
+// pf1e-archetypes: each archetype is a feat named "Class (Archetype)" whose
+// links point at its features; each feature's text says what it replaces.
+const ARCHETYPE_TEXT = 1000;
+const classByName = new Map(classes.map((c) => [c.name.toLowerCase(), c]));
+const archetypes: DbArchetype[] = [];
+for (const d of opts.archetypes ? load('pf-archetypes', opts.archetypes) : []) {
+  if (d.type !== 'feat') continue;
+  const k = classByName.get(String(d.system.associations?.classes?.[0] ?? '').toLowerCase());
+  if (!k?.linked) {
+    fallback('archetype of a class not in the data');
+    continue;
+  }
+  const base = k.linked.map((f) => ({ id: f.id, name: f.name, levels: f.levels }));
+  const features: DbArchetypeFeature[] = [];
+  for (const sup of supplements(d)) {
+    const f = featureDocs.get(sup.id);
+    if (!f) {
+      fallback('archetype feature link not found');
+      continue;
+    }
+    const { id: _, ...feature } = linkedFeature(f, sup.level, 20, true);
+    feature.description = feature.description.slice(0, ARCHETYPE_TEXT);
+    const html = String(f.system.description?.value ?? '');
+    const replaces = replacements(html, base);
+    // A feature named after a base feature ("Weapon Training (Two-Handed Fighter)") is that feature, altered.
+    const same = base.find((b) => featureKey(b.name) === featureKey(feature.name));
+    if (same && !replaces.some((r) => r.name === same.name)) replaces.push({ name: same.name });
+    features.push({ ...feature, replaces });
+  }
+  if (!features.length) continue;
+  const name = d.name.match(/\(([^)]+)\)\s*$/)?.[1] ?? d.name;
+  archetypes.push({ name, classId: k.id, summary: text(firstSentence(text(d.system.description?.value, 400)), 200), source: source(d.system), features: features.sort((a, b) => a.levels[0] - b.levels[0]) });
+}
+const classOut: DbClass[] = classes.map(({ linked: _, ...c }) => c);
 
 // --- Companions (animal companions and familiars) ----------------------------
 const SIZES: Record<string, string> = { fine: 'fine', dim: 'diminutive', tiny: 'tiny', sm: 'small', med: 'medium', lg: 'large', huge: 'huge', grg: 'gargantuan', col: 'colossal' };
@@ -467,7 +581,8 @@ const byName = <T extends { name: string }>(a: T[]) => {
 const byKindAndName = (a: DbCompanion[]) => byName(a.map((c) => ({ ...c, name: `${c.kind}\u0000${c.name}` }))).map((c) => ({ ...c, name: c.name.split('\u0000')[1] }));
 
 // Companions and evolutions come only from pf-content; a system-only run leaves those files alone.
-const outputs: Record<string, unknown[]> = { spells: byName(spells), feats: byName(feats), items: byName(items), classes: byName(classes) };
+const outputs: Record<string, unknown[]> = { spells: byName(spells), feats: byName(feats), items: byName(items), classes: byName(classOut) };
+if (opts.archetypes) outputs.archetypes = archetypes.sort((a, b) => a.classId.localeCompare(b.classId) || a.name.localeCompare(b.name));
 if (opts.content) Object.assign(outputs, { companions: byKindAndName(companions), evolutions: byName(evolutions) });
 for (const [name, data] of Object.entries(outputs)) {
   const json = JSON.stringify(data);

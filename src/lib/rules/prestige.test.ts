@@ -28,7 +28,7 @@ describe('prestige casting', () => {
   });
 
   it('maps a database class to a preset', () => {
-    const p = presetFromDb({ id: 'dragon-disciple', name: 'Dragon Disciple', kind: 'prestige', hd: 12, bab: '3/4', goodSaves: ['fort', 'will'], skillRanks: 2, classSkills: ['fly', 'knowledge:arcana'], summary: '', source: 'PZO1110' });
+    const p = presetFromDb({ id: 'dragon-disciple', name: 'Dragon Disciple', kind: 'prestige', hd: 12, bab: '3/4', goodSaves: ['fort', 'will'], skillRanks: 2, classSkills: ['fly', 'knowledge:arcana'], summary: '', source: 'PZO1110', maxLevel: 10, features: [] });
     expect(p.prestige).toBe(true);
     expect(p.castingAdvance?.levels).toEqual([2, 3, 4, 6, 7, 8, 10]);
   });

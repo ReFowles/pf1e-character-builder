@@ -78,6 +78,46 @@ export interface DbClass {
   casting?: { type: string; progression: string; spells: string };
   summary: string;
   source: string;
+  /** Highest class level: 20 for base classes, the table's length for prestige classes. */
+  maxLevel: number;
+  features: DbClassFeature[];
+  /** Prestige classes: the class table as printed, one row per level. */
+  table?: DbClassTableRow[];
+}
+
+export interface DbClassFeature {
+  name: string;
+  /** Class levels the feature is gained at (the first) and improves or repeats at. */
+  levels: number[];
+  /** Table text for each of `levels` when it isn't just the name, e.g. "Sneak Attack +2d6". */
+  labels?: string[];
+  summary: string;
+  description: string;
+}
+
+export interface DbClassTableRow {
+  bab: string;
+  fort: string;
+  ref: string;
+  will: string;
+  special: string[];
+  /** e.g. "+1 level of existing arcane spellcasting class"; '' for none. */
+  spells: string;
+}
+
+export interface DbArchetypeFeature extends DbClassFeature {
+  /** Base class features this replaces, by name; `levels` limits it to those levels ("the bonus feat gained at 1st level"). */
+  replaces: { name: string; levels?: number[] }[];
+}
+
+export interface DbArchetype {
+  /** "Two-Handed Fighter". */
+  name: string;
+  /** DbClass id of the class it modifies. */
+  classId: string;
+  summary: string;
+  source: string;
+  features: DbArchetypeFeature[];
 }
 
 export interface DbCompanion {
@@ -112,6 +152,7 @@ export interface DbData {
   feats: DbFeat[];
   items: DbItem[];
   classes: DbClass[];
+  archetypes: DbArchetype[];
   companions: DbCompanion[];
   evolutions: DbEvolution[];
 }
