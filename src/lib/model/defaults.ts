@@ -76,6 +76,7 @@ export const make = {
     goodSaves: [],
     skillRanks: 2,
     classSkills: [],
+    archetypes: [],
   }),
   level: (classId = ''): LevelEntry => ({
     id: uid(),

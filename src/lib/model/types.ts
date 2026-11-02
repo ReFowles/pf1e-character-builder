@@ -89,6 +89,8 @@ export interface ClassDef extends Identified {
   spellType?: 'arcane' | 'divine' | 'psychic';
   /** Prestige levels (1–10) that grant "+1 level of existing spellcasting class". */
   castingAdvance?: { which: 'arcane' | 'divine' | 'psychic' | 'any' | 'both'; levels: number[] };
+  /** Archetype names from the class data, shown in the class's progression table. */
+  archetypes: string[];
 }
 
 export type FcbKind = 'hp' | 'skill' | 'other';
