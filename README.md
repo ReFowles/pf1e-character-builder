@@ -7,6 +7,7 @@ A Pathfinder 1st Edition character sheet web app. It works offline, saves to you
 - **Tabs: Core and Character** (plus optional Spells, Companions and Mythic). The layout follows `character-sheet-mockup.pdf`. On narrow screens the sections stack in one column; drag them into your own order under **Settings → Layout & print**.
 - **Live calculations.** Ability scores, size (including Enlarge/Reduce Person, which also scale weapon dice), class levels, armor, conditions and macros flow into AC, saves, attacks, CMB/CMD, skills, HP, carrying capacity and spell DCs. Hover a number to see its breakdown.
 - **Macros.** Toggle Power Attack, Flanking, Heroism, Haste and more from a built-in library, or write your own effects against any stat key. Values can be formulas such as `-1 - floor(@bab / 4)`. Always-on feats (Improved Initiative, Iron Will, Toughness…) aren't macros: picking the feat adds its bonus to the right section.
+- **Class progression and level-up checklist.** The table button beside a class shows its progression table: BAB, saves, class features, spells per day, and the feats and ability increases every character gets. Levels you have are highlighted. Pick archetypes there; their features replace the ones they change (struck through). Picking a class opens its table. **+ Level** opens a checklist beside the sheet covering hit points, favored class bonus, skill ranks, feats, ability score increases, new class features (tick one to add it to Class Abilities) and new spells. It shows what was updated for you (BAB, saves, caster level) and can be reopened from the checklist button by Level.
 - **Rules database.** Search more than 3,000 spells, feats, weapons, armor, gear and magic items, then add them to the sheet. Picking an entry copies it into the character, so you can edit it freely.
 - **Wealth tracking.** Every item, weapon, armor piece and magic item has a gp value. Equipment totals carried weight and overall character wealth.
 - **Mythic (optional).** Turn on the Mythic tab in **Settings** to track tier, path, mythic power, surge die (with feat upgrades) and Mythic Paragon. Mythic hit points, Amazing Initiative and ability score increases feed into the rest of the sheet.
@@ -51,7 +52,7 @@ Screenshots and `sheet.pdf` go to `.shots/`.
 
 - the [Foundry VTT PF1 system](https://gitlab.com/foundryvtt_pathfinder1e/foundryvtt-pathfinder1) packs: spells, feats, items and the base and unchained classes;
 - the pf1-content module (GitLab project 47251054): the remaining feats, animal companions, familiars and eidolon evolutions;
-- the pf1e-archetypes module (GitLab project 47896698): prestige classes.
+- the pf1e-archetypes module (GitLab project 47896698): prestige classes and archetypes.
 
 Both modules are GPL-3 code wrapping Paizo Community Use / OGL game data; only the data is imported. Each download comes with its own `OGL.txt`, whose Section 15 notices are merged into `public/data/OGL.txt`.
 
@@ -69,6 +70,8 @@ pnpm import-data /tmp/pf1/foundryvtt-*/packs \
   --content /tmp/pf1/content/*/src --ogl-content /tmp/pf1/content/OGL.txt \
   --archetypes /tmp/pf1/archetypes/*/src --ogl-archetypes /tmp/pf1/archetypes/OGL.txt
 ```
+
+Foundry links each class feature only at the level it's first gained. The importer (`scripts/import-data/progression.ts`) works out the levels where a feature improves or repeats from its scaling formula and its text ("every four levels thereafter"). It also works out which base features an archetype feature replaces from its "This ability replaces …" text. Prestige classes use the class table printed in their description.
 
 `--content` and `--archetypes` are optional; with only the system packs the importer rebuilds spells, feats, items and classes and leaves the other files alone. The OGL text for each root defaults to `<root>/../OGL.txt`. The importer logs how many entries needed a fallback (for example a familiar whose ability scores or natural armor only appear in its stat block notes).
 
