@@ -13,6 +13,9 @@
   import RollDrawer from './lib/dice/RollDrawer.svelte';
   import Tour from './lib/ui/Tour.svelte';
   import RollFab from './lib/dice/RollFab.svelte';
+  import ProgressionDialog from './tabs/core/ProgressionDialog.svelte';
+  import LevelUpDialog from './tabs/core/LevelUpDialog.svelte';
+  import { classDialogs } from './tabs/core/classDialogs.svelte';
 
   // Leave the Mythic tab if it gets disabled while open.
   $effect(() => {
@@ -98,6 +101,8 @@
 
 <RollDrawer />
 <RollFab />
+<ProgressionDialog bind:open={classDialogs.progressionOpen} classId={classDialogs.progressionClass} />
+<LevelUpDialog bind:open={classDialogs.levelUpOpen} index={classDialogs.levelUpIndex} />
 <Tour />
 
 {#if app.toast}

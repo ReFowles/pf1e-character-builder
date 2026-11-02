@@ -16,6 +16,9 @@
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import Combobox from '../../lib/ui/Combobox.svelte';
   import { classOptions } from '../../lib/ui/options';
+  import TableProperties from '@lucide/svelte/icons/table-properties';
+  import ListChecks from '@lucide/svelte/icons/list-checks';
+  import { classDialogs } from './classDialogs.svelte';
 
   // Base and unchained presets are built in; prestige (and any extra base) classes come from the bundled database on first open.
   let dbPresets = $state<ClassPreset[]>([]);
@@ -44,6 +47,8 @@
   /** Class the + Level button adds: the chosen one, else the favored class, else the first. */
   const newLevelId = $derived(newLevelClass || c.favoredClassIds[0] || c.classes[0]?.id);
   const BAB_LABEL = { full: 'full BAB', '3/4': '¾ BAB', '1/2': '½ BAB' };
+  const showProgression = (id: string) => classDialogs.showProgression(id);
+  const showLevelUp = (i: number) => classDialogs.showLevelUp(i);
 
   /** Add Knowledge rows for any knowledge class skills not already on the sheet. */
   function ensureKnowledgeRows(classSkills: string[]) {
@@ -82,7 +87,11 @@
 
   function onName(k: ClassDef) {
     const preset = findPreset(k.name, dbPresets);
-    if (preset && preset.id !== k.presetId) applyPreset(k, preset);
+    if (!preset || preset.id === k.presetId) return;
+    // Another class's archetypes don't apply.
+    if (k.presetId) k.archetypes = [];
+    applyPreset(k, preset);
+    showProgression(k.id);
   }
 
   /** Casting classes a level can advance, with the table's suggestion marked. */
@@ -121,6 +130,7 @@
     if (c.gestalt && newGestaltClass !== id) l.gestaltClassId = newGestaltClass;
     c.levels.push(l);
     l.spellAdvance = levelSpellAdvance(c, c.levels.length - 1);
+    showLevelUp(c.levels.length - 1);
   }
   const onLevelClass = (l: LevelEntry, i: number) => (l.spellAdvance = levelSpellAdvance(c, i));
   /** Gestalt side choices: none, or any class other than the level's own. */
@@ -173,6 +183,7 @@
     <p><strong>Skill ranks</strong> per level are the class's ranks + Int modifier (minimum 1), plus +1 for each favored class skill bonus.</p>
     <p><strong>Favored class bonuses</strong> only count on levels taken in a favored class (★). Half-elves (Multitalented) and the Favored Prestige Class feat allow a second ★. Fractional "other" bonuses add up as entered and round down when used.</p>
     {#if c.gestalt}<p><strong>Gestalt</strong> (Settings): each level can add a second class. The level takes the better hit die, BAB, saves and skill ranks of the two, gets both classes' skills and features, and earns one favored class bonus if either side is favored. A class can't be taken on both sides.</p>{/if}
+    <p><strong>Progression table</strong>: the table button beside a class name shows its levels, features and spells per day, with your levels highlighted. Pick archetypes there; they replace the features they change. <strong>+ Level</strong> opens a checklist of what to update (hit points, skill ranks, feats, ability scores, class features).</p>
     <p><strong>Prestige classes</strong> are in the class list under Prestige. Levels that grant "+1 level of existing spellcasting class" are ticked in Level history by the class table; tick an extra level for the Prestigious Spellcaster feat. Each tick adds one caster level (and spells per day) to that class's spells section.</p>
   {/snippet}
   <EditMode>
@@ -182,6 +193,9 @@
       <div class="stat-value text-lg">{d.level}</div>
       <div class="field-label">Level</div>
     </div>
+    {#if c.levels.length}
+      <button type="button" class="icon-btn opacity-60 hover:opacity-100 print:hidden" title="Level {c.levels.length} checklist" aria-label="Level {c.levels.length} checklist" onclick={() => showLevelUp(c.levels.length - 1)}><ListChecks size={16} /></button>
+    {/if}
     {#if c.xp.track !== 'milestone'}
       <div class="flex flex-1 flex-col items-end">
         <div class="flex items-center justify-end gap-1">
@@ -234,7 +248,11 @@
               <div class="flex items-center gap-1">
                 <Combobox class="w-full font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
                 {#if k.prestige}<span class="rounded-sm bg-ink/10 px-1 text-[0.6rem] uppercase" title="Prestige class">PrC</span>{/if}
+                {#if k.name.trim()}
+                  <button type="button" class="icon-btn shrink-0 opacity-60 hover:opacity-100 print:hidden" title="Class progression table" aria-label="{k.name} progression table" onclick={() => showProgression(k.id)}><TableProperties size={15} /></button>
+                {/if}
               </div>
+              {#if k.archetypes.length}<div class="pl-1 text-xs opacity-70" title="Archetypes">{k.archetypes.join(', ')}</div>{/if}
             </td>
             {#if editing}
               <td>
@@ -380,7 +398,10 @@
                   {/if}
                 </td>
               {/if}
-              <td><button type="button" class="icon-btn text-accent" aria-label="Remove level {i + 1}" onclick={() => c.levels.splice(i, 1)}>✕</button></td>
+              <td class="whitespace-nowrap">
+                <button type="button" class="icon-btn" title="Level-up checklist" aria-label="Level {i + 1} checklist" onclick={() => showLevelUp(i)}><ListChecks size={15} /></button>
+                <button type="button" class="icon-btn text-accent" aria-label="Remove level {i + 1}" onclick={() => c.levels.splice(i, 1)}>✕</button>
+              </td>
             </tr>
           {/each}
         </tbody>

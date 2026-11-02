@@ -52,6 +52,9 @@ const pick = async (combo: Locator, option: string) => {
   await combo.click();
   await page.locator('.select-list:popover-open').getByRole('option', { name: option, exact: true }).click();
 };
+/** Picking a class opens its progression table; + Level opens the level-up checklist. */
+const closeProgression = () => page.getByRole('dialog', { name: /progression$/ }).getByRole('button', { name: 'Close' }).click();
+const closeChecklist = () => page.getByRole('dialog', { name: /checklist$/ }).getByRole('button', { name: 'Done', exact: true }).click();
 const skillTotal = (name: string) =>
   page.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
 
@@ -228,6 +231,7 @@ await page.getByRole('button', { name: '+ Class' }).click();
 const nameInput = page.getByLabel('Class name').last();
 await nameInput.fill('Summoner');
 await nameInput.blur();
+await closeProgression();
 await toggleEdit('classes');
 const addSpellSection = async () => {
   await openSettings();
@@ -305,10 +309,13 @@ await prestigeName.fill('Eldritch');
 await page.locator('.select-list:popover-open').getByRole('option', { name: 'Eldritch Knight' }).waitFor();
 await prestigeName.press('ArrowDown');
 await prestigeName.press('Enter');
+await closeProgression();
 check('prestige badge', (await page.locator('[data-section=classes]').getByText('PrC', { exact: true }).count()) === 1);
 await pick(page.getByLabel('Class for new level'), 'Eldritch Knight');
 await page.getByRole('button', { name: '+ Level' }).click();
+await closeChecklist();
 await page.getByRole('button', { name: '+ Level' }).click();
+await closeChecklist();
 await openLevelHistory();
 const advance = page.getByLabel(/^Level \d+ advances Summoner spellcasting/);
 check('first EK level does not advance casting', !(await advance.first().isChecked()));
@@ -459,6 +466,7 @@ await page.getByRole('button', { name: '+ Class' }).click();
 const wizName = page.getByLabel('Class name').last();
 await wizName.fill('Wizard');
 await wizName.blur();
+await closeProgression();
 await openLevelHistory();
 const gestaltPicks = page.getByLabel(/^Gestalt class for level \d+$/);
 const levelCount = await gestaltPicks.count();
@@ -470,6 +478,54 @@ await openSettings();
 await page.getByLabel(/Gestalt \(each level/).uncheck();
 await goTab('Core');
 check('turning gestalt off restores Will', (await will()) === willBefore, String(await will()));
+
+console.log('— progression table');
+await goTab('Core');
+await page.getByRole('button', { name: 'Fighter progression table' }).click();
+const prog = page.getByRole('dialog', { name: 'Fighter progression' });
+await prog.locator('tbody tr').first().waitFor();
+check('20 fighter levels', (await prog.locator('tbody tr').count()) === 20);
+// Earlier checks add levels, so read the fighter and character levels off the sheet.
+const fighterLevel = Number(await page.locator('[data-section=classes] tbody tr').first().locator('td').nth(1).innerText());
+const totalLevel = Number(await page.locator('[data-section=classes] .stat-value').first().innerText());
+check('reached levels highlighted', (await prog.locator('tbody tr.reached').count()) === fighterLevel, `${await prog.locator('tbody tr.reached').count()} of ${fighterLevel}`);
+await expectText('next fighter level lands on the next character level', prog.locator('tbody tr').nth(fighterLevel).locator('td').last(), new RegExp(`^Lv ${totalLevel + 1}\\b`));
+await expectText('fighter 7 features', prog.locator('tbody tr').nth(6).locator('td').nth(5), /Armor Training \+2/);
+const archetypeBox = prog.getByLabel('Add an archetype');
+await archetypeBox.fill('Two-Handed Fighter');
+await page.locator('.select-list:popover-open').getByRole('option', { name: 'Two-Handed Fighter', exact: true }).click();
+check('archetype chip', (await prog.getByLabel('Remove Two-Handed Fighter').count()) === 1);
+const lv3 = prog.locator('tbody tr').nth(2);
+check('Overhand Chop at 3', (await lv3.getByRole('button', { name: 'Overhand Chop' }).count()) === 1);
+check('armor training 1 struck through', (await lv3.getByRole('button', { name: 'Armor Training +1' }).getAttribute('class'))?.includes('line-through') === true);
+await lv3.getByRole('button', { name: 'Overhand Chop' }).click();
+check('feature description shown', /two-handed/i.test(await prog.locator('footer').innerText()));
+await closeProgression();
+await expectText('archetype under class name', page.locator('[data-section=classes] [title=Archetypes]').first(), /^Two-Handed Fighter$/);
+
+console.log('— level-up checklist');
+await toggleEdit('classes');
+await pick(page.getByLabel('Class for new level'), 'Fighter');
+await page.getByRole('button', { name: '+ Level' }).click();
+const list = page.getByRole('dialog', { name: /checklist$/ });
+await list.getByText('class features').waitFor();
+const lvl = Number((await list.locator('h2').innerText()).match(/\d+/)![0]);
+await list.getByRole('button', { name: /^Average/ }).click();
+check('average HP filled in', Number(await list.getByLabel(/^HP rolled at level/).inputValue()) > 0);
+check('ability increase offered at a 4th level', (lvl % 4 === 0) === ((await list.getByText('Ability score increase').count()) === 1), `level ${lvl}`);
+check('feat item at odd levels', (lvl % 2 === 1) === ((await list.getByText(/feat for reaching level/).count()) === 1), `level ${lvl}`);
+const featureBoxes = list.locator('label:has(input[type=checkbox])').filter({ hasText: /new|improves/ });
+if (await featureBoxes.count()) {
+  const abilityRows = page.locator('[data-section=classAbilities] input[aria-label="Ability name"]');
+  await goTab('Character');
+  const before = await abilityRows.count();
+  await featureBoxes.first().locator('input').check();
+  check('ticking a feature adds a class ability', (await abilityRows.count()) === before + 1, `${before} → ${await abilityRows.count()}`);
+} else check('checklist lists fighter features', false, 'none listed');
+check('checklist stays open across tabs', await list.isVisible());
+await closeChecklist();
+await goTab('Core');
+await toggleEdit('classes');
 
 if (errors.length) {
   failed += errors.length;
