@@ -5,7 +5,7 @@ const KEY = Symbol('section');
 /** Shared by a Section with its contents: structural controls show only while editing. */
 export interface SectionContext {
   readonly editing: boolean;
-  /** The section has an Edit toggle (so "use ✎ to add" hints make sense). */
+  /** The section has an Edit toggle (so "use the pencil to add" hints make sense). */
   readonly editable: boolean;
 }
 

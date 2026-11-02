@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from 'svelte';
   import { moveItem } from '../arrays';
+  import EditHint from './EditHint.svelte';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -61,7 +62,7 @@
           {/if}
         </tr>
       {:else}
-        <tr class="print:hidden"><td colspan={cols + 1} class="py-2 text-center text-sm italic opacity-60">{empty}</td></tr>
+        <tr class="print:hidden"><td colspan={cols + 1} class="py-2 text-center text-sm italic opacity-60">{empty}{#if onadd || tools}<EditHint />{/if}</td></tr>
       {/each}
       <!-- One blank row on paper for handwritten additions. -->
       <tr class="print-row hidden print:table-row">

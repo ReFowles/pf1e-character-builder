@@ -5,6 +5,7 @@
   import { parseGp } from '../../lib/model/migrate';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
+  import EditHint from '../../lib/ui/EditHint.svelte';
   import DefenseStats from '../../lib/ui/DefenseStats.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicTable from '../../lib/ui/DynamicTable.svelte';
@@ -169,7 +170,7 @@
               <span class="chip">{r.name}</span>
             {/if}
           {:else}
-            {#if !editing}<span class="text-sm italic opacity-40 print:hidden">None</span>{/if}
+            {#if !editing}<span class="text-sm italic opacity-40 print:hidden">None<EditHint /></span>{/if}
           {/each}
           {#if editing}
             <button type="button" class="add-btn print:hidden" onclick={() => c.resistances.push(make.resistance())}>+ Resistance</button>

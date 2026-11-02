@@ -9,6 +9,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
+  import EditHint from '../../lib/ui/EditHint.svelte';
   import { gp, lb } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import { CONSUMABLE_CHARGES, CONSUMABLE_MAX_LEVEL, consumableName, consumablePrice, consumableSpec, type ConsumableKind } from '../../lib/rules/consumables';
@@ -183,7 +184,7 @@
               {/if}
             </tr>
           {:else}
-            <tr><td colspan="10" class="py-2 text-center text-sm italic opacity-60">No gear yet.</td></tr>
+            <tr><td colspan="10" class="py-2 text-center text-sm italic opacity-60">No gear yet.<EditHint /></td></tr>
           {/each}
         </tbody>
       </table>

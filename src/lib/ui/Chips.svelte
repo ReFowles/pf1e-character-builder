@@ -1,5 +1,6 @@
 <script lang="ts">
   import Combobox from './Combobox.svelte';
+  import EditHint from './EditHint.svelte';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -37,6 +38,6 @@
   {#if editing}
     <Combobox class="w-36 print:hidden" {placeholder} aria-label={label ?? placeholder} suggestions={suggestions.filter((s) => !items.includes(s))} bind:value={draft} oncommit={add} />
   {:else if !items.length}
-    <span class="text-sm italic opacity-40 print:hidden">None{#if section.editable} · ✎ to add{/if}</span>
+    <span class="text-sm italic opacity-40 print:hidden">None<EditHint /></span>
   {/if}
 </div>

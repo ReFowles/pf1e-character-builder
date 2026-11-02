@@ -1,6 +1,7 @@
 <script lang="ts" generics="T extends { id: string }">
   import type { Snippet } from 'svelte';
   import { moveItem } from '../arrays';
+  import EditHint from './EditHint.svelte';
   import { useSection } from './sectionContext';
 
   interface Props {
@@ -79,7 +80,7 @@
       {/if}
     </div>
   {:else}
-    <p class="text-sm italic opacity-60 print:hidden">{empty}</p>
+    <p class="text-sm italic opacity-60 print:hidden">{empty}{#if onadd || tools}<EditHint />{/if}</p>
   {/each}
   <div class="hidden rounded-sm border border-ink/20 p-1.5 print:block">
     {#if blank}{@render blank()}{:else}<div class="h-8"></div>{/if}
