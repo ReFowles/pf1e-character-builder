@@ -101,10 +101,10 @@
 
   // --- Class features
   const onSheet = (k: ClassDef, name: string) => c.classAbilities.some((a) => a.classId === k.id && isFeature(a.name, name));
-  function toggleFeature(k: ClassDef, f: ProgressionFeature, classLevel: number) {
+  function toggleFeature(k: ClassDef, f: ProgressionFeature) {
     const i = c.classAbilities.findIndex((a) => a.classId === k.id && isFeature(a.name, f.name));
     if (i >= 0) c.classAbilities.splice(i, 1);
-    else c.classAbilities.push({ ...make.classAbility(k.id, classLevel), name: f.name, description: f.description });
+    else c.classAbilities.push({ ...make.classAbility(k.id, level), name: f.name, description: f.description });
   }
 
   // Reminders the sheet can't check, ticked off by hand for this visit.
@@ -254,7 +254,7 @@
             {:else}
               {#each s.features as f, i (i)}
                 <label class="flex items-start gap-2" title={f.summary}>
-                  <input type="checkbox" class="mt-1" checked={onSheet(s.k, f.name)} onchange={() => toggleFeature(s.k, f, s.classLevel)} />
+                  <input type="checkbox" class="mt-1" checked={onSheet(s.k, f.name)} onchange={() => toggleFeature(s.k, f)} />
                   <span>
                     <span class={{ 'text-accent': f.archetype }}>{f.label}</span>
                     <span class="text-xs opacity-60">{f.first ? 'new' : 'improves'}{f.archetype ? ` · ${f.archetype}` : ''}</span>
