@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa';
 export default defineConfig({
   // dice-box loads its physics worlds with relative dynamic imports; leave it unbundled in dev.
   optimizeDeps: { exclude: ['@3d-dice/dice-box'] },
+  // dice-box's renderer and physics world (~0.7 MB and ~1.4 MB) are its own prebuilt chunks,
+  // loaded only when 3D dice roll; the app's chunks stay well under this.
+  build: { chunkSizeWarningLimit: 1500 },
   plugins: [
     tailwindcss(),
     svelte(),
