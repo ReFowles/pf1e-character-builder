@@ -92,6 +92,7 @@
       onclick={() => c.resources.forEach((r) => (r.used = 0))}>Refill all</button
     >
   </div>
+  <EditMode>{#snippet children(editing)}
   <DynamicTable bind:items={c.resources} cols={4} onadd={() => c.resources.push(make.resource())} addLabel="Pool" empty="Grit, Panache, Arcane Pool, Ki, Burn…">
     {#snippet head()}
       <th>Pool</th>
@@ -102,15 +103,23 @@
     {#snippet row(r)}
       <td data-label="Pool" class="min-w-20 align-middle"><input class="w-full font-semibold" bind:value={r.name} aria-label="Pool name" title={r.notes} /></td>
       {@const max = d.resources[r.id] ?? r.max}
-      <td data-label="Used" class="w-24 align-middle">
+      <td data-label="Used" class="cell-fit w-24 text-center align-middle">
         <div class="flex items-center">
           <button type="button" class="icon-btn print:hidden" aria-label="Regain one {r.name}" title="Regain one" onclick={() => (r.used = Math.max(0, r.used - 1))}>−</button>
           <NumInput class="font-bold print:invisible" bind:value={r.used} aria-label="{r.name} used" />
           <button type="button" class="icon-btn print:hidden" aria-label="Spend one {r.name}" title="Spend one" onclick={() => (r.used = Math.min(max, r.used + 1))}>+</button>
         </div>
       </td>
-      <td data-label="Current" class="w-12 text-center align-middle font-bold tabular-nums" title="Uses left"><span class="print:invisible">{max - r.used}</span></td>
-      <td data-label="Max" class="w-14 align-middle"><FormulaInput bind:value={r.max} bind:expr={r.maxExpr} result={d.resources[r.id] ?? r.max} label="{r.name} max" /></td>
+      <!-- Plain numbers sit in an input-height box so they line up with the inputs beside them. -->
+      <td data-label="Current" class="cell-fit w-14 text-center align-middle font-bold tabular-nums" title="Uses left"><span class="flex h-7 items-center justify-center print:invisible">{max - r.used}</span></td>
+      <td data-label="Max" class="cell-fit w-14 text-center align-middle tabular-nums">
+        {#if editing}
+          <FormulaInput bind:value={r.max} bind:expr={r.maxExpr} result={max} label="{r.name} max" />
+        {:else}
+          <span class="flex h-7 items-center justify-center" title={r.maxExpr ? `= ${r.maxExpr}` : undefined}>{max}</span>
+        {/if}
+      </td>
     {/snippet}
   </DynamicTable>
+  {/snippet}</EditMode>
 </Section>
