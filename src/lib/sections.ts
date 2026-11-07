@@ -34,7 +34,7 @@ export const SECTIONS: SectionDef[] = [
   { id: 'classes', title: 'Class Info', tab: 'core' },
   { id: 'skills', title: 'Skills', tab: 'core' },
   { id: 'readiness', title: 'Readiness', tab: 'core' },
-  { id: 'hp', title: 'Hit Points', tab: 'core' },
+  { id: 'hp', title: 'Health', tab: 'core' },
   { id: 'macros', title: 'Macros', tab: 'core' },
   { id: 'offense', title: 'Offense', tab: 'core' },
   { id: 'defense', title: 'Defense', tab: 'core' },

@@ -19,6 +19,10 @@
     c.hp.damage += amount - absorbed;
     amount = 0;
   }
+  function nonlethal() {
+    c.hp.nonlethal += amount;
+    amount = 0;
+  }
   function heal() {
     c.hp.damage = Math.max(0, c.hp.damage - amount);
     c.hp.nonlethal = Math.max(0, c.hp.nonlethal - amount);
@@ -63,11 +67,12 @@
 
   <HpBox max={hp.max} current={hp.current} hp={c.hp} {status} />
 
-  <div class="flex items-center gap-1 print:hidden">
-    <NumInput class="w-14" bind:value={amount} aria-label="Damage or healing amount" />
+  <div class="flex flex-wrap items-center gap-1 print:hidden">
+    <button type="button" class="btn" onclick={() => ((c.hp.damage = 0), (c.hp.nonlethal = 0))}>Full heal</button>
+    <NumInput class="ml-auto w-14" bind:value={amount} aria-label="Damage or healing amount" />
     <button type="button" class="btn" onclick={damage}>Damage</button>
+    <button type="button" class="btn" onclick={nonlethal} title="Add nonlethal damage">NL</button>
     <button type="button" class="btn" onclick={heal}>Heal</button>
-    <button type="button" class="btn ml-auto" onclick={() => ((c.hp.damage = 0), (c.hp.nonlethal = 0))}>Full heal</button>
   </div>
 
   <div class="flex flex-col">
