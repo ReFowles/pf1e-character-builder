@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { MYTHIC_PATHS } from '../../lib/model/types';
   import { PATH_HP } from '../../lib/rules/mythic';
   import { app } from '../../lib/state.svelte';
@@ -65,5 +66,5 @@
       <UsesTracker max={dm.powerMax} bind:used={m.powerUsed} label="Mythic power" />
     </div>
   {/if}
-  <Field label="Notes"><textarea rows="2" bind:value={m.notes}></textarea></Field>
+  <Field label="Notes"><textarea use:keepSize={"notes"} rows="2" bind:value={m.notes}></textarea></Field>
 </Section>

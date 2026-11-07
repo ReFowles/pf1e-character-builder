@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { make } from '../../lib/model/defaults';
   import type { UsePeriod } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
@@ -53,7 +54,7 @@
         {/each}
         {#if editing}<button type="button" class="self-start text-xs underline opacity-70 print:hidden" onclick={() => a.uses.push(make.useCounter())}>+ uses</button>{/if}
       </div>
-      <textarea class="mt-1 w-full text-sm" rows="1" bind:value={a.notes} placeholder="Notes" aria-label="Notes"></textarea>
+      <textarea use:keepSize={`${a.id}:notes`} class="mt-1 w-full text-sm" rows="1" bind:value={a.notes} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
     {#snippet blank()}<div class="h-14"></div>{/snippet}
   </DynamicList>

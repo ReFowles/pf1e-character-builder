@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import Field from '../../lib/ui/Field.svelte';
@@ -20,8 +21,8 @@
   </div>
   <div class="grid grid-cols-2 gap-x-2 gap-y-1 sm:grid-cols-4">
     {#each LONG as k (k)}
-      <Field label={k}><textarea rows="2" bind:value={bio[k]}></textarea></Field>
+      <Field label={k}><textarea use:keepSize={k} rows="2" bind:value={bio[k]}></textarea></Field>
     {/each}
   </div>
-  <Field label="Backstory & notes"><textarea rows="2" bind:value={bio.backstory}></textarea></Field>
+  <Field label="Backstory & notes"><textarea use:keepSize={"backstory"} rows="2" bind:value={bio.backstory}></textarea></Field>
 </Section>

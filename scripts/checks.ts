@@ -578,6 +578,20 @@ await toggleEdit('classes');
   await expectStat('Touch', '12', p);
   await p.getByRole('button', { name: 'Spend one Grit' }).click();
   await expectText('resource current = max − used', p.locator('[data-section=readiness] td[data-label=Current]').first(), /^0$/);
+
+  console.log('— textarea sizes persist');
+  await p.goto(`${args.url}/#character`);
+  const story = p.locator('[data-section=bio] textarea').last();
+  const before = await story.evaluate((el) => el.offsetHeight);
+  await story.dispatchEvent('pointerdown');
+  await story.evaluate((el) => (el.style.height = '150px'));
+  await p.evaluate(() => window.dispatchEvent(new PointerEvent('pointerup')));
+  await p.waitForTimeout(600); // saved with the character (debounced)
+  await p.reload();
+  check('resized textarea keeps its height after reload', (await story.evaluate((el) => el.offsetHeight)) === 150, String(await story.evaluate((el) => el.offsetHeight)));
+  await p.getByRole('button', { name: /^Reset text box sizes/ }).click();
+  check('reset sizes restores the default height', (await story.evaluate((el) => el.offsetHeight)) === before, `${before} vs ${await story.evaluate((el) => el.offsetHeight)}`);
+  check('reset button hides after reset', (await p.getByRole('button', { name: /^Reset text box sizes/ }).count()) === 0);
   await ctx.close();
 }
 

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { make } from '../../lib/model/defaults';
   import { uid } from '../../lib/model/id';
   import { partsOf } from '../../lib/dice/roll';
@@ -273,7 +274,7 @@
           </div>
         {/if}
       </td>
-      <td data-label="Notes" class="min-w-56 align-middle"><textarea rows="1" class="w-full" bind:value={s.notes} aria-label="Notes"></textarea></td>
+      <td data-label="Notes" class="min-w-56 align-middle"><textarea use:keepSize={`${s.id}:notes`} rows="1" class="w-full" bind:value={s.notes} aria-label="Notes"></textarea></td>
     {/snippet}
     {#snippet tools()}
       <DbPicker

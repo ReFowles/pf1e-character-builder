@@ -70,7 +70,25 @@ export function normalize(raw: unknown): Character {
   const merged = merge(newCharacter(), data, '') as Character;
   merged.schemaVersion = SCHEMA_VERSION;
   resolveLegacyResources(merged);
+  pruneTextSizes(merged);
   return merged;
+}
+
+/** Drop saved textarea heights for items that no longer exist ("<section>:<itemId>:<field>"). */
+function pruneTextSizes(c: Character) {
+  const ids = new Set<string>();
+  const walk = (v: unknown) => {
+    if (Array.isArray(v)) v.forEach(walk);
+    else if (isPlain(v)) {
+      if (typeof v.id === 'string') ids.add(v.id);
+      Object.values(v).forEach(walk);
+    }
+  };
+  walk(c);
+  for (const k of Object.keys(c.ui.textSizes)) {
+    const parts = k.split(':');
+    if (parts.length === 3 && !ids.has(parts[1])) delete c.ui.textSizes[k];
+  }
 }
 
 /** Resources migrated from "uses left" with a formula max: spent = resolved max − left. */

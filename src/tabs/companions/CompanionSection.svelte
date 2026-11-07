@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { partsOf } from '../../lib/dice/roll';
   import { rollable } from '../../lib/dice/rollable';
   import { roll } from '../../lib/dice/rolls.svelte';
@@ -372,7 +373,7 @@
             {/if}
             <Chips bind:items={x.special} placeholder="Add special…" label="Add special ability" />
           </div>
-          <Field label="Notes"><textarea rows="2" bind:value={x.notes} aria-label="Companion notes"></textarea></Field>
+          <Field label="Notes"><textarea use:keepSize={`${x.id}:notes`} rows="2" bind:value={x.notes} aria-label="Companion notes"></textarea></Field>
         </div>
       </div>
     {/snippet}

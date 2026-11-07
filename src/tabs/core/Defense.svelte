@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { moveItem } from '../../lib/arrays';
   import { make } from '../../lib/model/defaults';
   import { SAVES, SAVE_NAMES } from '../../lib/model/types';
@@ -127,7 +128,7 @@
       {#if editing}<td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>{/if}
     {/snippet}
     {#snippet detail(a)}
-      <textarea rows="1" class="w-full text-xs" bind:value={a.notes} placeholder="Notes (special materials, abilities…)" aria-label="{a.name || 'Armor'} notes"></textarea>
+      <textarea use:keepSize={`${a.id}:notes`} rows="1" class="w-full text-xs" bind:value={a.notes} placeholder="Notes (special materials, abilities…)" aria-label="{a.name || 'Armor'} notes"></textarea>
     {/snippet}
     {#snippet tools()}
       <DbPicker

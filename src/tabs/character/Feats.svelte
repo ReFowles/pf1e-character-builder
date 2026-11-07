@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { make } from '../../lib/model/defaults';
   import { uid } from '../../lib/model/id';
   import { bonusRowsFor, featKey } from '../../lib/rules/featBonuses';
@@ -54,7 +55,7 @@
       <td data-label="Source" class="w-32"><Combobox class="w-full" bind:value={f.source} suggestions={SOURCES} aria-label="Source" /></td>
     {/snippet}
     {#snippet detail(f)}
-      <textarea rows="1" class="w-full text-xs" bind:value={f.description} placeholder="Notes" aria-label="Notes"></textarea>
+      <textarea use:keepSize={`${f.id}:description`} rows="1" class="w-full text-xs" bind:value={f.description} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
     {#snippet tools()}
       <DbPicker

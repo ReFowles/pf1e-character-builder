@@ -4,6 +4,7 @@
   import { SECTION_BY_ID } from '../sections';
   import Chevron from './Chevron.svelte';
   import { setSectionContext } from './sectionContext';
+  import { hasSavedSizes, resetSizes } from './keepSize.svelte';
 
   interface Props {
     id: string;
@@ -72,6 +73,9 @@
       </button>
       <div class="flex items-center gap-1 print:hidden">
         {#if actions}{@render actions()}{/if}
+        {#if hasSavedSizes(id) && !ui.collapsed}
+          <button type="button" class="head-btn size-6 p-0" title="Reset text box sizes" aria-label="Reset text box sizes in {title}" onclick={() => resetSizes(id)}>↺</button>
+        {/if}
         {#if editActions && editable && editing && !ui.collapsed}{@render editActions()}{/if}
         {#if editable && !ui.collapsed}
           <button

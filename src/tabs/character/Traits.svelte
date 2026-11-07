@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { make } from '../../lib/model/defaults';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -28,7 +29,7 @@
       <td data-label="Category" class="w-28">{#if t.kind !== 'racial'}<input bind:value={t.category} placeholder="Combat, Faith…" aria-label="Category" />{/if}</td>
     {/snippet}
     {#snippet detail(t)}
-      <textarea rows="1" class="w-full text-xs" bind:value={t.description} placeholder="Description" aria-label="Description"></textarea>
+      <textarea use:keepSize={`${t.id}:description`} rows="1" class="w-full text-xs" bind:value={t.description} placeholder="Description" aria-label="Description"></textarea>
     {/snippet}
     {#snippet tools()}
       <button type="button" class="add-btn" onclick={() => c.traits.push(make.trait('character'))}>+ Character trait</button>

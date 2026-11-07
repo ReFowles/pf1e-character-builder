@@ -47,6 +47,8 @@
   }
   textarea {
     @apply py-1;
+    /* Height only: keepSize saves it, and a sideways drag would break the layout. */
+    resize: vertical;
   }
   input:focus,
   textarea:focus {

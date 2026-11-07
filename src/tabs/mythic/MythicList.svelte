@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import { make } from '../../lib/model/defaults';
   import type { MythicEntry } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
@@ -32,7 +33,7 @@
       <td data-label={nameLabel}><input class="w-full font-semibold" bind:value={e.name} aria-label={nameLabel} /></td>
     {/snippet}
     {#snippet detail(e)}
-      <textarea rows="1" class="w-full text-xs" bind:value={e.notes} placeholder="Notes" aria-label="Notes"></textarea>
+      <textarea use:keepSize={`${e.id}:notes`} rows="1" class="w-full text-xs" bind:value={e.notes} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
   </DynamicTable>
 </Section>
