@@ -527,6 +527,22 @@ await closeChecklist();
 await goTab('Core');
 await toggleEdit('classes');
 
+// Printing from a tab other than Core: the Core grid used to be laid out while
+// hidden (every height 0), so the sheet spilled onto a blank extra page.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p = await ctx.newPage();
+  await seedCharacter(p, fixture);
+  await p.goto(`${args.url}/#character`);
+  await p.waitForTimeout(300);
+  console.log('— print from another tab');
+  await p.evaluate(() => dispatchEvent(new Event('beforeprint')));
+  const pdf = await p.pdf({ format: 'Letter', printBackground: true, preferCSSPageSize: true });
+  const pages = (pdf.toString('latin1').match(/\/Type\s*\/Page[^s]/g) ?? []).length;
+  check('printing from the Character tab makes 2 pages (Core, Character; Notes off)', pages === 2, String(pages));
+  await ctx.close();
+}
+
 // A fresh copy of the fixture, so these don't depend on the edits above.
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
@@ -592,6 +608,7 @@ await toggleEdit('classes');
   await p.getByRole('button', { name: /^Reset text box sizes/ }).click();
   check('reset sizes restores the default height', (await story.evaluate((el) => el.offsetHeight)) === before, `${before} vs ${await story.evaluate((el) => el.offsetHeight)}`);
   check('reset button hides after reset', (await p.getByRole('button', { name: /^Reset text box sizes/ }).count()) === 0);
+
   await ctx.close();
 }
 

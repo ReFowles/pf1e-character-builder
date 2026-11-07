@@ -29,9 +29,25 @@ export function spillover(node: HTMLElement, options: SpilloverOptions) {
     }
   }
 
+  // Measuring needs the grid on screen. While its tab isn't the open one, show
+  // the tab for the length of the measurement (synchronous, so it never paints):
+  // otherwise every height reads 0, and printing from another tab (beforeprint
+  // fires under screen styles) lays the Core page out wrong and spills a blank page.
+  function layout() {
+    if (node.getClientRects().length) return measure();
+    const host = node.closest<HTMLElement>('.screen-hidden');
+    if (!host) return;
+    host.classList.remove('screen-hidden');
+    try {
+      measure();
+    } finally {
+      host.classList.add('screen-hidden');
+    }
+  }
+
   // Synchronous on purpose: measuring the all-narrow layout and applying the
   // result happens inside one callback, before paint, so nothing flickers.
-  function layout() {
+  function measure() {
     const { right, items } = parts();
     if (!right || getComputedStyle(node).display !== 'grid') return clear();
     items.forEach((el, i) => {
@@ -65,6 +81,7 @@ export function spillover(node: HTMLElement, options: SpilloverOptions) {
     for (const el of node.querySelectorAll(':scope > *, :scope > .core-right > *')) ro.observe(el);
   };
   observe();
+  layout();
   // Sections can appear or disappear (hidden in config): re-observe and re-layout.
   const mo = new MutationObserver(() => {
     observe();
