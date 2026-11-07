@@ -527,6 +527,60 @@ await closeChecklist();
 await goTab('Core');
 await toggleEdit('classes');
 
+// A fresh copy of the fixture, so these don't depend on the edits above.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 900 } });
+  const p = await ctx.newPage();
+  p.on('pageerror', (e) => errors.push(e.message));
+  await seedCharacter(p, fixture);
+  await p.goto(`${args.url}/#core`);
+  const edit = (section: string) => p.locator(`[data-section=${section}] .section-head`).getByRole('button', { name: /^(Edit|Done editing) / }).click();
+  const choose = async (combo: Locator, option: string) => {
+    await combo.click();
+    await p.locator('.select-list:popover-open').getByRole('option', { name: option, exact: true }).click();
+  };
+  const total = (name: string) => p.locator('[data-section=skills] table').last().locator('tr', { hasText: name }).locator('td').nth(4);
+  const num = async (loc: Locator) => Number((await loc.innerText()).match(/[+-]?\d+/)![0]);
+  const addMacro = async (name: string) => {
+    await choose(p.getByLabel('Add macro from library'), name);
+    await p.getByLabel(`Activate ${name}`, { exact: true }).check({ force: true });
+  };
+
+  console.log('— macro library: Tears to Wine, Inspiration, Blur');
+  const perception = await num(total('Perception'));
+  const climb = await num(total('Climb'));
+  await edit('macros');
+  await addMacro('Tears to Wine');
+  check('Tears to Wine raises Wis skills', (await num(total('Perception'))) === perception + 2, `${perception} → ${await num(total('Perception'))}`);
+  check('Tears to Wine leaves Str skills', (await num(total('Climb'))) === climb);
+  await addMacro('Inspiration');
+  await expectText('skill shows inspiration die', total('Perception'), /\+1d6$/);
+  await total('Perception').locator('[role=button]').click();
+  await p.getByRole('button', { name: /^Roll log/ }).click();
+  const entries = p.locator('[data-roll]');
+  await entries.first().waitFor();
+  await expectText('skill roll adds the die', entries.last(), /inspiration/i);
+  const n = await entries.count();
+  await entries.last().getByRole('button', { name: /^Reroll/ }).click();
+  await p.waitForFunction((k) => document.querySelectorAll('[data-roll]').length === k, n + 1);
+  check('reroll adds a log entry', (await entries.count()) === n + 1);
+  await p.getByRole('button', { name: 'Close', exact: true }).click();
+  await addMacro('Blur');
+  await expectText('blur conceals', p.locator('[data-section=defense]').getByTitle(/Miss chance/).first(), /Concealed\s+20%/i);
+  await edit('macros');
+
+  console.log('— natural armor and resources');
+  await edit('defense');
+  await p.getByLabel('Natural armor bonus').fill('2');
+  await p.getByLabel('Natural armor bonus').blur();
+  await edit('defense');
+  await expectStat('AC', '22', p);
+  await expectStat('Touch', '12', p);
+  await p.getByRole('button', { name: 'Spend one Grit' }).click();
+  await expectText('resource current = max − used', p.locator('[data-section=readiness] td[data-label=Current]').first(), /^0$/);
+  await ctx.close();
+}
+
 if (errors.length) {
   failed += errors.length;
   console.log('page errors:', errors);

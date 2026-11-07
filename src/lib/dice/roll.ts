@@ -61,7 +61,8 @@ const diceSum = (dice: DieResult[]) => dice.reduce((s, d) => s + d.sign * d.valu
 
 function parsedExtras(spec: RollSpec) {
   return (spec.extras ?? []).flatMap((e) => {
-    const n = parseNotation(e.notation);
+    // Extras may be flat amounts (+1 per sneak attack die).
+    const n = parseNotation(e.notation, true);
     return n ? [{ label: e.label, n }] : [];
   });
 }

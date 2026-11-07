@@ -6,7 +6,7 @@
     /** Attack bonuses joined by "/", e.g. "+11/+6/+1". */
     text: string;
     /** Make each attack clickable: the nth piece rolls d20 + (bonus − 5n). */
-    onroll?: { title: string; subtitle?: string; bonus: number; parts: RollPart[] };
+    onroll?: { title: string; subtitle?: string; bonus: number; parts: RollPart[]; extras?: { label: string; notation: string }[] };
   }
   let { text, onroll }: Props = $props();
   // "+15", "/+10", "/+5": each piece stays whole, so a line can only break before a slash.
@@ -18,6 +18,7 @@
           subtitle: onroll.subtitle,
           bonus: onroll.bonus - 5 * i,
           parts: i ? [...onroll.parts, { source: `Iterative attack ${i + 1}`, value: -5 * i }] : onroll.parts,
+          extras: onroll.extras,
         }
       : { title: '', bonus: 0, disabled: true };
 </script>

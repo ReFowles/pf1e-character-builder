@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { parseFcbNote, parseGp } from './migrate';
+import { SCHEMA_VERSION } from './defaults';
 import { normalize } from './normalize';
 import { newCharacter } from './defaults';
 
@@ -23,7 +24,7 @@ describe('migrate v1 -> v2', () => {
 
   it('converts speeds, fcbs, prices and prunes unused knowledges', () => {
     const c = normalize(v1);
-    expect(c.schemaVersion).toBe(9);
+    expect(c.schemaVersion).toBe(SCHEMA_VERSION);
     expect(c.speeds.other.map((s) => [s.mode, s.value, s.maneuverability])).toEqual([
       ['fly', 60, 'good'],
       ['climb', 20, ''],
@@ -124,7 +125,7 @@ describe('migrate v6 -> v7', () => {
         { id: 'b', name: 'poison', value: '' },
       ],
     });
-    expect(c.schemaVersion).toBe(9);
+    expect(c.schemaVersion).toBe(SCHEMA_VERSION);
     expect(c.resistances.map((r) => r.name)).toEqual(['fire 10', 'poison']);
     expect('value' in c.resistances[0]).toBe(false);
   });
@@ -158,7 +159,7 @@ describe('migrate v7 -> v8', () => {
         { id: 'c', name: 'Longbow', crit: '×3' },
       ],
     });
-    expect(c.schemaVersion).toBe(9);
+    expect(c.schemaVersion).toBe(SCHEMA_VERSION);
     expect(c.weapons.map((w) => [w.critRange, w.crit])).toEqual([
       [18, '×2'],
       [20, '×2'],
@@ -172,5 +173,28 @@ describe('migrate v8 -> v9', () => {
   it('shows the Spells tab only for characters that already cast', () => {
     expect(normalize({ schemaVersion: 8, spellcasting: [{ id: 'b', table: 'wizard' }] }).spellsTab).toBe(true);
     expect(normalize({ schemaVersion: 8 }).spellsTab).toBe(false);
+  });
+});
+
+describe('migrate v9 -> v10', () => {
+  it('turns ammo text into rows and resources from uses left into uses spent', () => {
+    const c = normalize({
+      schemaVersion: 9,
+      abilities: { wis: { base: 16 } },
+      weapons: [
+        { id: 'a', name: 'Longbow', ammo: '20 arrows' },
+        { id: 'b', name: 'Sword', ammo: '' },
+      ],
+      resources: [
+        { id: 'r1', name: 'Grit', max: 3, maxExpr: '', current: 1 },
+        { id: 'r2', name: 'Ki', max: 0, maxExpr: '@wis.mod', current: 2 },
+      ],
+    });
+    expect(c.weapons[0].ammo.map((a) => [a.name, a.count])).toEqual([['20 arrows', 0]]);
+    expect(c.weapons[1].ammo).toEqual([]);
+    expect(c.resources.map((r) => r.used)).toEqual([2, 1]);
+    expect(c.resources.some((r) => 'legacyCurrent' in r || 'current' in r)).toBe(false);
+    expect(c.concealment).toBe(0);
+    expect(c.ui.textSizes).toEqual({});
   });
 });

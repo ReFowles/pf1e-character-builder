@@ -9,6 +9,7 @@ import type {
   CompanionAttack,
   CompanionKind,
   CompanionSkill,
+  AmmoEntry,
   ArmorPiece,
   Character,
   ClassAbility,
@@ -40,7 +41,7 @@ import type {
   EidolonEvolution,
 } from './types';
 
-export const SCHEMA_VERSION = 9;
+export const SCHEMA_VERSION = 10;
 
 const ability = (): AbilityScore => ({
   base: 10,
@@ -113,10 +114,11 @@ export const make = {
     type: '',
     weight: 0,
     price: 0,
-    ammo: '',
+    ammo: [],
     notes: '',
     extraDamage: [],
   }),
+  ammo: (name = ''): AmmoEntry => ({ id: uid(), name, count: 0 }),
   extraDamage: (): ExtraDamage => ({ id: uid(), dice: '', type: '', active: true }),
   armor:(kind: 'armor' | 'shield' = 'armor'): ArmorPiece => ({
     id: uid(),
@@ -135,7 +137,7 @@ export const make = {
     notes: '',
   }),
   resistance: (): Resistance => ({ id: uid(), name: '' }),
-  resource: (): Resource => ({ id: uid(), name: '', max: 0, maxExpr: '', current: 0, notes: '' }),
+  resource: (): Resource => ({ id: uid(), name: '', max: 0, maxExpr: '', used: 0, notes: '' }),
   useCounter: (): UseCounter => ({ id: uid(), max: 1, maxExpr: '', per: 'day', used: 0 }),
   specialAbility: (): SpecialAbility => ({
     id: uid(),
@@ -154,7 +156,7 @@ export const make = {
     damageDice: [],
     notes: '',
   }),
-  macroDice: (): MacroDice => ({ id: uid(), count: '1', sides: 6, type: '', applies: 'all' }),
+  macroDice: (): MacroDice => ({ id: uid(), count: '1', sides: 6, type: '', bonus: '', applies: 'all' }),
   trait: (kind: Trait['kind'] = 'character'): Trait => ({
     id: uid(),
     name: '',
@@ -312,6 +314,7 @@ export function classKnowledges(classSkills: string[]): string[] {
 export const defaultUi = (): Character['ui'] => ({
   sections: { macros: { hidden: false, collapsed: false, printHidden: true }, 'tab:notes': { hidden: false, collapsed: false, printHidden: true } },
   mobileOrder: {},
+  textSizes: {},
 });
 
 export function newCharacter(): Character {
@@ -371,6 +374,7 @@ export function newCharacter(): Character {
     naturalArmor: 0,
     resistances: [],
     spellResistance: 0,
+    concealment: 0,
     damageReduction: '',
     resources: [],
     specialAbilities: [],

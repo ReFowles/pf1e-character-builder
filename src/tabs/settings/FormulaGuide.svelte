@@ -13,7 +13,7 @@
     { ref: '@level', meaning: 'Total character level', key: 'level' },
     { ref: '@hd', meaning: 'Hit dice (same as @level)', key: 'hd' },
     { ref: '@bab', meaning: 'Base attack bonus', key: 'bab' },
-    { ref: '@cl', meaning: 'Caster level of the first spellcasting section (not available in macros)', key: 'cl' },
+    { ref: '@cl', meaning: 'Caster level of the first spellcasting section, 0 without one (in macros: before caster level bonuses)', key: 'cl' },
     ...ABILITIES.flatMap((a) => [
       { ref: `@${a}`, meaning: `${ABILITY_NAMES[a]} score, including temporary changes`, key: a },
       { ref: `@${a}.mod`, meaning: `${ABILITY_NAMES[a]} modifier`, key: `${a}.mod` },
@@ -21,6 +21,8 @@
   ]);
   /** Class level references for this character, e.g. class.arcane-trickster.level. */
   const classRefs = $derived(Object.keys(vars).filter((k) => k.startsWith('class.') && k.endsWith('.level')));
+  /** Macro dice references for this character, e.g. macro.sneak-attack.dice. */
+  const macroRefs = $derived(Object.keys(vars).filter((k) => k.startsWith('macro.')));
 
   const FUNCS = [
     { fn: 'floor(x)', does: 'Round down', ex: 'floor(7 / 2)', out: '3' },
@@ -35,7 +37,9 @@
     { what: 'Power Attack attack penalty', f: '-1 - floor(@bab / 4)', where: 'Macro effect on attack.melee' },
     { what: 'Power Attack damage', f: '2 * (1 + floor(@bab / 4))', where: 'Macro effect on damage.melee' },
     { what: 'Smite Evil attack and AC', f: '@cha.mod', where: 'Macro effects on attack and ac (deflection)' },
-    { what: 'Sneak attack dice', f: 'ceil(@class.rogue.level / 2)', where: 'Macro damage dice count, d6, precision' },
+    { what: 'Sneak attack dice', f: 'ceil(@class.rogue.level / 2)', where: 'Macro extra dice count, d6, precision, to all weapons' },
+    { what: '+1 damage per sneak attack die', f: '@macro.sneak-attack.dice', where: 'Bonus of another macro\'s extra dice (0 dice), precision' },
+    { what: 'Tears to Wine (+2, +5 at CL 9, +10 at CL 15)', f: '2 + 3 * min(1, floor(@cl / 9)) + 5 * min(1, floor(@cl / 15))', where: 'Macro effects on skills.int and skills.wis (enhancement)' },
     { what: 'Divine Favor (+1 per 3 levels, 1 to 3)', f: 'min(3, max(1, floor(@class.cleric.casterLevel / 3)))', where: 'Macro effect on attack and damage (luck)' },
     { what: 'Rage rounds per day', f: '4 + @con.mod + 2 * (@class.barbarian.level - 1)', where: 'Resource max' },
     { what: 'Ki pool', f: 'floor(@class.monk.level / 2) + @wis.mod', where: 'Resource max' },
@@ -48,10 +52,10 @@
   const GROUPS: { title: string; test: (k: string) => boolean }[] = [
     { title: 'Ability scores', test: (k) => k.startsWith('ability.') },
     { title: 'Offense', test: (k) => /^(attack|damage|cmb)/.test(k) },
-    { title: 'Defense', test: (k) => /^(ac|cmd|save|hp\.)/.test(k) },
+    { title: 'Defense', test: (k) => /^(ac|cmd|save|hp\.|concealment)/.test(k) },
     { title: 'Movement, size and carrying', test: (k) => /^(init|speed|size\.|capacity\.)/.test(k) },
     { title: 'Spellcasting', test: (k) => /^(cl|concentration|spell\.)/.test(k) },
-    { title: 'Skills', test: (k) => k === 'skills' || k.startsWith('skill.') },
+    { title: 'Skills', test: (k) => k === 'skills' || k.startsWith('skills.') || k.startsWith('skill.') },
   ];
 
   let trial = $state('3 + @cha.mod');
@@ -62,7 +66,7 @@
   <div class="flex flex-col gap-4 text-sm">
     <div class="flex flex-col gap-1">
       <p>
-        Formulas work in macro effect values, the number of macro damage dice, resource maximums (Readiness) and special ability max uses. A formula is a
+        Formulas work in macro effect values, macro extra dice (count and bonus), resource maximums (Readiness) and special ability max uses. A formula is a
         number, a reference such as <code>@bab</code>, a function such as <code>floor(…)</code>, or any mix of them.
       </p>
       <label class="field max-w-xl">
@@ -125,6 +129,18 @@
               <td>That class's caster level, counting prestige class advancement</td>
               <td></td>
             </tr>
+            <tr class="border-b border-ink/10">
+              <td class="font-mono text-xs whitespace-nowrap">@macro.&lt;name&gt;.dice</td>
+              <td>Dice a macro adds while it's on (0 while off). The name is a library macro's id or the macro's name in lowercase with dashes: <code>@macro.sneak-attack.dice</code></td>
+              <td></td>
+            </tr>
+            {#each macroRefs as k (k)}
+              <tr class="border-b border-ink/10">
+                <td class="font-mono text-xs whitespace-nowrap">@{k}</td>
+                <td class="italic opacity-70">This character</td>
+                <td class="text-center">{show(k)}</td>
+              </tr>
+            {/each}
             {#each classRefs as k (k)}
               <tr class="border-b border-ink/10">
                 <td class="font-mono text-xs whitespace-nowrap">@{k}</td>
@@ -150,11 +166,17 @@
             {/each}
           </tbody>
         </table>
-        <h3 class="mt-3 font-semibold">Macro damage dice</h3>
+        <h3 class="mt-3 font-semibold">Macro extra dice</h3>
         <p>
-          <strong>+ damage dice</strong> adds dice to weapon damage rolls: a count (number or formula), the die size, a damage type and which weapons
-          (all, melee or ranged). These dice are never multiplied on a critical hit, like sneak attack.
+          <strong>+ extra dice</strong> adds dice to rolls while the macro is on: a count (number or formula, 0 for none), the die size, an optional flat
+          bonus (number or formula), a damage type or label, and what they apply to:
         </p>
+        <ul class="list-disc pl-5">
+          <li><strong>Damage</strong>: all weapons, melee or ranged weapons, or one weapon. Never multiplied on a critical hit, like sneak attack.</li>
+          <li><strong>Attack rolls</strong> and <strong>saving throws</strong>, e.g. Inspiration spent on an attack or save.</li>
+          <li><strong>Skill checks</strong>: all skills, all skills of one ability, one skill or one Craft/Perform/Profession, e.g. Inspiration.</li>
+        </ul>
+        <p>A macro can build on another's dice with <code>@macro.&lt;name&gt;.dice</code>: 0 dice with a bonus of <code>@macro.sneak-attack.dice</code> adds +1 per sneak attack die, and only while Sneak Attack is on.</p>
       </div>
 
       <div class="flex flex-col gap-1">
@@ -176,7 +198,13 @@
       <p>
         The key decides what an effect changes; type it or pick it from the list in the macro editor. A broad key covers everything under it:
         <code>attack</code> reaches melee and ranged, <code>save</code> all three saves, <code>skill.knowledge</code> every Knowledge. A Craft, Perform or
-        Profession skill also takes its subtype in lowercase with dashes: <code>skill.craft.alchemy</code>.
+        Profession skill also takes its subtype in lowercase with dashes: <code>skill.craft.alchemy</code>. <code>skills.int</code> reaches every
+        Intelligence-based skill.
+      </p>
+      <p>
+        <code>ac.armor</code>, <code>ac.shield</code> and <code>ac.natural</code> total their own bonuses before they join AC, so an enhancement bonus
+        to natural armor (amulet of natural armor) doesn't compete with an enhancement bonus to armor. <code>concealment</code> takes the highest miss
+        chance instead of adding them up.
       </p>
       <div class="columns-1 gap-4 sm:columns-2">
         {#each GROUPS as g (g.title)}

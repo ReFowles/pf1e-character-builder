@@ -1,5 +1,6 @@
 import { SCHEMA_VERSION, make, newCharacter } from './defaults';
 import { migrate } from './migrate';
+import { derive } from '../rules/derive';
 import type { Character } from './types';
 
 type Plain = Record<string, unknown>;
@@ -16,6 +17,7 @@ const ITEM_FACTORIES: Record<string, () => unknown> = {
   bonuses: make.bonus,
   weapons: make.weapon,
   'weapons.extraDamage': make.extraDamage,
+  'weapons.ammo': make.ammo,
   armor: () => make.armor(),
   resistances: make.resistance,
   resources: make.resource,
@@ -67,5 +69,18 @@ export function normalize(raw: unknown): Character {
   const data = migrate(isPlain(raw) ? raw : {});
   const merged = merge(newCharacter(), data, '') as Character;
   merged.schemaVersion = SCHEMA_VERSION;
+  resolveLegacyResources(merged);
   return merged;
+}
+
+/** Resources migrated from "uses left" with a formula max: spent = resolved max − left. */
+function resolveLegacyResources(c: Character) {
+  type Legacy = Character['resources'][number] & { legacyCurrent?: number };
+  const pending = (c.resources as Legacy[]).filter((r) => typeof r.legacyCurrent === 'number');
+  if (!pending.length) return;
+  const max = derive(c).resources;
+  for (const r of pending) {
+    r.used = Math.max(0, (max[r.id] ?? r.max) - (r.legacyCurrent ?? 0));
+    delete r.legacyCurrent;
+  }
 }

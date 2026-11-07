@@ -60,6 +60,14 @@ export interface SkillDerived {
   /** Trained-only skill with no ranks. */
   unusable: boolean;
   breakdown: Total;
+  /** Dice rolled along with the check while a macro is active (Inspiration +1d6). */
+  extraDice: RollExtra[];
+}
+
+/** Dice (or a flat amount) a macro adds to a roll; `label` names the macro. */
+export interface RollExtra {
+  label: string;
+  notation: string;
 }
 
 export interface WeaponDerived {
@@ -71,6 +79,8 @@ export interface WeaponDerived {
   damageBreakdown: Total;
   /** Active extra damage with rollable dice, e.g. { notation: '1d6', type: 'fire' }; `macro` names a macro that adds it. */
   extraDamage: { notation: string; type: string; macro?: string }[];
+  /** Macro dice rolled along with each attack roll. */
+  attackDice: RollExtra[];
 }
 
 /** Per-category sums for carried weight (lb) or owned value (gp). */
@@ -123,18 +133,27 @@ export interface Derived {
   mods: Record<Ability, number>;
   bab: number;
   attack: { melee: Total; ranged: Total };
+  /** Macro dice rolled with melee / ranged attack rolls. */
+  attackDice: { melee: RollExtra[]; ranged: RollExtra[] };
   cmb: Total;
   cmd: Total;
   cmdFlatFooted: number;
   init: Total;
   saves: Record<Save, Total>;
+  /** Macro dice rolled along with each saving throw. */
+  saveDice: Record<Save, RollExtra[]>;
   /** Class base saves before ability modifiers and bonuses (familiars borrow these). */
   baseSaves: Record<Save, number>;
   ac: { normal: Total; touch: Total; flatFooted: Total };
+  /** Natural armor: base plus bonuses to it (amulet of natural armor), stacked on their own. */
+  naturalArmor: Total;
+  /** Miss chance (%): the highest of the base value and `concealment` bonuses; they don't stack. */
+  concealment: { total: number; sources: { source: string; value: number }[] };
   maxDex: number | null;
   acp: number;
   spellFailure: number;
-  speed: { base: number; encumbered: boolean };
+  /** `reduced` is the calculated encumbered speed; `reason` says what slows you ('' when nothing does). */
+  speed: { base: number; encumbered: boolean; reduced: number; reason: string };
   hp: { max: Total; current: number; perLevel: number[] };
   skills: Record<string, SkillDerived>;
   skillRanks: { spent: number; available: number };
@@ -158,7 +177,7 @@ export interface Derived {
   /** Max uses per use-counter id. */
   uses: Record<string, number>;
   vars: Vars;
-  /** Macro effects whose formula failed, by effect id. */
+  /** Macro effects and dice whose formula failed, by id. */
   macroErrors: Record<string, true>;
   conditionNotes: string[];
 }
@@ -237,20 +256,22 @@ export function derive(c: Character): Derived {
   }
 
   const equipped = c.armor.filter((a) => a.equipped);
+  // Armor, shield and natural armor each total their own bonuses first (an
+  // enhancement to armor doesn't compete with one to natural armor); see Defense.
   for (const a of equipped) {
-    set.add({
-      key: 'ac',
-      value: a.acBonus + a.enhancement,
-      type: a.kind === 'shield' ? 'shield' : 'armor',
-      source: a.name || (a.kind === 'shield' ? 'Shield' : 'Armor'),
-    });
+    const key = a.kind === 'shield' ? 'ac.shield' : 'ac.armor';
+    const name = a.name || (a.kind === 'shield' ? 'Shield' : 'Armor');
+    set.add(
+      { key, value: a.acBonus, type: a.kind === 'shield' ? 'shield' : 'armor', source: name },
+      { key, value: a.enhancement, type: 'enhancement', source: `${name} enhancement` },
+    );
   }
   for (const a of equipped) {
     if (a.nonProficient && a.checkPenalty) {
       set.add({ key: 'attack', value: -Math.abs(a.checkPenalty), type: 'untyped', source: `${a.name || 'Armor'} (not proficient)` });
     }
   }
-  set.add({ key: 'ac', value: c.naturalArmor, type: 'natural', source: 'Natural armor' });
+  set.add({ key: 'ac.natural', value: c.naturalArmor, type: 'natural', source: 'Natural armor' });
 
   let loseDex = false;
   const conditionNotes: string[] = [];
@@ -285,7 +306,7 @@ export function derive(c: Character): Derived {
     }
   }
   const makeVars = (): Vars => {
-    const v: Vars = { level, bab, hd: level, ...classVars };
+    const v: Vars = { level, bab, hd: level, cl: 0, ...classVars };
     for (const a of ABILITIES) {
       const score = scoreOf(a, true).total;
       v[a] = score;
@@ -296,14 +317,37 @@ export function derive(c: Character): Derived {
 
   // --- Macros -------------------------------------------------------------
   const preVars = makeVars();
+  // Caster level for macro formulas (Tears to Wine): the first spellcasting block, before CL bonuses.
+  const firstBlock = c.spellcasting[0];
+  if (firstBlock) preVars.cl = (firstBlock.classId ? (castingLevels[firstBlock.classId] ?? 0) : firstBlock.casterLevel) + firstBlock.casterLevelMisc;
   const macroErrors: Record<string, true> = {};
-  const macroDice: { notation: string; type: string; macro: string; applies: 'all' | 'melee' | 'ranged' }[] = [];
+  const activeMacros = c.macros.filter((m) => m.active);
+  // Pass 1: each macro's dice count as @macro.<slug>.dice (0 while off), so a
+  // macro can build on another's dice (+1 damage per sneak attack die).
+  const macroVars: Vars = {};
   for (const m of c.macros) {
-    if (!m.active) continue;
+    const id = macroSlug(m);
+    if (id) macroVars[`macro.${id}.dice`] = 0;
+  }
+  for (const m of activeMacros) {
+    const id = macroSlug(m);
+    if (!id) continue;
+    for (const x of m.damageDice) macroVars[`macro.${id}.dice`] += Math.max(0, Math.trunc(tryEvaluate(x.count, { ...preVars, ...macroVars }, 0)));
+  }
+  Object.assign(preVars, macroVars);
+  // Pass 2: dice with those vars, then effects.
+  const macroDice: (RollExtra & { type: string; applies: string })[] = [];
+  for (const m of activeMacros) {
     for (const x of m.damageDice) {
       const count = Math.trunc(tryEvaluate(x.count, preVars, NaN));
-      if (Number.isNaN(count)) macroErrors[x.id] = true;
-      else if (count > 0 && x.sides >= 2) macroDice.push({ notation: `${count}d${x.sides}`, type: x.type.trim(), macro: m.name, applies: x.applies });
+      const flat = x.bonus.trim() ? Math.trunc(tryEvaluate(x.bonus, preVars, NaN)) : 0;
+      if (Number.isNaN(count) || Number.isNaN(flat)) {
+        macroErrors[x.id] = true;
+        continue;
+      }
+      const dice = count > 0 && x.sides >= 2 ? [{ count, sides: x.sides, sign: 1 as const }] : [];
+      if (!dice.length && !flat) continue;
+      macroDice.push({ notation: formatNotation({ dice, modifier: flat }), type: x.type.trim(), label: m.name, applies: x.applies });
     }
     for (const e of m.effects) {
       const value = tryEvaluate(e.value, preVars, NaN);
@@ -314,6 +358,9 @@ export function derive(c: Character): Derived {
       set.add({ key: e.key, value: Math.trunc(value), type: e.type, source: m.name, temp: true });
     }
   }
+  /** Macro dice whose target is one of `targets`, for a roll's extras. */
+  const diceFor = (targets: string[]): RollExtra[] =>
+    macroDice.filter((x) => targets.includes(x.applies)).map(({ label, notation }) => ({ label, notation }));
 
   // --- Size (after macros, so Enlarge Person and the like shift it) -------
   const sizeSteps = set.total(['size.steps']).total;
@@ -344,7 +391,7 @@ export function derive(c: Character): Derived {
     };
     mods[a] = abilityMod(temp.total);
   }
-  const vars = makeVars();
+  const vars = { ...makeVars(), ...macroVars };
 
   // --- Favored class bonuses ----------------------------------------------
   const otherFcb = new Map<string, ReturnType<typeof parseFraction>>();
@@ -394,18 +441,36 @@ export function derive(c: Character): Derived {
   const acp = Math.min(armorAcp, loadPen.acp);
   const spellFailure = equipped.reduce((s, a) => s + a.spellFailure, 0);
 
-  const encumbered =
-    load !== 'light' || equipped.some((a) => a.kind === 'armor' && isEncumberingArmor(a.category));
-  const speedBase = c.speeds.base + set.total(['speed']).total;
+  const heavyArmor = equipped.filter((a) => a.kind === 'armor' && isEncumberingArmor(a.category));
+  const encumbered = load !== 'light' || heavyArmor.length > 0;
+  const speedBonus = set.total(['speed']).total;
+  const speedBase = c.speeds.base + speedBonus;
+  const reduced = reducedSpeed(speedBase);
   const speed = {
-    base: encumbered ? c.speeds.armored || reducedSpeed(speedBase) : speedBase,
+    base: encumbered ? (c.speeds.armored ? c.speeds.armored + speedBonus : reduced) : speedBase,
     encumbered,
+    reduced,
+    reason: [...heavyArmor.map((a) => `${a.name || 'Armor'} (${a.category.trim()})`), ...(load !== 'light' ? [`${load} load`] : [])].join(', '),
   };
 
   // --- Defense ------------------------------------------------------------
   const dexToAc = maxDex === null ? mods.dex : Math.min(mods.dex, maxDex);
   const dexPart = bonus('ac', loseDex ? Math.min(dexToAc, 0) : dexToAc, 'Dex');
-  const acBonuses = set.list(['ac']).filter((b) => !(loseDex && b.type === 'dodge' && b.value > 0));
+  const naturalArmor = set.total(['ac.natural']);
+  // Each sub-total enters AC as one bonus of its type, so touch AC still drops it
+  // and it still competes with other bonuses of that type (mage armor vs armor).
+  const subtotal = (key: string, type: 'armor' | 'shield' | 'natural', label: string) => {
+    const t = key === 'ac.natural' ? naturalArmor : set.total([key]);
+    const named = t.parts.filter((p) => p.applied);
+    const source = named.length === 1 ? named[0].source : `${label} (${named.map((p) => fmtSigned(p.value)).join(' ')})`;
+    return t.total ? [{ key: 'ac', value: t.total, type, source }] : [];
+  };
+  const acBonuses = [
+    ...subtotal('ac.armor', 'armor', 'Armor'),
+    ...subtotal('ac.shield', 'shield', 'Shield'),
+    ...subtotal('ac.natural', 'natural', 'Natural armor'),
+    ...set.list(['ac']),
+  ].filter((b) => !(loseDex && b.type === 'dodge' && b.value > 0));
   const touchTypes = new Set(['armor', 'shield', 'natural']);
   const ten = bonus('ac', 10, 'Base');
   const ac = {
@@ -414,8 +479,16 @@ export function derive(c: Character): Derived {
     flatFooted: stack([ten, bonus('ac', Math.min(dexPart.value, 0), 'Dex'), ...acBonuses.filter((b) => !(b.type === 'dodge' && b.value > 0))]),
   };
 
+  const concealmentSources = [
+    { source: 'Base', value: c.concealment },
+    ...set.list(['concealment']).map((b) => ({ source: b.source, value: b.value })),
+  ].filter((x) => x.value > 0);
+  const concealment = { total: Math.min(100, Math.max(0, ...concealmentSources.map((x) => x.value))), sources: concealmentSources };
+
   const saves = {} as Record<Save, Total>;
+  const saveDice = {} as Record<Save, RollExtra[]>;
   for (const s of SAVES) {
+    saveDice[s] = diceFor(['save', `save.${s}`]);
     const classBase = progression.saves[s];
     saves[s] = stack([
       bonus(`save.${s}`, classBase, 'Class'),
@@ -488,8 +561,11 @@ export function derive(c: Character): Derived {
           const n = x.active ? parseNotation(x.dice) : null;
           return n ? [{ notation: formatNotation(n), type: x.type.trim() }] : [];
         }),
-        ...macroDice.filter((x) => x.applies === 'all' || x.applies === w.kind).map(({ notation, type, macro }) => ({ notation, type, macro })),
+        ...macroDice
+          .filter((x) => x.applies === 'all' || x.applies === w.kind || x.applies === `weapon:${w.id}`)
+          .map(({ notation, type, label }) => ({ notation, type, macro: label })),
       ],
+      attackDice: diceFor(['attack', `attack.${w.kind}`]),
     };
   }
 
@@ -522,7 +598,7 @@ export function derive(c: Character): Derived {
     if (!def) continue;
     spent += e.ranks;
     const cs = e.classSkill ?? isClassSkill(classSkills, e.skill, e.subtype);
-    const keys = ['skills', `skill.${e.skill}`];
+    const keys = ['skills', `skills.${def.ability}`, `skill.${e.skill}`];
     if (e.subtype) keys.push(`skill.${e.skill}.${subtypeKey(e.subtype)}`);
     const breakdown = stack([
       bonus('skill', e.ranks, 'Ranks'),
@@ -539,6 +615,7 @@ export function derive(c: Character): Derived {
       classSkill: cs,
       unusable: def.trainedOnly && e.ranks <= 0,
       breakdown,
+      extraDice: diceFor(keys),
     };
   }
   const intMod = abilities.int.mod;
@@ -612,13 +689,17 @@ export function derive(c: Character): Derived {
     mods,
     bab,
     attack,
+    attackDice: { melee: diceFor(['attack', 'attack.melee']), ranged: diceFor(['attack', 'attack.ranged']) },
     cmb,
     cmd,
     cmdFlatFooted,
     init,
     saves,
+    saveDice,
     baseSaves: progression.saves,
     ac,
+    naturalArmor,
+    concealment,
     maxDex,
     acp,
     spellFailure,
@@ -648,6 +729,11 @@ export function derive(c: Character): Derived {
     conditionNotes,
   };
 }
+
+/** Name formulas use for a macro's dice: its library id, else its name as a slug. */
+export const macroSlug = (m: { libraryId?: string; name: string }) => m.libraryId || slug(m.name);
+
+const fmtSigned = (n: number) => (n < 0 ? `${n}` : `+${n}`);
 
 /** Items whose weight counts: not inside a weightless or uncarried container. */
 export function carriedItems(items: Item[]): Item[] {

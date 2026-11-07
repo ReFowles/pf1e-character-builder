@@ -164,9 +164,15 @@ export interface Weapon extends Identified {
   weight: number;
   /** Value in gp. */
   price: number;
-  ammo: string;
+  /** Ammunition carried for this weapon, one row per kind (arrows, cold iron arrows…). */
+  ammo: AmmoEntry[];
   notes: string;
   extraDamage: ExtraDamage[];
+}
+
+export interface AmmoEntry extends Identified {
+  name: string;
+  count: number;
 }
 
 /** Dice rolled along with a weapon's damage (Flaming 1d6 fire, sneak attack 3d6 precision). Never multiplied on a critical. */
@@ -207,7 +213,8 @@ export interface Resource extends Identified {
   max: number;
   /** Optional formula for max, e.g. `max(1, @wis.mod)`; overrides `max`. */
   maxExpr: string;
-  current: number;
+  /** Uses spent; what's left is the max minus this. */
+  used: number;
   notes: string;
 }
 
@@ -253,8 +260,10 @@ export interface MacroDice extends Identified {
   sides: number;
   /** Damage type, e.g. precision. */
   type: string;
-  /** Which weapons roll these dice. */
-  applies: 'all' | 'melee' | 'ranged';
+  /** Flat amount added to these dice (formula, may be blank), e.g. `@macro.sneak-attack.dice`. Never multiplied on a critical. */
+  bonus: string;
+  /** What rolls these dice: see DICE_TARGETS in rules/keys.ts (`all`, `ranged`, `weapon:<id>`, `skills`, `save.will`…). */
+  applies: string;
 }
 
 export interface Trait extends Identified {
@@ -544,6 +553,8 @@ export interface Character {
   naturalArmor: number;
   resistances: Resistance[];
   spellResistance: number;
+  /** Base miss chance from concealment (%); macros can raise it with the `concealment` key. */
+  concealment: number;
   damageReduction: string;
   resources: Resource[];
   specialAbilities: SpecialAbility[];
@@ -570,5 +581,7 @@ export interface Character {
     sections: Record<string, SectionUi>;
     /** Section ids per tab in their small-screen order; missing ids follow in default order. */
     mobileOrder: Record<string, string[]>;
+    /** Heights (px) of textareas the user resized, keyed `<section>:<field>`. */
+    textSizes: Record<string, number>;
   };
 }

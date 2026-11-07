@@ -5,12 +5,14 @@
     value: number;
     /** Show a leading + for positive values when not focused. */
     signed?: boolean;
+    /** Show 0 as an empty field (so the placeholder shows). */
+    blankZero?: boolean;
   }
-  let { value = $bindable(), signed = false, class: cls = '', ...rest }: Props = $props();
+  let { value = $bindable(), signed = false, blankZero = false, class: cls = '', ...rest }: Props = $props();
   let focused = $state(false);
   let text = $state('');
 
-  const shown = $derived(focused ? text : signed && value > 0 ? `+${value}` : String(value ?? 0));
+  const shown = $derived(focused ? text : blankZero && !value ? '' : signed && value > 0 ? `+${value}` : String(value ?? 0));
 </script>
 
 <input
@@ -21,7 +23,7 @@
   value={shown}
   onfocus={(e) => {
     focused = true;
-    text = String(value ?? 0);
+    text = blankZero && !value ? '' : String(value ?? 0);
     e.currentTarget.select();
   }}
   oninput={(e) => {

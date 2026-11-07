@@ -3,7 +3,8 @@
   import { uid } from '../../lib/model/id';
   import { BONUS_TYPES, type Macro } from '../../lib/model/types';
   import { tryEvaluate } from '../../lib/rules/expr';
-  import { BONUS_KEYS, FORMULA_REFS, KEY_LABELS } from '../../lib/rules/keys';
+  import { BONUS_KEYS, FORMULA_REFS, KEY_LABELS, diceTargetLabel, diceTargets } from '../../lib/rules/keys';
+  import { macroSlug } from '../../lib/rules/derive';
   import { MACRO_LIBRARY } from '../../lib/rules/macroLibrary';
   import { app } from '../../lib/state.svelte';
   import Section from '../../lib/ui/Section.svelte';
@@ -37,18 +38,25 @@
     open[m.id] = true;
   }
 
-  const APPLIES = { all: 'Weapon damage', melee: 'Melee weapon damage', ranged: 'Ranged weapon damage' };
+  const targets = $derived(diceTargets(c.weapons, c.skills));
 
   function summary(m: Macro) {
     return [
       ...m.effects.map((e) => {
         const v = Math.trunc(tryEvaluate(e.value, app.d.vars, NaN));
+        if (e.key === 'concealment') return `${Number.isNaN(v) ? '?' : v}% miss chance`;
         const label = KEY_LABELS[e.key] ?? e.key;
         return `${label} ${Number.isNaN(v) ? '?' : fmt(v)}${e.type !== 'untyped' ? ` ${e.type}` : ''}`;
       }),
       ...m.damageDice.map((x) => {
         const n = Math.trunc(tryEvaluate(x.count, app.d.vars, NaN));
-        return `${APPLIES[x.applies]} +${Number.isNaN(n) ? '?' : n}d${x.sides}${x.type ? ` ${x.type}` : ''}`;
+        const flat = x.bonus.trim() ? Math.trunc(tryEvaluate(x.bonus, app.d.vars, NaN)) : 0;
+        const dice = n === 0 ? '' : `${Number.isNaN(n) ? '?' : n}d${x.sides}`;
+        const extra = Number.isNaN(flat) ? '+?' : flat ? fmt(flat) : '';
+        const group = targets.find((t) => t.value === x.applies)?.group;
+        const where = group === 'Damage' && !x.applies.startsWith('weapon:') ? `${diceTargetLabel(x.applies, c.weapons, c.skills)} damage` : diceTargetLabel(x.applies, c.weapons, c.skills);
+        const text = dice ? `+${dice}${extra}` : extra || '+0';
+        return `${where} ${text}${x.type ? ` ${x.type}` : ''}`;
       }),
     ].join(', ');
   }
@@ -58,6 +66,8 @@
   {#snippet info()}
     <p>Toggle a macro to apply its effects everywhere they matter. Effects follow normal bonus stacking: same-typed bonuses don't stack except dodge, circumstance and untyped.</p>
     <p>Values can be formulas using @level, @bab, @cl, @str.mod (and other abilities) or @class.&lt;name&gt;.level.</p>
+    <p><strong>Extra dice</strong> roll along with weapon damage (never multiplied on a critical), attack rolls, saves or skill checks: pick what they apply to under "To". A flat bonus can ride along with them.</p>
+    <p>One macro can build on another's dice: <code>@macro.&lt;name&gt;.dice</code> is the number of dice that macro adds while it's on (0 while off), e.g. <code>@macro.sneak-attack.dice</code>. For +1 damage per sneak attack die, add extra dice with 0 dice and a bonus of <code>@macro.sneak-attack.dice</code>.</p>
     {#each c.macros.filter((m) => m.active) as m (m.id)}<p><strong>{m.name}</strong>: {summary(m)}</p>{/each}
   {/snippet}
 
@@ -97,27 +107,35 @@
             </Field>
           </div>
           {#each m.effects as e, i (e.id)}
-            <div class="flex gap-1">
+            <div class="flex flex-wrap gap-1">
               <input class="w-32" list="bonus-keys" bind:value={e.key} placeholder="key" aria-label="Applies to" title={KEY_LABELS[e.key] ?? 'Unknown key'} class:text-accent={!KEY_LABELS[e.key]} />
-              <input class="flex-1 font-mono text-xs" bind:value={e.value} aria-label="Value or formula" class:text-accent={!!app.d.macroErrors[e.id]} title="Number or formula. Refs: {FORMULA_REFS.join(' ')}" />
+              <input class="min-w-40 flex-1 font-mono text-xs" bind:value={e.value} aria-label="Value or formula" class:text-accent={!!app.d.macroErrors[e.id]} title="Number or formula. Refs: {FORMULA_REFS.join(' ')}" />
               <Select class="w-24" bind:value={e.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
               <button type="button" class="icon-btn text-accent" aria-label="Remove effect" onclick={() => m.effects.splice(i, 1)}>✕</button>
             </div>
           {/each}
           {#each m.damageDice as x, i (x.id)}
-            <div class="flex items-center gap-1">
-              <input class="min-w-0 flex-1 font-mono text-xs" bind:value={x.count} aria-label="Number of dice" class:text-accent={!!app.d.macroErrors[x.id]} title="Number of dice: a number or formula. Refs: {FORMULA_REFS.join(' ')}" />
-              <span>d</span>
-              <NumInput class="w-12" bind:value={x.sides} aria-label="Die sides" />
-              <input class="w-24" bind:value={x.type} placeholder="precision" aria-label="Damage type" />
-              <Select class="w-24" bind:value={x.applies} options={opts(['all', 'melee', 'ranged'] as const, (a) => (a === 'all' ? 'All weapons' : a === 'melee' ? 'Melee' : 'Ranged'))} aria-label="Weapons" />
-              <button type="button" class="icon-btn text-accent" aria-label="Remove damage dice" onclick={() => m.damageDice.splice(i, 1)}>✕</button>
+            <!-- Dice count gets its own line: formulas like ceil(@class.rogue.level / 2) need the room. -->
+            <div class="flex flex-col gap-1 rounded-sm border border-ink/10 p-1">
+              <div class="flex items-center gap-1">
+                <input class="min-w-0 flex-1 font-mono text-xs" bind:value={x.count} aria-label="Number of dice" class:text-accent={!!app.d.macroErrors[x.id]} title="Number of dice: a number or formula (0 for a flat bonus only). Refs: {FORMULA_REFS.join(' ')}" />
+                <span>d</span>
+                <NumInput class="w-12" bind:value={x.sides} aria-label="Die sides" />
+                <button type="button" class="icon-btn text-accent" aria-label="Remove extra dice" onclick={() => m.damageDice.splice(i, 1)}>✕</button>
+              </div>
+              <div class="flex flex-wrap items-center gap-1">
+                <input class="w-24 font-mono text-xs" bind:value={x.bonus} placeholder="+ bonus" aria-label="Flat bonus" class:text-accent={!!app.d.macroErrors[x.id]} title="Flat amount added to these dice: a number or formula, e.g. @macro.sneak-attack.dice. Never multiplied on a critical." />
+                <input class="w-24" bind:value={x.type} placeholder="precision" aria-label="Damage type or label" title="Damage type or label shown in the roll log" />
+                <span class="text-xs opacity-60">to</span>
+                <Select class="min-w-32 flex-1" bind:value={x.applies} options={targets} aria-label="Applies to" title="What rolls these dice: weapon damage, attack rolls, saves or skill checks" />
+              </div>
             </div>
           {/each}
           <div class="flex gap-3">
             <button type="button" class="text-xs underline opacity-70" onclick={() => m.effects.push(make.macroEffect())}>+ effect</button>
-            <button type="button" class="text-xs underline opacity-70" title="Dice added to weapon damage rolls, never multiplied on a critical (sneak attack)" onclick={() => m.damageDice.push(make.macroDice())}>+ damage dice</button>
+            <button type="button" class="text-xs underline opacity-70" title="Dice added to weapon damage (never multiplied on a critical), attack rolls, saves or skill checks" onclick={() => m.damageDice.push(make.macroDice())}>+ extra dice</button>
           </div>
+          {#if m.damageDice.length}<p class="text-[0.65rem] opacity-60">Other macros can use this one's dice count as <code>@macro.{macroSlug(m) || 'name'}.dice</code>.</p>{/if}
           <Field label="Notes"><input bind:value={m.notes} /></Field>
         </div>
       {/if}

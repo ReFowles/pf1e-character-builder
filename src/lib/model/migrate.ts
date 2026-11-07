@@ -169,6 +169,23 @@ STEPS[8] = (d) => ({
   spellsTab: arr(d.spellcasting).length > 0,
 });
 
+STEPS[9] = (d) => ({
+  ...d,
+  // Ammo text becomes a list of ammo rows.
+  weapons: arr(d.weapons).map((w) => ({
+    ...w,
+    ammo: typeof w.ammo === 'string' ? (w.ammo.trim() ? [{ id: uid(), name: w.ammo.trim(), count: 0 }] : []) : arr(w.ammo),
+  })),
+  // Resources track uses spent instead of uses left. Formula maxima are
+  // resolved in normalize(), which can run derive().
+  resources: arr(d.resources).map(({ current, ...r }) => {
+    const left = Number(current) || 0;
+    return String(r.maxExpr ?? '').trim()
+      ? { ...r, used: 0, legacyCurrent: left }
+      : { ...r, used: Math.max(0, (Number(r.max) || 0) - left) };
+  }),
+});
+
 export function migrate(data: Plain): Plain {
   let version = typeof data.schemaVersion === 'number' ? data.schemaVersion : 1;
   let out = data;

@@ -14,21 +14,18 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import BreakdownList from '../../lib/ui/BreakdownList.svelte';
   import { sortable } from '../../lib/ui/sortable';
-  import { fmt } from '../../lib/ui/format';
+  import { breakdown, fmt } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
 
   const c = $derived(app.char);
   const d = $derived(app.d);
-  const KEYS = ['ac', 'save', 'save.fort', 'save.ref', 'save.will', 'cmd'];
+  const KEYS = ['ac', 'ac.armor', 'ac.shield', 'ac.natural', 'save', 'save.fort', 'save.ref', 'save.will', 'cmd', 'concealment'];
+  const concealTip = $derived(
+    d.concealment.sources.length
+      ? `Miss chance: the highest applies (they don't stack)\n${d.concealment.sources.map((x) => `${x.source} ${x.value}%`).join('\n')}`
+      : 'Miss chance from concealment (blur 20%, displacement 50%). Macros can raise it with the concealment key.',
+  );
 </script>
-
-{#snippet naturalRow()}
-  <div class="flex items-center gap-1">
-    <NumInput class="w-12" bind:value={c.naturalArmor} signed aria-label="Natural armor bonus" />
-    <span class="w-28 px-1.5 text-xs opacity-70">natural</span>
-    <span class="flex-1 px-1.5">Natural armor</span>
-  </div>
-{/snippet}
 
 <Section id="defense" editable>
   {#snippet info()}
@@ -41,16 +38,38 @@
         { label: 'CMD', total: d.cmd, signed: false },
       ]}
     />
+    <p>Armor, shield and natural armor each total their own bonuses first, so an enhancement bonus to natural armor (amulet, barkskin) doesn't compete with one to armor. Pick Armor bonus, Shield bonus or Natural armor under "Applies to" for those.</p>
+    <p>Concealment gives attackers a miss chance; the highest source applies.</p>
     <p>Touch AC ignores armor, shield and natural armor bonuses. Flat-footed AC loses Dex and dodge bonuses. Flat-footed CMD is {d.cmdFlatFooted}.</p>
     <p>Max Dex and armor check penalty use the worst of your armor, shield and carried load.</p>
     <p>In Edit mode, armor values (gp) appear and resistances can be dragged by ⋮⋮ to reorder.</p>
   {/snippet}
-  <div class="flex flex-wrap items-baseline gap-x-4 border-b border-ink/30 pb-1 text-sm">
+  <EditMode>{#snippet children(editing)}
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1 border-b border-ink/30 pb-1 text-sm">
+    {#if editing}
+      <label class="inline-flex items-center gap-1" title="Base natural armor (race, form). Bonuses to it, such as an amulet of natural armor, go in the AC bonus list as Natural armor.">
+        <span class="field-label">Natural armor</span>
+        <NumInput class="h-6 w-10" bind:value={c.naturalArmor} signed aria-label="Natural armor bonus" />
+        {#if d.naturalArmor.total !== c.naturalArmor}<span class="tabular-nums opacity-70">= {fmt(d.naturalArmor.total)}</span>{/if}
+      </label>
+    {:else if d.naturalArmor.total}
+      <span title={breakdown(d.naturalArmor)}><span class="field-label">Natural armor</span> {fmt(d.naturalArmor.total)}</span>
+    {/if}
     <span><span class="field-label">Max Dex</span> {d.maxDex ?? '—'}</span>
     <span><span class="field-label">ACP</span> {d.acp}</span>
-    <span><span class="field-label">Spell failure</span> {d.spellFailure}%</span>
+    <span title="Arcane spell failure: the sum of equipped armor and shield"><span class="field-label">Spell failure</span> {d.spellFailure}%</span>
+    {#if editing}
+      <label class="inline-flex items-center gap-1" title={concealTip}>
+        <span class="field-label">Concealed</span>
+        <NumInput class="h-6 w-10" bind:value={c.concealment} aria-label="Base concealment miss chance" />%
+        {#if d.concealment.total !== c.concealment}<span class="tabular-nums opacity-70">= {d.concealment.total}%</span>{/if}
+      </label>
+    {:else}
+      <span title={concealTip}><span class="field-label">Concealed</span> {d.concealment.total}%</span>
+    {/if}
     <span class="ml-auto"><span class="field-label">Load</span> <span class="capitalize" class:text-accent={d.load !== 'light'}>{d.load}</span></span>
   </div>
+  {/snippet}</EditMode>
 
   <EditMode>{#snippet children(editing)}
   <DynamicTable
@@ -138,7 +157,7 @@
     <option value="buckler"></option><option value="light shield"></option><option value="heavy shield"></option><option value="tower"></option>
   </datalist>
 
-  <DefenseStats ac={d.ac} saves={d.saves} />
+  <DefenseStats ac={d.ac} saves={d.saves} saveDice={d.saveDice} />
   <div class="grid grid-cols-3 gap-1 px-1">
     <div class="stat" title="Flat-footed CMD: {d.cmdFlatFooted}">
       <div class="stat-value text-2xl">{d.cmd.total}</div>
@@ -156,11 +175,7 @@
 
   <EditMode>
     {#snippet children(editing)}
-      {#if c.naturalArmor !== 0 || editing}
-        <BonusList keys={KEYS} label="AC / save bonuses" placeholder="Source (e.g. Ring of protection)" fixed={naturalRow} />
-      {:else}
-        <BonusList keys={KEYS} label="AC / save bonuses" placeholder="Source (e.g. Ring of protection)" />
-      {/if}
+      <BonusList keys={KEYS} label="AC / save bonuses" placeholder="Source (e.g. Ring of protection)" />
 
       <div class="mt-auto flex flex-col border-t border-ink/30 pt-1">
         <span class="field-label">Resistances & immunities</span>

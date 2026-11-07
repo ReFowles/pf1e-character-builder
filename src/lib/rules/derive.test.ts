@@ -286,3 +286,92 @@ describe('gestalt', () => {
     expect(derive(c).gestaltConflicts.sort()).toEqual(['Fighter', 'Wizard']);
   });
 });
+
+describe('macro dice, AC sub-totals and concealment', () => {
+  it('targets extra dice at one weapon, attack rolls, saves and skills', () => {
+    const c = fighter();
+    const bow = { ...make.weapon(), name: 'Longbow', kind: 'ranged' as const, damage: '1d8' };
+    c.weapons.push(bow);
+    const sword = c.weapons[0];
+    const dice = (applies: string, count = '1') => ({ ...make.macroDice(), count, type: 'inspiration', applies });
+    c.macros = [
+      { ...make.macro(), name: 'Bane', active: true, damageDice: [dice(`weapon:${bow.id}`, '2')] },
+      { ...make.macro(), name: 'Inspiration', active: true, damageDice: [dice('skills'), dice('attack.melee'), dice('save.will')] },
+    ];
+    const d = derive(c);
+    expect(d.weapons[bow.id].extraDamage).toEqual([{ notation: '2d6', type: 'inspiration', macro: 'Bane' }]);
+    expect(d.weapons[sword.id].extraDamage).toEqual([]);
+    expect(d.weapons[sword.id].attackDice).toEqual([{ label: 'Inspiration', notation: '1d6' }]);
+    expect(d.weapons[bow.id].attackDice).toEqual([]);
+    expect(d.attackDice).toEqual({ melee: [{ label: 'Inspiration', notation: '1d6' }], ranged: [] });
+    expect(d.saveDice.will).toEqual([{ label: 'Inspiration', notation: '1d6' }]);
+    expect(d.saveDice.fort).toEqual([]);
+    const climb = c.skills.find((s) => s.skill === 'climb')!;
+    expect(d.skills[climb.id].extraDice).toEqual([{ label: 'Inspiration', notation: '1d6' }]);
+  });
+
+  it('lets a macro build on another macro\'s dice with @macro.<name>.dice', () => {
+    const c = fighter();
+    const sneak = { ...make.macro(), name: 'Sneak Attack', libraryId: 'sneak-attack', active: true, damageDice: [{ ...make.macroDice(), count: '3', type: 'precision' }] };
+    const perDie = { ...make.macroDice(), count: '0', bonus: '@macro.sneak-attack.dice', type: 'precision', applies: 'ranged' };
+    const goggles = { ...make.macro(), name: 'Per die', active: true, damageDice: [perDie] };
+    c.weapons.push({ ...make.weapon(), name: 'Bow', kind: 'ranged' as const, damage: '1d8' });
+    c.macros = [goggles, sneak];
+    const bow = c.weapons[1];
+    let d = derive(c);
+    expect(d.vars['macro.sneak-attack.dice']).toBe(3);
+    expect(d.weapons[bow.id].extraDamage).toEqual([
+      { notation: '+3', type: 'precision', macro: 'Per die' },
+      { notation: '3d6', type: 'precision', macro: 'Sneak Attack' },
+    ]);
+    sneak.active = false;
+    d = derive(c);
+    expect(d.vars['macro.sneak-attack.dice']).toBe(0);
+    expect(d.weapons[bow.id].extraDamage).toEqual([]);
+    perDie.bonus = 'nope +';
+    expect(derive(c).macroErrors[perDie.id]).toBe(true);
+  });
+
+  it('stacks natural armor bonuses apart from armor and keeps them off touch AC', () => {
+    const c = fighter();
+    const before = derive(c);
+    c.naturalArmor = 2;
+    c.armor[0].enhancement = 1;
+    c.bonuses.push({ ...make.bonus(), key: 'ac.natural', value: 1, type: 'enhancement', source: 'Amulet' });
+    const d = derive(c);
+    // +2 natural, +1 enhancement to natural armor, +1 enhancement to armor: all apply.
+    expect(d.naturalArmor.total).toBe(3);
+    expect(d.ac.normal.total).toBe(before.ac.normal.total + 4);
+    expect(d.ac.touch.total).toBe(before.ac.touch.total);
+    // Mage armor (+4 armor) doesn't stack with the chain shirt's +5 total.
+    c.bonuses.push({ ...make.bonus(), key: 'ac', value: 4, type: 'armor', source: 'Mage armor' });
+    expect(derive(c).ac.normal.total).toBe(d.ac.normal.total);
+  });
+
+  it('uses the highest concealment and adds ability-keyed skill bonuses', () => {
+    const c = fighter();
+    c.concealment = 20;
+    c.macros = [{ ...make.macro(), name: 'Displacement', active: true, effects: [{ ...make.macroEffect(), key: 'concealment', value: '50' }] }];
+    expect(derive(c).concealment.total).toBe(50);
+    c.macros[0].active = false;
+    expect(derive(c).concealment.total).toBe(20);
+
+    const climb = c.skills.find((s) => s.skill === 'climb')!;
+    const appraise = c.skills.find((s) => s.skill === 'appraise')!;
+    const before = derive(c);
+    c.bonuses.push({ ...make.bonus(), key: 'skills.int', value: 2, type: 'enhancement', source: 'Tears to Wine' });
+    const d = derive(c);
+    expect(d.skills[appraise.id].total).toBe(before.skills[appraise.id].total + 2);
+    expect(d.skills[climb.id].total).toBe(before.skills[climb.id].total);
+  });
+
+  it('gives macro formulas a caster level', () => {
+    const c = fighter();
+    const eff = { ...make.macroEffect(), key: 'skills.wis', value: '2 + 3 * min(1, floor(@cl / 9))', type: 'enhancement' as const };
+    c.macros = [{ ...make.macro(), name: 'Tears to Wine', active: true, effects: [eff] }];
+    expect(derive(c).macroErrors).toEqual({});
+    c.spellcasting = [{ ...make.spellcasting(), casterLevel: 9 }];
+    const perception = c.skills.find((s) => s.skill === 'perception')!;
+    expect(derive(c).skills[perception.id].breakdown.parts.find((p) => p.source === 'Tears to Wine')?.value).toBe(5);
+  });
+});

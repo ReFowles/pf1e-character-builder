@@ -7,7 +7,7 @@
   import NumInput from '../../lib/ui/NumInput.svelte';
   import DynamicList from '../../lib/ui/DynamicList.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
-  import { breakdown, fmt } from '../../lib/ui/format';
+  import { breakdown, fmt, plusNotation } from '../../lib/ui/format';
   import { rollable } from '../../lib/dice/rollable';
   import DbPicker from '../../lib/ui/DbPicker.svelte';
   import type { DbItem } from '../../lib/db/types';
@@ -63,7 +63,7 @@
       parts: partsOf(wd.damageBreakdown).map((p) => (byDice ? { ...p, value: p.value * times } : p)),
       multiplier: crit && !byDice ? times : 1,
       // Extra dice (Flaming, sneak attack…) aren't multiplied on a critical.
-      extras: wd.extraDamage.map((x) => ({ label: x.type, notation: x.notation })),
+      extras: wd.extraDamage.map((x) => ({ label: x.type || x.macro || 'extra', notation: x.notation })),
     });
   }
 </script>
@@ -83,8 +83,8 @@
   {/snippet}
   <div class="grid grid-cols-4 gap-2">
     <Stat label="BAB" value={d.bab} size="md" />
-    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" roll={{ title: 'Melee attack' }} />
-    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" roll={{ title: 'Ranged attack' }} />
+    <Stat label="Melee" value={d.attack.melee} display={iterativeText(d.bab, d.attack.melee.total)} size="md" roll={{ title: 'Melee attack', extras: d.attackDice.melee }} />
+    <Stat label="Ranged" value={d.attack.ranged} display={iterativeText(d.bab, d.attack.ranged.total)} size="md" roll={{ title: 'Ranged attack', extras: d.attackDice.ranged }} />
     <Stat label="CMB" value={d.cmb} size="md" roll={{ title: 'Combat maneuver' }} />
   </div>
 
@@ -114,7 +114,7 @@
         {/if}
         <div class="field" title={wd ? breakdown(wd.attackBreakdown) : ''}>
           <div class="px-1 leading-7 font-bold tabular-nums">
-            <Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} onroll={wd ? { title: `${weaponName(w)} attack`, bonus: wd.attacks[0], parts: partsOf(wd.attackBreakdown) } : undefined} />
+            <Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} onroll={wd ? { title: `${weaponName(w)} attack`, bonus: wd.attacks[0], parts: partsOf(wd.attackBreakdown), extras: wd.attackDice } : undefined} />
           </div>
           <span class="field-label">Attack</span>
         </div>
@@ -182,15 +182,28 @@
             >
           {/each}
           {#each wd?.extraDamage.filter((x) => x.macro) ?? [] as x, i (i)}
-            <span class="chip border-dashed tabular-nums" title="From the {x.macro} macro; switch it off in Macros">+{x.notation}{x.type ? ` ${x.type}` : ''}</span>
+            <span class="chip border-dashed tabular-nums" title="From the {x.macro} macro; switch it off in Macros">{plusNotation(x.notation)}{x.type ? ` ${x.type}` : ''}</span>
           {/each}
           <span class="field-label">Extra damage</span>
         </div>
       {/if}
-      <div class="mt-1 flex items-end gap-2">
-        <Field label="Notes" class="flex-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
-        <Field label="Ammo" class="w-32 shrink-0"><input bind:value={w.ammo} aria-label="Ammo" /></Field>
-      </div>
+      <Field label="Notes" class="mt-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
+      {#if w.kind === 'ranged' || w.ammo.length}
+        <!-- One row per kind of ammunition; counts stay blank on paper for pencil. -->
+        <div class={['mt-1 flex flex-wrap items-center gap-1', { 'print:hidden': !w.ammo.length }]}>
+          <span class="field-label">Ammo</span>
+          {#each w.ammo as a, i (a.id)}
+            <div class="flex items-center gap-0.5 rounded-sm border border-ink/20 px-1">
+              <input class="h-6 w-28 min-w-0 border-0 bg-transparent px-0.5 text-sm" bind:value={a.name} placeholder="arrows" aria-label="Ammo kind" />
+              <button type="button" class="icon-btn size-5 print:hidden" aria-label="Use one {a.name || 'ammo'}" title="Use one" onclick={() => (a.count = Math.max(0, a.count - 1))}>−</button>
+              <NumInput class="h-6 w-10 font-bold print:invisible" bind:value={a.count} aria-label="{a.name || 'Ammo'} count" />
+              <button type="button" class="icon-btn size-5 print:hidden" aria-label="Add one {a.name || 'ammo'}" title="Add one" onclick={() => a.count++}>+</button>
+              {#if editing}<button type="button" class="icon-btn size-5 text-accent print:hidden" aria-label="Remove {a.name || 'ammo'}" onclick={() => w.ammo.splice(i, 1)}>✕</button>{/if}
+            </div>
+          {/each}
+          <button type="button" class="text-xs underline opacity-70 hover:opacity-100 print:hidden" title="Track another kind of ammunition (cold iron arrows, +1 bolts…)" onclick={() => w.ammo.push(make.ammo())}>+ Ammo</button>
+        </div>
+      {/if}
       {#if editing}
         <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-9 print:hidden">
           <Field label="Kind">

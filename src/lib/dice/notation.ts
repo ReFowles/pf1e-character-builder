@@ -13,8 +13,8 @@ export interface Notation {
 
 const MAX_DICE = 100;
 
-/** Parse notation; null when it isn't plain dice arithmetic or has no dice. */
-export function parseNotation(input: string): Notation | null {
+/** Parse notation; null when it isn't plain dice arithmetic, or has no dice unless `allowFlat` ("+2"). */
+export function parseNotation(input: string, allowFlat = false): Notation | null {
   const src = input.replace(/\s+/g, '').replace(/−/g, '-').toLowerCase();
   if (!src) return null;
   const re = /([+-]?)(?:(\d*)d(\d+)|(\d+))/g;
@@ -33,7 +33,7 @@ export function parseNotation(input: string): Notation | null {
       dice.push({ count, sides, sign });
     } else modifier += sign * Number(m[4]);
   }
-  if (last !== src.length || !dice.length) return null;
+  if (last !== src.length || (!dice.length && !allowFlat)) return null;
   return { dice, modifier };
 }
 

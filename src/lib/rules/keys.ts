@@ -1,10 +1,13 @@
-import { ABILITIES, ABILITY_NAMES } from '../model/types';
-import { KNOWLEDGES, SKILLS } from './skills';
+import { ABILITIES, ABILITY_NAMES, SAVES, SAVE_NAMES, type SkillEntry, type Weapon } from '../model/types';
+import { KNOWLEDGES, SKILLS, SKILL_BY_KEY, subtypeKey } from './skills';
 
 export interface KeyDef {
   key: string;
   label: string;
 }
+
+/** Abilities that have skills keyed to them (Constitution has none). */
+const SKILL_ABILITIES = ABILITIES.filter((a) => SKILLS.some((s) => s.ability === a));
 
 /** Every bonus key derive() reads, for pickers and validation. */
 export const BONUS_KEYS: KeyDef[] = [
@@ -18,6 +21,10 @@ export const BONUS_KEYS: KeyDef[] = [
   { key: 'cmb', label: 'Combat maneuver bonus' },
   { key: 'cmd', label: 'Combat maneuver defense' },
   { key: 'ac', label: 'Armor class (type decides touch/flat-footed)' },
+  { key: 'ac.armor', label: 'Armor bonus to AC (its own bonuses stack separately, e.g. magic vestment)' },
+  { key: 'ac.shield', label: 'Shield bonus to AC (its own bonuses stack separately)' },
+  { key: 'ac.natural', label: 'Natural armor (its own bonuses stack separately, e.g. amulet of natural armor, barkskin)' },
+  { key: 'concealment', label: 'Concealment miss chance % (highest applies)' },
   { key: 'save', label: 'All saving throws' },
   { key: 'save.fort', label: 'Fortitude save' },
   { key: 'save.ref', label: 'Reflex save' },
@@ -28,6 +35,7 @@ export const BONUS_KEYS: KeyDef[] = [
   { key: 'size.steps', label: 'Size category steps (+1 = one size larger)' },
   { key: 'capacity.mult', label: 'Carrying capacity multiplier (highest applies)' },
   { key: 'skills', label: 'All skill checks' },
+  ...SKILL_ABILITIES.map((a) => ({ key: `skills.${a}`, label: `All ${ABILITY_NAMES[a]}-based skill checks` })),
   ...SKILLS.map((s) => ({ key: `skill.${s.key}`, label: `${s.name}${s.multi ? ' (all)' : ''}` })),
   ...KNOWLEDGES.map((k) => ({ key: `skill.knowledge.${k}`, label: `Knowledge (${k})` })),
   { key: 'cl', label: 'Caster level' },
@@ -51,6 +59,10 @@ export const KEY_SHORT: Record<string, string> = {
   cmb: 'CMB',
   cmd: 'CMD',
   ac: 'AC',
+  'ac.armor': 'Armor bonus',
+  'ac.shield': 'Shield bonus',
+  'ac.natural': 'Natural armor',
+  concealment: 'Concealment',
   save: 'All saves',
   'save.fort': 'Fortitude',
   'save.ref': 'Reflex',
@@ -59,8 +71,62 @@ export const KEY_SHORT: Record<string, string> = {
   speed: 'Speed',
   'hp.max': 'Max HP',
   skills: 'All skills',
+  ...Object.fromEntries(SKILL_ABILITIES.map((a) => [`skills.${a}`, `${a.toUpperCase()} skills`])),
 };
 export const keyShort = (k: string) => KEY_SHORT[k] ?? KEY_LABELS[k] ?? k;
 
 /** Formula references available to macros and resource formulas. */
-export const FORMULA_REFS = ['@level', '@hd', '@bab', '@cl', ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]), '@class.<name>.level', '@class.<name>.casterLevel'];
+export const FORMULA_REFS = [
+  '@level',
+  '@hd',
+  '@bab',
+  '@cl',
+  ...ABILITIES.flatMap((a) => [`@${a}`, `@${a}.mod`]),
+  '@class.<name>.level',
+  '@class.<name>.casterLevel',
+  '@macro.<name>.dice',
+];
+
+/**
+ * Skill bonus keys for the character's skill list: all skills, by ability,
+ * then each skill and each subtype row (Craft (alchemy), Perform (sing)…).
+ */
+export function skillKeys(skills: SkillEntry[]): KeyDef[] {
+  const out: KeyDef[] = [
+    { key: 'skills', label: 'All skills' },
+    ...SKILL_ABILITIES.map((a) => ({ key: `skills.${a}`, label: `${ABILITY_NAMES[a]} skills` })),
+  ];
+  const seen = new Set(out.map((k) => k.key));
+  const push = (key: string, label: string) => {
+    if (!seen.has(key)) out.push({ key, label }), seen.add(key);
+  };
+  for (const e of skills) {
+    const def = SKILL_BY_KEY[e.skill];
+    if (!def) continue;
+    push(`skill.${def.key}`, def.multi ? `${def.name} (all)` : def.name);
+    const sub = subtypeKey(e.subtype);
+    if (def.multi && sub) push(`skill.${def.key}.${sub}`, `${def.name} (${e.subtype!.trim()})`);
+  }
+  return out;
+}
+
+/** What a macro's extra dice can apply to: damage, attack rolls, saves or skill checks. */
+export function diceTargets(weapons: Weapon[], skills: SkillEntry[]): { value: string; label: string; group: string }[] {
+  return [
+    { value: 'all', label: 'All weapons', group: 'Damage' },
+    { value: 'melee', label: 'Melee weapons', group: 'Damage' },
+    { value: 'ranged', label: 'Ranged weapons', group: 'Damage' },
+    ...weapons.map((w) => ({ value: `weapon:${w.id}`, label: w.name || 'Unnamed weapon', group: 'Damage' })),
+    { value: 'attack', label: 'All attacks', group: 'Attack rolls' },
+    { value: 'attack.melee', label: 'Melee attacks', group: 'Attack rolls' },
+    { value: 'attack.ranged', label: 'Ranged attacks', group: 'Attack rolls' },
+    { value: 'save', label: 'All saves', group: 'Saving throws' },
+    ...SAVES.map((s) => ({ value: `save.${s}`, label: SAVE_NAMES[s], group: 'Saving throws' })),
+    ...skillKeys(skills).map((k) => ({ value: k.key, label: k.label, group: 'Skill checks' })),
+  ];
+}
+
+/** Short label for a dice target (`weapon:<id>` resolves to the weapon's name). */
+export function diceTargetLabel(target: string, weapons: Weapon[], skills: SkillEntry[]): string {
+  return diceTargets(weapons, skills).find((t) => t.value === target)?.label ?? (target.startsWith('weapon:') ? 'Removed weapon' : target);
+}

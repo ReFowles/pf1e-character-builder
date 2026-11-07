@@ -9,8 +9,10 @@
     saves: Record<Save, Total>;
     /** Shown under save rolls in the log (a companion's name). */
     subtitle?: string;
+    /** Macro dice rolled with each save. */
+    saveDice?: Record<Save, { label: string; notation: string }[]>;
   }
-  let { ac, saves, subtitle }: Props = $props();
+  let { ac, saves, subtitle, saveDice }: Props = $props();
 </script>
 
 <div class="group-box group-box-dark grid grid-cols-3 gap-1">
@@ -19,5 +21,5 @@
   <Stat label="Flat-footed" value={ac.flatFooted} signed={false} />
 </div>
 <div class="group-box group-box-dark grid grid-cols-3 gap-1">
-  {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save`, subtitle }} />{/each}
+  {#each SAVES as s (s)}<Stat label={SAVE_NAMES[s]} value={saves[s]} size="md" roll={{ title: `${SAVE_NAMES[s]} save`, subtitle, extras: saveDice?.[s] }} />{/each}
 </div>

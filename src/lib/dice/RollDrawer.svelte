@@ -3,6 +3,7 @@
   import { fmt } from '../ui/format';
   import TrashIcon from '../ui/TrashIcon.svelte';
   import { roll, rolls } from './rolls.svelte';
+  import type { RollResult } from './roll';
 
   const DICE = [4, 6, 8, 10, 12, 20, 100];
   const MAX_COUNT = 50;
@@ -22,6 +23,18 @@
   /** Committed groups, in the order they were added with Add. */
   let groups = $state<Group[]>([]);
   let list: HTMLOListElement | undefined = $state();
+
+  /** Roll the same thing again: same notation, multiplier, sources and extra dice. */
+  function reroll(r: RollResult) {
+    void roll({
+      title: r.title,
+      subtitle: r.subtitle,
+      notation: r.notation,
+      multiplier: r.multiplier,
+      parts: r.parts,
+      extras: r.extras?.map((e) => ({ label: e.label, notation: e.notation })),
+    });
+  }
 
   const customOk = $derived(customSides !== null && Number.isInteger(customSides) && customSides >= 2 && customSides <= 1000);
   const pendingTerms = $derived([
@@ -103,6 +116,7 @@
             <span class="font-semibold">{r.title}</span>
             {#if r.subtitle}<span class="text-xs opacity-60">{r.subtitle}</span>{/if}
             <time class="ml-auto text-xs opacity-50" datetime={new Date(r.at).toISOString()}>{time(r.at)}</time>
+            <button type="button" class="icon-btn size-5" aria-label="Reroll {r.title}" title="Roll this again" onclick={() => reroll(r)}>↻</button>
             <button type="button" class="icon-btn size-5 text-accent" aria-label="Delete roll {r.title}" title="Delete this roll" onclick={() => rolls.remove(r.id)}>
               <TrashIcon class="size-3.5" />
             </button>

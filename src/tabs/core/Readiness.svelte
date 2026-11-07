@@ -45,7 +45,15 @@
   {#if editing}
     <div class="flex gap-2 print:hidden">
       <Field label="Base speed" class="w-24"><NumInput bind:value={c.speeds.base} /></Field>
-      <Field label="Armored (0 = calc)" class="w-32"><NumInput bind:value={c.speeds.armored} /></Field>
+      <Field label="Armored speed" class="w-28">
+        <NumInput
+          bind:value={c.speeds.armored}
+          blankZero
+          placeholder="{d.speed.reduced} (auto)"
+          aria-label="Armored speed (blank to calculate)"
+          title="Speed in medium or heavy armor, or with a medium or heavy load. Leave blank to work it out from base speed ({d.speed.reduced} ft). Never used while nothing slows you."
+        />
+      </Field>
     </div>
   {/if}
 {/snippet}
@@ -55,13 +63,14 @@
     <BreakdownList items={[{ label: 'Initiative', total: d.init }]} />
     <p>
       <strong>Speed</strong> is your base speed plus speed bonuses.
-      {#if d.speed.encumbered}It's reduced (*) by medium or heavy armor or load; set an armored speed in Edit to override.{/if}
+      Medium or heavy armor, or a medium or heavy load, reduces it (*) to {c.speeds.armored ? `the armored speed set in Edit (${c.speeds.armored} ft)` : `${d.speed.reduced} ft, worked out from base speed; set an armored speed in Edit to override`}.
+      {#if d.speed.encumbered}Now slowed by: {d.speed.reason}.{/if}
     </p>
     <p><strong>Resources</strong> can use a formula for their maximum, e.g. <code>max(1, @wis.mod)</code>.</p>
   {/snippet}
   <div class="flex flex-wrap items-stretch gap-1.5">
     <Stat label="Initiative" value={d.init} size="md" roll />
-    <div class="stat" title={d.speed.encumbered ? 'Reduced by armor or load' : undefined}>
+    <div class="stat" title={d.speed.encumbered ? `Reduced by ${d.speed.reason}. Base speed ${c.speeds.base} ft.` : 'Base speed plus speed bonuses'}>
       <div class="stat-value text-2xl">{d.speed.base}<span class="text-xs">ft</span></div>
       <div class="field-label">Speed{d.speed.encumbered ? '*' : ''}</div>
     </div>
@@ -80,24 +89,27 @@
       type="button"
       class="text-xs underline opacity-70 hover:opacity-100 print:hidden"
       title="Refill every pool to its maximum"
-      onclick={() => c.resources.forEach((r) => (r.current = d.resources[r.id] ?? r.max))}>Refill all</button
+      onclick={() => c.resources.forEach((r) => (r.used = 0))}>Refill all</button
     >
   </div>
-  <DynamicTable bind:items={c.resources} cols={3} onadd={() => c.resources.push(make.resource())} addLabel="Pool" empty="Grit, Panache, Arcane Pool, Ki, Burn…">
+  <DynamicTable bind:items={c.resources} cols={4} onadd={() => c.resources.push(make.resource())} addLabel="Pool" empty="Grit, Panache, Arcane Pool, Ki, Burn…">
     {#snippet head()}
       <th>Pool</th>
-      <th class="text-center">Current</th>
+      <th class="text-center" title="Uses spent">Used</th>
+      <th class="text-center" title="Uses left: max − used">Current</th>
       <th class="text-center">Max</th>
     {/snippet}
     {#snippet row(r)}
       <td data-label="Pool" class="min-w-20 align-middle"><input class="w-full font-semibold" bind:value={r.name} aria-label="Pool name" title={r.notes} /></td>
-      <td data-label="Current" class="w-24 align-middle">
+      {@const max = d.resources[r.id] ?? r.max}
+      <td data-label="Used" class="w-24 align-middle">
         <div class="flex items-center">
-          <button type="button" class="icon-btn print:hidden" aria-label="Spend one" onclick={() => (r.current = Math.max(0, r.current - 1))}>−</button>
-          <NumInput class="font-bold print:invisible" bind:value={r.current} aria-label="{r.name} current" />
-          <button type="button" class="icon-btn print:hidden" aria-label="Gain one" onclick={() => r.current++}>+</button>
+          <button type="button" class="icon-btn print:hidden" aria-label="Regain one {r.name}" title="Regain one" onclick={() => (r.used = Math.max(0, r.used - 1))}>−</button>
+          <NumInput class="font-bold print:invisible" bind:value={r.used} aria-label="{r.name} used" />
+          <button type="button" class="icon-btn print:hidden" aria-label="Spend one {r.name}" title="Spend one" onclick={() => (r.used = Math.min(max, r.used + 1))}>+</button>
         </div>
       </td>
+      <td data-label="Current" class="w-12 text-center align-middle font-bold tabular-nums" title="Uses left"><span class="print:invisible">{max - r.used}</span></td>
       <td data-label="Max" class="w-14 align-middle"><FormulaInput bind:value={r.max} bind:expr={r.maxExpr} result={d.resources[r.id] ?? r.max} label="{r.name} max" /></td>
     {/snippet}
   </DynamicTable>

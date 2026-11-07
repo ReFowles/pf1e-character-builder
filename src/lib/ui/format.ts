@@ -15,3 +15,6 @@ export const lb = (n: number) => `${round2(n)} lb`;
 
 /** Gold pieces with thousands separators, up to 2 decimals. */
 export const gp = (n: number) => `${round2(n).toLocaleString(undefined, { maximumFractionDigits: 2 })} gp`;
+
+/** Extra dice as an addition: "1d6" → "+1d6"; flat amounts keep their sign ("+3", "-1"). */
+export const plusNotation = (notation: string) => (/^[+-]/.test(notation) ? notation : `+${notation}`);

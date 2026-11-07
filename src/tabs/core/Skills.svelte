@@ -6,7 +6,7 @@
   import type { SkillEntry } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
   import { isClassSkill } from '../../lib/rules/skills';
-  import { BONUS_KEYS } from '../../lib/rules/keys';
+  import { skillKeys } from '../../lib/rules/keys';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
   import BonusList from '../../lib/ui/BonusList.svelte';
@@ -14,10 +14,16 @@
   import EditMode from '../../lib/ui/EditMode.svelte';
   import Chevron from '../../lib/ui/Chevron.svelte';
   import { sortable } from '../../lib/ui/sortable';
-  import { breakdown, fmt } from '../../lib/ui/format';
+  import { breakdown, fmt, plusNotation } from '../../lib/ui/format';
 
-  const SKILL_KEYS = BONUS_KEYS.filter((k) => k.key.startsWith('skill')).map((k) => k.key);
   const c = $derived(app.char);
+  // Keys follow the current skill list (Craft (alchemy)…); bonus rows on a key no longer listed still show.
+  const skillKeyDefs = $derived(skillKeys(c.skills));
+  const skillKeyLabels = $derived(Object.fromEntries(skillKeyDefs.map((k) => [k.key, k.label])));
+  const bonusSkillKeys = $derived([
+    ...skillKeyDefs.map((k) => k.key),
+    ...new Set(c.bonuses.filter((b) => b.key.startsWith('skill') && !(b.key in skillKeyLabels)).map((b) => b.key)),
+  ]);
   const ranks = $derived(app.d.skillRanks);
 
   /** Favorites in the user's order; any not yet in favoriteOrder go last. */
@@ -85,7 +91,7 @@
       </td>
       <td class="w-full">
         <div class="flex items-center gap-1">
-          <span class="whitespace-nowrap max-sm:text-sm" use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown) }}>
+          <span class="whitespace-nowrap max-sm:text-sm" use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice }}>
             {sd.def.name}{#if sd.def.trainedOnly}<sup title="Trained only" class="ml-0.5 font-bold text-accent">T</sup>{/if}{#if sd.def.acp}<sup title="Armor check penalty applies" class="ml-0.5">*</sup>{/if}
           </span>
           {#if sd.def.multi}
@@ -98,7 +104,7 @@
         </div>
       </td>
       <td class="text-center text-xs uppercase opacity-60">{sd.def.ability}</td>
-      <td class="text-center font-bold tabular-nums" title={breakdown(sd.breakdown)}><span use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown) }}>{fmt(sd.total)}</span></td>
+      <td class="text-center font-bold whitespace-nowrap tabular-nums" title={breakdown(sd.breakdown) + sd.extraDice.map((x) => `\n${plusNotation(x.notation)} ${x.label}`).join('')}><span use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice }}>{fmt(sd.total)}</span>{#each sd.extraDice as x, j (j)}<span class="ml-0.5 text-[0.6rem] font-normal opacity-70">{plusNotation(x.notation)}</span>{/each}</td>
       <td class="w-9"><NumInput class="h-6" bind:value={e.ranks} aria-label="{sd.label} ranks" /></td>
       <td class={['w-9', { 'print:hidden': allMiscZero }]}><NumInput class="h-6" bind:value={e.misc} signed aria-label="{sd.label} misc" /></td>
       {#if editing}
@@ -147,9 +153,9 @@
     <p><span class="font-bold text-accent">T</span> skills need at least one rank. In Edit mode, drag ⋮⋮ (or use the arrows) to reorder favorites.</p>
     <BreakdownList
       items={c.skills
-        .filter((s) => s.favorite || s.ranks > 0)
-        .map((s) => app.d.skills[s.id])
-        .filter(Boolean)
+        .map((s) => ({ s, sd: app.d.skills[s.id] }))
+        .filter(({ s, sd }) => sd && (s.favorite || s.ranks > 0 || sd.breakdown.parts.some((p) => p.key !== 'skill')))
+        .map(({ sd }) => sd)
         .map((sd) => ({ label: sd.label, total: sd.breakdown }))}
     />
   {/snippet}
@@ -184,7 +190,7 @@
       <p class="text-[0.65rem] opacity-60">
         <sup class="font-bold text-accent">T</sup> trained only · <sup>*</sup> armor check penalty ({app.d.acp}) · class skills with ranks get +3
       </p>
-      <div class="print:hidden"><BonusList keys={SKILL_KEYS} label="Skill bonuses" placeholder="Source (e.g. Skill Focus)" /></div>
+      <div class="print:hidden"><BonusList keys={bonusSkillKeys} labels={skillKeyLabels} label="Skill bonuses" placeholder="Source (e.g. Skill Focus)" /></div>
     {/snippet}
   </EditMode>
 </Section>

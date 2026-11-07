@@ -16,6 +16,8 @@ export interface RollableOptions {
   /** Run this instead of rolling a die (damage rolls build their own notation). */
   roll?: () => void;
   disabled?: boolean;
+  /** Dice rolled along with the d20 (Inspiration +1d6). */
+  extras?: { label: string; notation: string }[];
 }
 
 export const rollable: Action<HTMLElement, RollableOptions> = (node, opts) => {
@@ -40,7 +42,7 @@ export const rollable: Action<HTMLElement, RollableOptions> = (node, opts) => {
     e.preventDefault();
     e.stopPropagation();
     if (current.roll) return current.roll();
-    void roll({ title: current.title, subtitle: current.subtitle, notation: `1d${current.sides ?? 20}${fmt(current.bonus ?? 0)}`, parts: current.parts });
+    void roll({ title: current.title, subtitle: current.subtitle, notation: `1d${current.sides ?? 20}${fmt(current.bonus ?? 0)}`, parts: current.parts, extras: current.extras });
   };
   const key = (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') fire(e);

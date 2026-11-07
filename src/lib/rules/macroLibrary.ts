@@ -24,6 +24,9 @@ const stat = (id: string, name: string, ability: string) =>
 
 const SCALE = 'floor(@bab / 4)';
 
+/** Extra dice for a library macro; flat bonus blank. */
+const dice = (count: string, sides: number, type: string, applies: string): Omit<MacroDice, 'id'> => ({ count, sides, type, bonus: '', applies });
+
 export const MACRO_LIBRARY: LibraryMacro[] = [
   // Combat feats and actions
   m('power-attack', 'Power Attack', 'feat', [['attack.melee', `-1 - ${SCALE}`], ['damage.melee', `2 * (1 + ${SCALE})`]],
@@ -41,6 +44,8 @@ export const MACRO_LIBRARY: LibraryMacro[] = [
   m('two-weapon-fighting', 'Two-Weapon Fighting', 'feat', [['attack', -2]],
     'With the feat and a light off-hand weapon. Main hand -4 / off-hand -8 without the feat.'),
   m('rapid-shot', 'Rapid Shot', 'feat', [['attack.ranged', -2]], 'One extra ranged attack at highest bonus.'),
+  m('nonlethal', 'Nonlethal Damage', 'condition', [['attack.melee', -4]],
+    'Dealing nonlethal damage with a lethal melee weapon. Not needed with nonlethal weapons such as a sap or unarmed strike.'),
   // Always-on feats (Toughness, Improved Initiative, Iron Will…) are not macros:
   // picking the feat adds a row to the section's bonus list (rules/featBonuses.ts).
   // Class features
@@ -54,7 +59,17 @@ export const MACRO_LIBRARY: LibraryMacro[] = [
   {
     ...m('sneak-attack', 'Sneak Attack', 'class', [],
       'When the target is denied its Dex bonus to AC or you flank it; ranged only within 30 feet. Uses rogue level: change the formula for slayers, ninjas and other classes.'),
-    damageDice: [{ count: 'ceil(@class.rogue.level / 2)', sides: 6, type: 'precision', applies: 'all' }],
+    damageDice: [dice('ceil(@class.rogue.level / 2)', 6, 'precision', 'all')],
+  },
+  {
+    ...m('inspiration', 'Inspiration', 'class', [],
+      'Free on trained Knowledge, Linguistics and Spellcraft checks; other skill and ability checks spend one use. Change the die if a talent improves it.'),
+    damageDice: [dice('1', 6, 'inspiration', 'skills')],
+  },
+  {
+    ...m('inspiration-attack-save', 'Inspiration (attack/save)', 'class', [],
+      'Costs two uses of inspiration each time. On saving throws it is an immediate action instead of a free action.'),
+    damageDice: [dice('1', 6, 'inspiration', 'attack'), dice('1', 6, 'inspiration', 'save')],
   },
   m('inspire-courage', 'Inspire Courage', 'class', [['attack', 1, 'competence'], ['damage', 1, 'competence']],
     '+2 at bard level 5, +3 at 11, +4 at 17. Also a morale bonus on saves against charm and fear.'),
@@ -74,9 +89,16 @@ export const MACRO_LIBRARY: LibraryMacro[] = [
   m('ant-haul', 'Ant Haul', 'spell', [['capacity.mult', 3]], 'Carrying capacity triples.'),
   m('shield', 'Shield (spell)', 'spell', [['ac', 4, 'shield']], 'Negates magic missile.'),
   m('mage-armor', 'Mage Armor', 'spell', [['ac', 4, 'armor']]),
-  m('barkskin', 'Barkskin', 'spell', [['ac', 2, 'natural']], '+1 per three caster levels above 3rd (max +5).'),
+  m('barkskin', 'Barkskin', 'spell', [['ac.natural', 'min(5, 2 + floor(max(0, @cl - 3) / 3))', 'enhancement']],
+    'Enhancement to natural armor: +2, +1 per three caster levels above 3rd (max +5). Uses your caster level; edit it if someone else cast it.'),
   m('protection-from-evil', 'Protection from Evil', 'spell', [['ac', 2, 'deflection'], ['save', 2, 'resistance']], 'Against evil creatures.'),
   m('resistance', 'Resistance', 'spell', [['save', 1, 'resistance']]),
+  m('tears-to-wine', 'Tears to Wine', 'spell', [
+    ['skills.int', '2 + 3 * min(1, floor(@cl / 9)) + 5 * min(1, floor(@cl / 15))', 'enhancement'],
+    ['skills.wis', '2 + 3 * min(1, floor(@cl / 9)) + 5 * min(1, floor(@cl / 15))', 'enhancement'],
+  ], 'On Intelligence- and Wisdom-based skill checks: +2, +5 at caster level 9, +10 at 15. Uses your caster level; edit it if someone else cast it.'),
+  m('blur', 'Blur', 'spell', [['concealment', 20]], 'Attacks against you have a 20% miss chance. True seeing negates it.'),
+  m('displacement', 'Displacement', 'spell', [['concealment', 50]], 'Attacks against you have a 50% miss chance. True seeing negates it.'),
   stat('bulls-strength', "Bull's Strength", 'str'),
   stat('cats-grace', "Cat's Grace", 'dex'),
   stat('bears-endurance', "Bear's Endurance", 'con'),

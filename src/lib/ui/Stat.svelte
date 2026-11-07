@@ -15,7 +15,7 @@
     display?: string;
     class?: string;
     /** Click to roll d20 + value; a title overrides the label in the roll log. */
-    roll?: boolean | { title?: string; subtitle?: string };
+    roll?: boolean | { title?: string; subtitle?: string; extras?: { label: string; notation: string }[] };
   }
   let { label, value, signed = true, size = 'sm', display, class: cls = '', roll = false }: Props = $props();
   const SIZES = { sm: 'text-xl', md: 'text-2xl', lg: 'text-3xl' };
@@ -24,6 +24,7 @@
   const iterative = $derived(!!display?.includes('/'));
   const rollTitle = $derived((typeof roll === 'object' && roll.title) || label);
   const rollSubtitle = $derived(typeof roll === 'object' ? roll.subtitle : undefined);
+  const extras = $derived(typeof roll === 'object' ? roll.extras : undefined);
   const parts = $derived(typeof value === 'number' ? [] : partsOf(value));
 </script>
 
@@ -31,10 +32,10 @@
   <div
     class="stat-value text-center {SIZES[size]}"
     class:whitespace-nowrap={!iterative}
-    use:rollable={{ title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, disabled: !roll || iterative }}
+    use:rollable={{ title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras, disabled: !roll || iterative }}
   >
     {#if iterative}
-      <Iterative text={display!} onroll={roll ? { title: rollTitle, subtitle: rollSubtitle, bonus: n, parts } : undefined} />
+      <Iterative text={display!} onroll={roll ? { title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras } : undefined} />
     {:else}{display ?? (signed ? fmt(n) : n)}{/if}
   </div>
   <div class="field-label">{label}</div>
