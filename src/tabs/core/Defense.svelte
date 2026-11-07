@@ -56,9 +56,9 @@
     {:else if d.naturalArmor.total}
       <span title={breakdown(d.naturalArmor)}><span class="field-label">Natural armor</span> {fmt(d.naturalArmor.total)}</span>
     {/if}
-    <span title="Highest Dex bonus to AC: the lowest of equipped armor, shield and your load's limit"><span class="field-label">Max Dex</span> {d.maxDex ?? '—'}</span>
-    <span title="Armor check penalty on Str- and Dex-based skills (*): equipped armor and shield together, or your load's penalty if worse"><span class="field-label">ACP</span> {d.acp}</span>
-    <span title="Arcane spell failure: the sum of equipped armor and shield"><span class="field-label">Spell failure</span> {d.spellFailure}%</span>
+    {#if d.maxDex !== null}<span title="Highest Dex bonus to AC: the lowest of equipped armor, shield and your load's limit"><span class="field-label">Max Dex</span> {d.maxDex}</span>{/if}
+    {#if d.acp}<span title="Armor check penalty on Str- and Dex-based skills (*): equipped armor and shield together, or your load's penalty if worse"><span class="field-label">ACP</span> {d.acp}</span>{/if}
+    {#if d.spellFailure}<span title="Arcane spell failure: the sum of equipped armor and shield"><span class="field-label">Spell failure</span> {d.spellFailure}%</span>{/if}
     {#if editing}
       <label class="inline-flex items-center gap-1" title={concealTip}>
         <span class="field-label">Concealed</span>
@@ -80,6 +80,7 @@
     addLabel="Armor / shield"
     empty="No armor or shield."
     detailPrints={(a) => !!a.notes.trim()}
+    cards
   >
     {#snippet head()}
       <th title="Equipped">Eq</th>
@@ -96,7 +97,7 @@
       {#if editing}<th class="text-center">gp</th>{/if}
     {/snippet}
     {#snippet row(a)}
-      <td data-label="Eq" class="text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.equipped} aria-label="Equipped" /></td>
+      <td data-label="Eq" class="cell-fit text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.equipped} aria-label="Equipped" /></td>
       {#if editing}<td data-label="Enh" class="w-11"><NumInput bind:value={a.enhancement} signed aria-label="Enhancement" /></td>{/if}
       <td data-label="Armor / shield" class="min-w-32">
         <div class="flex items-center gap-1">
@@ -123,8 +124,8 @@
       <td data-label="ACP" class="w-11"><NumInput bind:value={a.checkPenalty} aria-label="Armor check penalty" /></td>
       <td data-label="ASF%" class="w-11"><NumInput bind:value={a.spellFailure} aria-label="Arcane spell failure" /></td>
       <td data-label="Category" class="w-24"><input class="w-full" list="armor-categories" bind:value={a.category} aria-label="Category" /></td>
-      <td data-label="NP" class="text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.nonProficient} aria-label="Not proficient" title="Not proficient: armor check penalty also applies to attack rolls" /></td>
-      <td data-label="Wt" class="w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
+      <td data-label="NP" class="cell-fit text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.nonProficient} aria-label="Not proficient" title="Not proficient: armor check penalty also applies to attack rolls" /></td>
+      <td data-label="Wt" class="cell-fit w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
       {#if editing}<td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>{/if}
     {/snippet}
     {#snippet detail(a)}

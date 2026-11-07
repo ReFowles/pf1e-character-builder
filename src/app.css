@@ -238,7 +238,45 @@
     @apply border-b-0;
   }
   .dyn-table tr.detail-row > td {
-    @apply pt-0;
+    @apply pt-1;
+  }
+  /* Cards: each item (row plus detail line) boxed like the weapon cards, with a gap between. */
+  .dyn-table.cards {
+    @apply border-separate border-spacing-0;
+  }
+  .dyn-table.cards tbody.dyn-item > tr > td {
+    @apply border-0 border-ink/20;
+  }
+  .dyn-table.cards tbody.dyn-item > tr.has-detail > td {
+    @apply border-t pt-1.5;
+  }
+  .dyn-table.cards tbody.dyn-item > tr.detail-row > td {
+    @apply border-b pb-1.5;
+  }
+  .dyn-table.cards tbody.dyn-item > tr > td:first-child,
+  .dyn-table.cards thead th:first-child {
+    @apply pl-1.5;
+  }
+  .dyn-table.cards tbody.dyn-item > tr > td:first-child {
+    @apply border-l;
+  }
+  .dyn-table.cards tbody.dyn-item > tr > td:last-child {
+    @apply border-r pr-1.5;
+  }
+  .dyn-table.cards tr.has-detail > td:first-child {
+    @apply rounded-tl-sm;
+  }
+  .dyn-table.cards tr.has-detail > td:last-child {
+    @apply rounded-tr-sm;
+  }
+  .dyn-table.cards tr.detail-row > td:first-child {
+    @apply rounded-bl-sm;
+  }
+  .dyn-table.cards tr.detail-row > td:last-child {
+    @apply rounded-br-sm;
+  }
+  .dyn-table.cards tr.card-gap > td {
+    @apply h-2 border-0 p-0;
   }
   .skills-table td {
     @apply align-middle;
@@ -440,7 +478,23 @@
     padding-bottom: 0;
   }
   .dyn-table:not(.keep-table) tbody tr.detail-row {
-    padding-top: 0;
+    padding-top: 0.25rem;
+  }
+  .dyn-table.cards:not(.keep-table) {
+    display: block;
+  }
+  .dyn-table.cards:not(.keep-table) tbody.dyn-item {
+    display: block;
+    margin-bottom: 0.5rem;
+    border: 1px solid color-mix(in srgb, var(--color-ink) 20%, transparent);
+    border-radius: 0.25rem;
+    padding: 0 0.375rem 0.375rem;
+  }
+  .dyn-table.cards:not(.keep-table) tbody.dyn-item tr {
+    border-bottom: 0;
+  }
+  .dyn-table.cards:not(.keep-table) tr.card-gap {
+    display: none;
   }
   .dyn-table:not(.keep-table) tbody tr.detail-row td.row-actions {
     display: none;

@@ -14,6 +14,8 @@
     detail?: Snippet<[T, number]>;
     /** Whether an item's detail line prints (e.g. only when it has text). Defaults to always. */
     detailPrints?: (item: T) => boolean;
+    /** Box each item (row plus detail line) like a card. Needs `detail`. */
+    cards?: boolean;
     onadd?: () => void;
     /** Extra controls beside the add button (e.g. a database search). */
     tools?: Snippet;
@@ -31,6 +33,7 @@
     row,
     detail,
     detailPrints,
+    cards = false,
     onadd,
     tools,
     onremove,
@@ -44,7 +47,7 @@
 </script>
 
 <div>
-  <table class="dyn-table {cls}">
+  <table class={['dyn-table', cls, { cards }]}>
     <thead>
       <tr>
         {@render head()}
@@ -67,6 +70,7 @@
     {#if detail}
       <!-- One tbody per item keeps a row and its detail line together across page breaks. -->
       {#each items as item, i (item.id)}
+        {#if cards && i}<tbody aria-hidden="true"><tr class="card-gap"><td colspan={cols + (section.editing ? 1 : 0)}></td></tr></tbody>{/if}
         <tbody class="dyn-item">
           <tr class="has-detail">
             {@render row(item, i)}
