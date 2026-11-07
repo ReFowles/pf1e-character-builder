@@ -1,6 +1,7 @@
 <script lang="ts">
   import { make } from '../../lib/model/defaults';
   import { app } from '../../lib/state.svelte';
+  import { keepSize } from '../../lib/ui/keepSize.svelte';
   import Section from '../../lib/ui/Section.svelte';
   import Stat from '../../lib/ui/Stat.svelte';
   import Field from '../../lib/ui/Field.svelte';
@@ -197,7 +198,7 @@
           <span class="field-label">Extra damage</span>
         </div>
       {/if}
-      <Field label="Notes" class="mt-1 {w.notes ? '' : 'print:hidden'}"><input bind:value={w.notes} aria-label="Notes" /></Field>
+      <textarea use:keepSize={`${w.id}:notes`} rows="1" class={['mt-1 w-full text-xs', { 'print:hidden': !w.notes.trim() }]} bind:value={w.notes} placeholder="Notes (special abilities, materials…)" aria-label="{weaponName(w)} notes"></textarea>
       {#if w.kind === 'ranged' || w.ammo.length}
         <!-- One row per kind of ammunition; counts stay blank on paper for pencil. -->
         <div class={['mt-1 flex flex-wrap items-center gap-1', { 'print:hidden': !w.ammo.length }]}>
