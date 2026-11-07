@@ -221,7 +221,7 @@
           {#if editing}
             <th></th>
           {:else}
-            <th colspan="4">Progression</th>
+            <th colspan="4" class="pl-2">Progression</th>
           {/if}
         </tr>
       </thead>
@@ -241,20 +241,25 @@
             </td>
             <td class="w-8 text-center align-middle font-bold tabular-nums" title={app.d.castingLevels[k.id] !== app.d.classLevels[k.id] ? `Caster level ${app.d.castingLevels[k.id]} with prestige advancement` : undefined}>{app.d.classLevels[k.id] ?? 0}</td>
             <td>
+              <!-- The table button centres on the name and its archetype line together. -->
               <div class="flex items-center gap-1">
-                <Combobox class="w-full min-w-0 font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
-                {#if k.prestige}<span class="rounded-sm bg-ink/10 px-1 text-[0.6rem] uppercase" title="Prestige class">PrC</span>{/if}
+                <div class="min-w-0 flex-1">
+                  <div class="flex items-center gap-1">
+                    <Combobox class="w-full min-w-0 font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
+                    {#if k.prestige}<span class="rounded-sm bg-ink/10 px-1 text-[0.6rem] uppercase" title="Prestige class">PrC</span>{/if}
+                  </div>
+                  {#if k.archetypes.length}<div class="pl-1 text-xs opacity-70" title="Archetypes">{k.archetypes.join(', ')}</div>{/if}
+                </div>
                 {#if k.name.trim()}
                   <button type="button" class="icon-btn shrink-0 opacity-60 hover:opacity-100 print:hidden" title="Class progression table" aria-label="{k.name} progression table" onclick={() => showProgression(k.id)}><TableProperties size={15} /></button>
                 {/if}
               </div>
-              {#if k.archetypes.length}<div class="pl-1 text-xs opacity-70" title="Archetypes">{k.archetypes.join(', ')}</div>{/if}
             </td>
             {#if editing}
               <td class="w-6"><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
             {:else}
               <!-- Separate cells so the bullets line up across classes. -->
-              <td class="progression pl-3">d{k.hd}</td>
+              <td class="progression pl-2">d{k.hd}</td>
               <td class="progression">{BAB_LABEL[k.bab]}</td>
               <td class="progression">{k.goodSaves.map((s) => s[0].toUpperCase()).join('') || '—'}</td>
               <td class="progression">{k.skillRanks}+Int</td>
