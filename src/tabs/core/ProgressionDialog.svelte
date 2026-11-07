@@ -143,7 +143,7 @@
   {#snippet footer()}
     {#if picked}
       {@const f = picked.f}
-      <div class="flex max-h-56 flex-col gap-1 overflow-y-auto text-sm">
+      <div class="flex max-h-[40vh] flex-col gap-1 overflow-y-auto text-sm">
         <div class="flex flex-wrap items-baseline gap-2">
           <strong class="font-display text-base">{f.name}</strong>
           <span class="opacity-60">{ordinal(picked.level)} level{f.archetype ? ` · ${f.archetype}` : ''}{f.first ? '' : ' · improves'}</span>
@@ -156,6 +156,17 @@
           {/if}
         </div>
         <p class="whitespace-pre-line">{f.description || f.summary || 'No description in the class data.'}</p>
+        {#each f.tables ?? [] as t, ti (ti)}
+          <div class="overflow-x-auto">
+            <table class="feature-table">
+              {#if t.title}<caption>{t.title}</caption>{/if}
+              {#if t.head.length}<thead><tr>{#each t.head as h, hi (hi)}<th>{h}</th>{/each}</tr></thead>{/if}
+              <tbody>
+                {#each t.rows as row, ri (ri)}<tr>{#each row as cell, ci (ci)}<td>{cell}</td>{/each}</tr>{/each}
+              </tbody>
+            </table>
+          </div>
+        {/each}
       </div>
     {:else}
       <p class="text-xs opacity-60">
@@ -189,6 +200,33 @@
   }
   .progression-table tr.current td:first-child {
     box-shadow: inset 3px 0 0 var(--color-gold);
+  }
+  .feature-table {
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+  }
+  .feature-table caption {
+    caption-side: top;
+    text-align: left;
+    font-weight: 600;
+    padding-bottom: 0.25rem;
+  }
+  .feature-table th,
+  .feature-table td {
+    padding: 0.125rem 0.75rem 0.125rem 0.375rem;
+    text-align: left;
+    border-bottom: 1px solid color-mix(in srgb, var(--color-ink) 15%, transparent);
+  }
+  .feature-table th {
+    font-size: 0.6rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    opacity: 0.7;
+    border-bottom-color: color-mix(in srgb, var(--color-ink) 35%, transparent);
+  }
+  .feature-table td:first-child {
+    font-weight: 600;
+    white-space: nowrap;
   }
   .feature {
     text-align: left;

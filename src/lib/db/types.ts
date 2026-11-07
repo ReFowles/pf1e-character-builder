@@ -93,6 +93,14 @@ export interface DbClassFeature {
   labels?: string[];
   summary: string;
   description: string;
+  /** Tables in the feature's text (unarmed damage by size), kept out of `description`. */
+  tables?: DbFeatureTable[];
+}
+
+export interface DbFeatureTable {
+  title: string;
+  head: string[];
+  rows: string[][];
 }
 
 export interface DbClassTableRow {

@@ -273,3 +273,27 @@ export function boldParagraphs(html: string, plain: (h: string) => string): Map<
   }
   return out;
 }
+
+// --- Tables inside feature descriptions ----------------------------------------------
+export interface FeatureTable {
+  title: string;
+  head: string[];
+  rows: string[][];
+}
+
+/** The description with its HTML tables taken out, and the tables as data (the Unarmed Strike damage table). */
+export function extractTables(html: string): { html: string; tables: FeatureTable[] } {
+  const tables: FeatureTable[] = [];
+  const rest = html.replace(/<table[\s\S]*?<\/table>/gi, (t) => {
+    const title = cellText(t.match(/<caption[^>]*>([\s\S]*?)<\/caption>/i)?.[1] ?? '').replace(/^table:\s*/i, '');
+    const rows = [...t.matchAll(/<tr[\s\S]*?<\/tr>/gi)].map((r) => ({
+      header: !/<td/i.test(r[0]),
+      cells: [...r[0].matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map((c) => cellText(c[1])),
+    }));
+    const head = rows[0]?.header ? rows.shift()!.cells : [];
+    const body = rows.map((r) => r.cells).filter((r) => r.some(Boolean));
+    if (body.length) tables.push({ title, head, rows: body });
+    return '';
+  });
+  return { html: rest, tables };
+}

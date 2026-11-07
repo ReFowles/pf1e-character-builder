@@ -14,7 +14,7 @@ import { parse } from 'yaml';
 import type { DbArchetype, DbArchetypeFeature, DbClass, DbClassFeature, DbCompanion, DbEvolution, DbFeat, DbItem, DbSpell } from '../../src/lib/db/types.ts';
 import { ABILITIES, SAVES } from '../../src/lib/model/types.ts';
 import { slug } from '../../src/lib/slug.ts';
-import { archetypeFeatureName, baseName, boldParagraphs, featureKey, featureLevels, prestigeTable, replacements, specialKey } from './progression.ts';
+import { archetypeFeatureName, baseName, boldParagraphs, extractTables, featureKey, featureLevels, prestigeTable, replacements, specialKey } from './progression.ts';
 
 const { values: opts, positionals } = parseArgs({
   allowPositionals: true,
@@ -253,8 +253,9 @@ const FEATURE_TEXT = 1500;
 /** A linked feature at its first level, with the levels it improves or repeats at. */
 function linkedFeature(f: Doc, level: number, max: number, archetype = false): DbClassFeature & { id?: string } {
   const name = archetype ? archetypeFeatureName(f.name) : baseName(f.name);
-  const description = text(f.system.description?.value, FEATURE_TEXT);
-  return { id: f._id, name, ...featureLevels(name, f.system, description, level, max), summary: text(firstSentence(description), 200), description };
+  const { html, tables } = extractTables(String(f.system.description?.value ?? ''));
+  const description = text(html, FEATURE_TEXT);
+  return { id: f._id, name, ...featureLevels(name, f.system, description, level, max), summary: text(firstSentence(description), 200), description, ...(tables.length ? { tables } : {}) };
 }
 
 function baseFeatures(d: Doc): (DbClassFeature & { id?: string })[] {

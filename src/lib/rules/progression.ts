@@ -1,7 +1,7 @@
 // A class's progression table from the bundled class data: BAB, saves,
 // features and spells per day at each class level, with archetypes swapped
 // in. Also the universal level-up rewards by character level.
-import type { DbArchetype, DbClass } from '../db/types';
+import type { DbArchetype, DbClass, DbFeatureTable } from '../db/types';
 import type { BabProgression, Character, ClassDef, Save } from '../model/types';
 import { SAVES } from '../model/types';
 import { slug } from '../slug';
@@ -21,6 +21,7 @@ export interface ProgressionFeature {
   replacedBy?: string;
   summary: string;
   description: string;
+  tables?: DbFeatureTable[];
 }
 
 export interface ProgressionRow {
@@ -107,6 +108,7 @@ export function progression(
         ...(archetype ? { archetype } : { replacedBy: replacedAt(f.name, level) }),
         summary: f.summary,
         description: f.description,
+        tables: f.tables,
       });
     };
     for (const f of k.features) add(f);
