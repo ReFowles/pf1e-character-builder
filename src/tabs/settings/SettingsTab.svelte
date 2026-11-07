@@ -141,16 +141,16 @@
   </Section>
   <Section id="settings-tabs" title="Tabs">
     <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.companionTab} />
+      Companions tab (familiars, animal companions, eidolons…)
+    </label>
+    <label class="flex items-center gap-2 text-sm">
       <input type="checkbox" bind:checked={c.spellsTab} />
       Spells tab
     </label>
     <label class="flex items-center gap-2 text-sm">
       <input type="checkbox" bind:checked={c.mythic.enabled} />
       Mythic tab
-    </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={c.companionTab} />
-      Companions tab (familiars, animal companions, eidolons…)
     </label>
   </Section>
   {@render sectionList('settings-spells', 'Spellcasting sections', c.spellcasting.map((b) => ({ key: b.id, title: spellSectionTitle(c, b) })), 'section', 'Spellcasting section', (id) => removeSpellBlock(c, id), () => {
