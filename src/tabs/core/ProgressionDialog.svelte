@@ -53,7 +53,7 @@
   function addToSheet(f: ProgressionFeature, level: number) {
     if (!k || onSheet(f.name)) return;
     // The Class Abilities level is the character level the feature arrives at, not the class level.
-    c.classAbilities.push({ ...make.classAbility(k.id, charLevels[level - 1] ?? level), name: f.name, description: f.description });
+    c.classAbilities.push({ ...make.classAbility(k.id, charLevels[level - 1] ?? level), name: f.name, description: f.summary || f.description });
     app.notify(`${f.name} added to Class Abilities`);
   }
 </script>

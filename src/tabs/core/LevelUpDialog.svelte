@@ -104,7 +104,7 @@
   function toggleFeature(k: ClassDef, f: ProgressionFeature) {
     const i = c.classAbilities.findIndex((a) => a.classId === k.id && isFeature(a.name, f.name));
     if (i >= 0) c.classAbilities.splice(i, 1);
-    else c.classAbilities.push({ ...make.classAbility(k.id, level), name: f.name, description: f.description });
+    else c.classAbilities.push({ ...make.classAbility(k.id, level), name: f.name, description: f.summary || f.description });
   }
 
   // Reminders the sheet can't check, ticked off by hand for this visit.
