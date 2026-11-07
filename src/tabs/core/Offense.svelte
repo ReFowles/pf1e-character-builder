@@ -192,13 +192,14 @@
         <Field label="Ammo" class="w-32 shrink-0"><input bind:value={w.ammo} aria-label="Ammo" /></Field>
       </div>
       {#if editing}
-        <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-8 print:hidden">
+        <div class="mt-1 grid grid-cols-3 items-end gap-2 border-t border-ink/10 pt-1 sm:grid-cols-9 print:hidden">
           <Field label="Kind">
             <Select bind:value={w.kind} options={opts(['melee', 'ranged'] as const)} />
           </Field>
           <Field label="Atk abil">
             <Select bind:value={w.attackAbility} options={ABILITY_OPTIONS} />
           </Field>
+          <Field label="Not prof."><input type="checkbox" class="mb-1" bind:checked={w.nonProficient} aria-label="Not proficient" title="Not proficient: −4 to attack rolls" /></Field>
           <Field label="Atk misc"><NumInput bind:value={w.attackMisc} signed /></Field>
           <Field label="Dmg abil">
             <Select bind:value={w.damageAbility} options={[{ value: 'none' as const, label: 'None' }, ...ABILITY_OPTIONS]} />

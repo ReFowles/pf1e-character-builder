@@ -245,6 +245,11 @@ export function derive(c: Character): Derived {
       source: a.name || (a.kind === 'shield' ? 'Shield' : 'Armor'),
     });
   }
+  for (const a of equipped) {
+    if (a.nonProficient && a.checkPenalty) {
+      set.add({ key: 'attack', value: -Math.abs(a.checkPenalty), type: 'untyped', source: `${a.name || 'Armor'} (not proficient)` });
+    }
+  }
   set.add({ key: 'ac', value: c.naturalArmor, type: 'natural', source: 'Natural armor' });
 
   let loseDex = false;
@@ -460,6 +465,7 @@ export function derive(c: Character): Derived {
       bonus('attack', mods[w.attackAbility], w.attackAbility.toUpperCase()),
       { key: 'attack', value: w.enhancement, type: 'enhancement', source: 'Enhancement' },
       bonus('attack', w.attackMisc, 'Misc'),
+      bonus('attack', w.nonProficient ? -4 : 0, 'Not proficient'),
       ...set.list(keys),
     ]);
     const offset = attackBreakdown.total - bab;

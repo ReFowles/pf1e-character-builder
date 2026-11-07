@@ -24,6 +24,18 @@ function fighter(): Character {
 }
 
 describe('derive', () => {
+  it('applies non-proficiency penalties to attacks', () => {
+    const c = fighter();
+    const w = c.weapons[0];
+    const base = derive(c).weapons[w.id].attackBreakdown.total;
+    w.nonProficient = true;
+    expect(derive(c).weapons[w.id].attackBreakdown.total).toBe(base - 4);
+    w.nonProficient = false;
+    c.armor[0].nonProficient = true;
+    c.armor[1].nonProficient = true;
+    expect(derive(c).weapons[w.id].attackBreakdown.total).toBe(base - 4);
+  });
+
   it('collects extra damage from the weapon and from active macros', () => {
     const c = fighter();
     const bow = { ...make.weapon(), name: 'Longbow', kind: 'ranged' as const, damage: '1d8' };

@@ -149,6 +149,8 @@ export interface Weapon extends Identified {
   /** Multiplier for damage ability mod: 0.5 off-hand, 1, 1.5 two-handed. */
   damageMultiplier: number;
   kind: 'melee' | 'ranged';
+  /** Not proficient: −4 to attack rolls with this weapon. */
+  nonProficient: boolean;
   enhancement: number;
   attackMisc: number;
   damageMisc: number;
@@ -181,6 +183,8 @@ export interface ArmorPiece extends Identified {
   name: string;
   kind: 'armor' | 'shield';
   equipped: boolean;
+  /** Not proficient: the armor check penalty also applies to attack rolls. */
+  nonProficient: boolean;
   acBonus: number;
   enhancement: number;
   maxDex: number | null;

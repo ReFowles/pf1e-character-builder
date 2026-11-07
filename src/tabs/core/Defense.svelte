@@ -55,7 +55,7 @@
   <EditMode>{#snippet children(editing)}
   <DynamicTable
     bind:items={c.armor}
-    cols={editing ? 11 : 9}
+    cols={editing ? 12 : 10}
     onadd={() => c.armor.push(make.armor(c.armor.some((a) => a.kind === 'armor') ? 'shield' : 'armor'))}
     addLabel="Armor / shield"
     empty="No armor or shield."
@@ -70,11 +70,12 @@
       <th class="text-center">ACP</th>
       <th class="text-center">ASF%</th>
       <th>Category</th>
+      <th class="text-center" title="Not proficient: armor check penalty also applies to attack rolls">NP</th>
       <th class="text-center">Wt</th>
       {#if editing}<th class="text-center">gp</th>{/if}
     {/snippet}
     {#snippet row(a)}
-      <td data-label="Eq" class="text-center align-middle"><input type="checkbox" bind:checked={a.equipped} aria-label="Equipped" /></td>
+      <td data-label="Eq" class="text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.equipped} aria-label="Equipped" /></td>
       {#if editing}<td data-label="Enh" class="w-11"><NumInput bind:value={a.enhancement} signed aria-label="Enhancement" /></td>{/if}
       <td data-label="Armor / shield" class="min-w-32">
         <div class="flex items-center gap-1">
@@ -101,6 +102,7 @@
       <td data-label="ACP" class="w-11"><NumInput bind:value={a.checkPenalty} aria-label="Armor check penalty" /></td>
       <td data-label="ASF%" class="w-11"><NumInput bind:value={a.spellFailure} aria-label="Arcane spell failure" /></td>
       <td data-label="Category" class="w-24"><input class="w-full" list="armor-categories" bind:value={a.category} aria-label="Category" /></td>
+      <td data-label="NP" class="text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.nonProficient} aria-label="Not proficient" title="Not proficient: armor check penalty also applies to attack rolls" /></td>
       <td data-label="Wt" class="w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
       {#if editing}<td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>{/if}
     {/snippet}
