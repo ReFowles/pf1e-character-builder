@@ -153,9 +153,9 @@
   <EditMode>
     {#snippet children(editing)}
       {#if c.naturalArmor !== 0 || editing}
-        <BonusList keys={KEYS} label="AC / save bonuses" fixed={naturalRow} />
+        <BonusList keys={KEYS} label="AC / save bonuses" placeholder="Source (e.g. Ring of protection)" fixed={naturalRow} />
       {:else}
-        <BonusList keys={KEYS} label="AC / save bonuses" />
+        <BonusList keys={KEYS} label="AC / save bonuses" placeholder="Source (e.g. Ring of protection)" />
       {/if}
 
       <div class="mt-auto flex flex-col border-t border-ink/30 pt-1">

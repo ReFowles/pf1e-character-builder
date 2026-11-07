@@ -219,10 +219,6 @@
           <th class="text-center">Lv</th>
           <th>Class</th>
           {#if editing}
-            <th class="text-center">HD</th>
-            <th class="text-center">BAB</th>
-            <th class="text-center">Good saves</th>
-            <th class="text-center" title="Skill ranks per level">Ranks</th>
             <th></th>
           {:else}
             <th colspan="4">Progression</th>
@@ -246,7 +242,7 @@
             <td class="w-8 text-center align-middle font-bold tabular-nums" title={app.d.castingLevels[k.id] !== app.d.classLevels[k.id] ? `Caster level ${app.d.castingLevels[k.id]} with prestige advancement` : undefined}>{app.d.classLevels[k.id] ?? 0}</td>
             <td>
               <div class="flex items-center gap-1">
-                <Combobox class="w-full font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
+                <Combobox class="w-full min-w-0 font-semibold" bind:value={k.name} options={CLASS_OPTIONS} onopen={loadClassDb} oncommit={() => onName(k)} placeholder="Class name" aria-label="Class name" />
                 {#if k.prestige}<span class="rounded-sm bg-ink/10 px-1 text-[0.6rem] uppercase" title="Prestige class">PrC</span>{/if}
                 {#if k.name.trim()}
                   <button type="button" class="icon-btn shrink-0 opacity-60 hover:opacity-100 print:hidden" title="Class progression table" aria-label="{k.name} progression table" onclick={() => showProgression(k.id)}><TableProperties size={15} /></button>
@@ -255,24 +251,7 @@
               {#if k.archetypes.length}<div class="pl-1 text-xs opacity-70" title="Archetypes">{k.archetypes.join(', ')}</div>{/if}
             </td>
             {#if editing}
-              <td>
-                <Select class="w-16" bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />
-              </td>
-              <td>
-                <Select
-                  class="w-16"
-                  bind:value={k.bab}
-                  options={[
-                    { value: 'full' as const, label: 'Full' },
-                    { value: '3/4' as const, label: '¾' },
-                    { value: '1/2' as const, label: '½' },
-                  ]}
-                  aria-label="BAB progression"
-                />
-              </td>
-              <td class="text-center whitespace-nowrap"><SaveToggles bind:saves={k.goodSaves} /></td>
-              <td class="w-12"><NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" /></td>
-              <td><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
+              <td class="w-6"><button type="button" class="icon-btn text-accent" aria-label="Remove class" onclick={() => removeClass(i)}>✕</button></td>
             {:else}
               <!-- Separate cells so the bullets line up across classes. -->
               <td class="progression pl-3">d{k.hd}</td>
@@ -281,6 +260,41 @@
               <td class="progression">{k.skillRanks}+Int</td>
             {/if}
           </tr>
+          {#if editing}
+            <!-- Progression controls on their own line so the class name keeps its width in a narrow card. -->
+            <tr>
+              <td></td>
+              <td></td>
+              <td colspan="2" class="pb-2">
+                <div class="flex flex-wrap items-end gap-2">
+                  <label class="field w-16">
+                    <Select bind:value={k.hd} options={opts([6, 8, 10, 12] as const, (hd) => `d${hd}`)} aria-label="Hit die" />
+                    <span class="field-label">HD</span>
+                  </label>
+                  <label class="field w-16">
+                    <Select
+                      bind:value={k.bab}
+                      options={[
+                        { value: 'full' as const, label: 'Full' },
+                        { value: '3/4' as const, label: '¾' },
+                        { value: '1/2' as const, label: '½' },
+                      ]}
+                      aria-label="BAB progression"
+                    />
+                    <span class="field-label">BAB</span>
+                  </label>
+                  <div class="field">
+                    <span class="whitespace-nowrap"><SaveToggles bind:saves={k.goodSaves} /></span>
+                    <span class="field-label">Good saves</span>
+                  </div>
+                  <label class="field w-12" title="Skill ranks per level">
+                    <NumInput bind:value={k.skillRanks} aria-label="Skill ranks per level" />
+                    <span class="field-label">Ranks</span>
+                  </label>
+                </div>
+              </td>
+            </tr>
+          {/if}
         {/each}
         <tr class="print-row hidden print:table-row">{#each { length: 7 }, i (i)}<td></td>{/each}</tr>
       </tbody>
@@ -323,7 +337,7 @@
             <th>Class</th>
             {#if c.gestalt}<th title="Second class taken at this level">Gestalt</th>{/if}
             <th class="text-center">HP roll</th>
-            <th>Favored class bonus</th>
+            <th title="Favored class bonus">FCB</th>
             {#if hasPrestigeCasting}<th title="Casting classes this level advances by one caster level">Spellcasting</th>{/if}
             <th></th>
           </tr>
@@ -347,7 +361,7 @@
                   <NumInput bind:value={l.hpRoll} aria-label="HP rolled at level {i + 1}" />
                 {/if}
               </td>
-              <td data-label="Favored class bonus">
+              <td data-label="FCB">
                 {#if levelClassIds(c, l).some((id) => c.favoredClassIds.includes(id))}
                   <div class="flex flex-wrap gap-1">
                     <Select
@@ -415,7 +429,7 @@
 
   {#if app.d.fcb.hp || app.d.fcb.skill || app.d.fcb.other.length}
     <div class="text-sm">
-      <span class="field-label">Favored class bonuses ({c.favoredClassIds.map(className).join(', ') || '—'})</span>
+      <span class="field-label" title="Favored class bonuses">FCB ({c.favoredClassIds.map(className).join(', ') || '—'})</span>
       <ul class="flex flex-wrap gap-x-3">
         {#if app.d.fcb.hp}<li>+{app.d.fcb.hp} HP</li>{/if}
         {#if app.d.fcb.skill}<li>+{app.d.fcb.skill} skill rank{app.d.fcb.skill === 1 ? '' : 's'}</li>{/if}

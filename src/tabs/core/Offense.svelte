@@ -234,5 +234,5 @@
     {/snippet}
   </DynamicList>
   {/snippet}</EditMode>
-  <div class="print:hidden"><BonusList keys={KEYS} label="Attack / damage bonuses" /></div>
+  <div class="print:hidden"><BonusList keys={KEYS} label="Attack / damage bonuses" placeholder="Source (e.g. Weapon Focus)" /></div>
 </Section>

@@ -14,8 +14,10 @@
     label?: string;
     /** Permanent first row(s), e.g. natural armor. */
     fixed?: Snippet;
+    /** Example source shown in empty source fields. */
+    placeholder?: string;
   }
-  let { keys, label = 'Misc bonuses', fixed }: Props = $props();
+  let { keys, label = 'Misc bonuses', fixed, placeholder = 'Source' }: Props = $props();
   const section = useSection();
   const rows = $derived(app.char.bonuses.filter((b) => keys.includes(b.key)));
 
@@ -42,7 +44,7 @@
           <Select class="w-24 shrink-0" bind:value={b.key} options={keys.map((k) => ({ value: k, label: keyShort(k), title: KEY_LABELS[k] }))} aria-label="Applies to" />
         {/if}
         <Select class="w-24 shrink-0" bind:value={b.type} options={opts(BONUS_TYPES)} aria-label="Bonus type" />
-        <input class="min-w-0 flex-1" bind:value={b.source} placeholder="Source (e.g. Toughness)" aria-label="Source" />
+        <input class="min-w-0 flex-1" bind:value={b.source} {placeholder} aria-label="Source" />
         {#if section.editing}
           <button type="button" class="icon-btn shrink-0 text-accent print:hidden" aria-label="Remove bonus" onclick={() => remove(b.id)}>✕</button>
         {/if}

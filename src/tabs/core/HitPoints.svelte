@@ -77,5 +77,5 @@
       <p class="text-xs opacity-70">{note}</p>
     {/each}
   </div>
-  <div class="print:hidden"><BonusList keys={['hp.max']} label="Extra max HP (e.g. Toughness)" /></div>
+  <div class="print:hidden"><BonusList keys={['hp.max']} label="Extra max HP" placeholder="Source (e.g. Toughness)" /></div>
 </Section>

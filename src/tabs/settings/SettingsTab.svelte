@@ -61,30 +61,12 @@
     </div>
     <p class="text-sm opacity-70">Characters are saved in this browser. Export a JSON backup before clearing site data or switching devices.</p>
   </Section>
-  <Section id="settings-tabs" title="Tabs">
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={c.spellsTab} />
-      Spells tab
-    </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={c.mythic.enabled} />
-      Mythic tab
-    </label>
-    <label class="flex items-center gap-2 text-sm">
-      <input type="checkbox" bind:checked={c.companionTab} />
-      Companions tab (familiars, animal companions, eidolons…)
+  <Section id="settings-appearance" title="Appearance">
+    <label class="flex items-center gap-2 text-sm" title="Saved on this device. Printing always uses the light theme.">
+      <input type="checkbox" bind:checked={() => theme.dark, (v) => (theme.dark = v)} />
+      Dark mode
     </label>
   </Section>
-  {@render sectionList('settings-spells', 'Spellcasting sections', c.spellcasting.map((b) => ({ key: b.id, title: spellSectionTitle(c, b) })), 'section', 'Spellcasting section', (id) => removeSpellBlock(c, id), () => {
-    c.spellsTab = true;
-    addSpellBlock(c);
-  })}
-  {@render sectionList('settings-companions', 'Companions', c.companions.map((x) => ({ key: x.id, title: companionTitle(x) })), 'companion', 'Companion', (id) => removeCompanion(c, id), () => {
-    c.companionTab = true;
-    addCompanion(c);
-  })}
-  </div>
-  <div class="flex flex-col gap-3">
   <Section id="settings-dice" title="Dice">
     <p class="text-sm opacity-70">Click initiative, saves, attacks, skills, ability modifiers or caster level to roll; weapons roll damage and criticals. Results go to the roll log (the d20 button in the header). Saved on this device.</p>
     <label class="flex items-center gap-2 text-sm">
@@ -104,12 +86,8 @@
       <button type="button" class="btn" onclick={() => roll({ title: 'Test roll', notation: '2d20+1d6' })}>Test roll</button>
     </div>
   </Section>
-  <Section id="settings-appearance" title="Appearance">
-    <label class="flex items-center gap-2 text-sm" title="Saved on this device. Printing always uses the light theme.">
-      <input type="checkbox" bind:checked={() => theme.dark, (v) => (theme.dark = v)} />
-      Dark mode
-    </label>
-  </Section>
+  </div>
+  <div class="flex flex-col gap-3">
   <Section id="settings-rules" title="Rules">
     <label class="field">
       <Select bind:value={c.xp.track} options={[...opts(['slow', 'medium', 'fast'] as const), { value: 'milestone' as const, label: 'Milestones (no XP)' }]} aria-label="Experience track" />
@@ -161,6 +139,28 @@
       {c.critMode === 'total' ? 'Roll the damage normally, then multiply the whole total (×2, ×3…).' : 'Roll the dice multiplied (×2 means twice as many dice), with the bonus multiplied too.'}
     </p>
   </Section>
+  <Section id="settings-tabs" title="Tabs">
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.spellsTab} />
+      Spells tab
+    </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.mythic.enabled} />
+      Mythic tab
+    </label>
+    <label class="flex items-center gap-2 text-sm">
+      <input type="checkbox" bind:checked={c.companionTab} />
+      Companions tab (familiars, animal companions, eidolons…)
+    </label>
+  </Section>
+  {@render sectionList('settings-spells', 'Spellcasting sections', c.spellcasting.map((b) => ({ key: b.id, title: spellSectionTitle(c, b) })), 'section', 'Spellcasting section', (id) => removeSpellBlock(c, id), () => {
+    c.spellsTab = true;
+    addSpellBlock(c);
+  })}
+  {@render sectionList('settings-companions', 'Companions', c.companions.map((x) => ({ key: x.id, title: companionTitle(x) })), 'companion', 'Companion', (id) => removeCompanion(c, id), () => {
+    c.companionTab = true;
+    addCompanion(c);
+  })}
   </div>
 </div>
 <div class="mt-3">

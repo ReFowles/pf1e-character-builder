@@ -72,7 +72,7 @@
     </div>
   </div>
   <EditMode>{#snippet children(editing)}{@render editFields(editing)}{/snippet}</EditMode>
-  <div class="print:hidden"><BonusList keys={['init', 'speed']} label="Initiative / speed bonuses" /></div>
+  <div class="print:hidden"><BonusList keys={['init', 'speed']} label="Initiative / speed bonuses" placeholder="Source (e.g. Fleet)" /></div>
 
   <div class="mt-1 flex items-center justify-between border-b border-ink/30">
     <span class="subhead border-0">Resources</span>

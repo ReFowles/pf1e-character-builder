@@ -184,7 +184,7 @@
       <p class="text-[0.65rem] opacity-60">
         <sup class="font-bold text-accent">T</sup> trained only · <sup>*</sup> armor check penalty ({app.d.acp}) · class skills with ranks get +3
       </p>
-      <div class="print:hidden"><BonusList keys={SKILL_KEYS} label="Skill bonuses" /></div>
+      <div class="print:hidden"><BonusList keys={SKILL_KEYS} label="Skill bonuses" placeholder="Source (e.g. Skill Focus)" /></div>
     {/snippet}
   </EditMode>
 </Section>
