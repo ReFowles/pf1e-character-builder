@@ -94,6 +94,7 @@
     break-after: avoid;
   }
   .dyn-table tr,
+  .dyn-table tbody.dyn-item,
   .stat {
     break-inside: avoid;
   }
@@ -229,6 +230,13 @@
   }
   .dyn-table td > input {
     @apply w-full;
+  }
+  /* A row with a detail line under it: the border goes under the pair. */
+  .dyn-table tr.has-detail > td {
+    @apply border-b-0;
+  }
+  .dyn-table tr.detail-row > td {
+    @apply pt-0;
   }
   .skills-table td {
     @apply align-middle;
@@ -424,6 +432,16 @@
   }
   .dyn-table:not(.keep-table) tbody td.row-actions {
     flex: 0 0 auto;
+  }
+  .dyn-table:not(.keep-table) tbody tr.has-detail {
+    border-bottom: 0;
+    padding-bottom: 0;
+  }
+  .dyn-table:not(.keep-table) tbody tr.detail-row {
+    padding-top: 0;
+  }
+  .dyn-table:not(.keep-table) tbody tr.detail-row td.row-actions {
+    display: none;
   }
 }
 

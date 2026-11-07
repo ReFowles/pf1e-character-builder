@@ -10,6 +10,10 @@
     cols: number;
     head: Snippet;
     row: Snippet<[T, number]>;
+    /** Full-width line under each row (notes, descriptions). */
+    detail?: Snippet<[T, number]>;
+    /** Whether an item's detail line prints (e.g. only when it has text). Defaults to always. */
+    detailPrints?: (item: T) => boolean;
     onadd?: () => void;
     /** Extra controls beside the add button (e.g. a database search). */
     tools?: Snippet;
@@ -25,6 +29,8 @@
     cols,
     head,
     row,
+    detail,
+    detailPrints,
     onadd,
     tools,
     onremove,
@@ -45,25 +51,46 @@
         {#if section.editing}<th class="w-0 print:hidden"><span class="sr-only">Actions</span></th>{/if}
       </tr>
     </thead>
-    <tbody>
+    {#snippet actions(item: T, i: number)}
+      {#if section.editing}
+        <td class="row-actions print:hidden">
+          <div class="flex">
+            {#if reorder}
+              <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => moveItem(items, i, i - 1)}>↑</button>
+              <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => moveItem(items, i, i + 1)}>↓</button>
+            {/if}
+            <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => (onremove ? onremove(item) : items.splice(i, 1))}>✕</button>
+          </div>
+        </td>
+      {/if}
+    {/snippet}
+    {#if detail}
+      <!-- One tbody per item keeps a row and its detail line together across page breaks. -->
       {#each items as item, i (item.id)}
-        <tr>
-          {@render row(item, i)}
-          {#if section.editing}
-          <td class="row-actions print:hidden">
-            <div class="flex">
-              {#if reorder}
-                <button type="button" class="icon-btn" aria-label="Move up" disabled={i === 0} onclick={() => moveItem(items, i, i - 1)}>↑</button>
-                <button type="button" class="icon-btn" aria-label="Move down" disabled={i === items.length - 1} onclick={() => moveItem(items, i, i + 1)}>↓</button>
-              {/if}
-              <button type="button" class="icon-btn text-accent" aria-label="Remove row" onclick={() => (onremove ? onremove(item) : items.splice(i, 1))}>✕</button>
-            </div>
-          </td>
-          {/if}
-        </tr>
-      {:else}
-        <tr class="print:hidden"><td colspan={cols + 1} class="py-2 text-center text-sm italic opacity-60">{empty}{#if onadd || tools}<EditHint />{/if}</td></tr>
+        <tbody class="dyn-item">
+          <tr class="has-detail">
+            {@render row(item, i)}
+            {@render actions(item, i)}
+          </tr>
+          <tr class={['detail-row', { 'print:hidden': detailPrints && !detailPrints(item) }]}>
+            <td colspan={cols}>{@render detail(item, i)}</td>
+            {#if section.editing}<td class="row-actions print:hidden"></td>{/if}
+          </tr>
+        </tbody>
       {/each}
+    {/if}
+    <tbody>
+      {#if !detail}
+        {#each items as item, i (item.id)}
+          <tr>
+            {@render row(item, i)}
+            {@render actions(item, i)}
+          </tr>
+        {/each}
+      {/if}
+      {#if !items.length}
+        <tr class="print:hidden"><td colspan={cols + 1} class="py-2 text-center text-sm italic opacity-60">{empty}{#if onadd || tools}<EditHint />{/if}</td></tr>
+      {/if}
       <!-- One blank row on paper for handwritten additions. -->
       <tr class="print-row hidden print:table-row">
         {#each { length: cols }, c (c)}<td>&nbsp;</td>{/each}

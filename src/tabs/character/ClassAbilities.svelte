@@ -29,20 +29,21 @@
   {#snippet actions()}
     <EditMode>{#snippet children(editing)}{#if editing}<button type="button" class="head-btn" onclick={sort}>Sort</button>{/if}{/snippet}</EditMode>
   {/snippet}
-  <DynamicTable bind:items={c.classAbilities} cols={4} onadd={add} addLabel="Class ability" empty="Bravery, Sneak Attack, Bloodline powers…">
+  <DynamicTable bind:items={c.classAbilities} cols={3} detailPrints={(a) => !!a.description.trim()} onadd={add} addLabel="Class ability" empty="Bravery, Sneak Attack, Bloodline powers…">
     {#snippet head()}
       <th>Class</th>
       <th class="text-center">Lvl</th>
       <th>Ability</th>
-      <th>Notes</th>
     {/snippet}
     {#snippet row(a)}
       <td data-label="Class" class="w-24">
         <Select bind:value={a.classId} options={classOptions(c.classes, { value: '', label: '—' })} aria-label="Class" />
       </td>
       <td data-label="Lvl" class="w-10"><NumInput bind:value={a.level} aria-label="Class level gained" /></td>
-      <td data-label="Ability" class="w-2/5"><input class="font-semibold" bind:value={a.name} aria-label="Ability name" /></td>
-      <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={a.description} aria-label="Notes"></textarea></td>
+      <td data-label="Ability"><input class="font-semibold" bind:value={a.name} aria-label="Ability name" /></td>
+    {/snippet}
+    {#snippet detail(a)}
+      <textarea rows="1" class="w-full text-xs" bind:value={a.description} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
   </DynamicTable>
 </Section>

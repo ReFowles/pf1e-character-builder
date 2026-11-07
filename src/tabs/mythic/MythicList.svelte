@@ -22,16 +22,17 @@
   {#snippet info()}
     <p>{empty} Use Edit to add, reorder or remove entries.</p>
   {/snippet}
-  <DynamicTable bind:items cols={3} onadd={() => items.push(make.mythicEntry(numberLabel === 'Tier' ? app.char.mythic.tier : 1))} {addLabel} {empty}>
+  <DynamicTable bind:items cols={2} detailPrints={(e) => !!e.notes.trim()} onadd={() => items.push(make.mythicEntry(numberLabel === 'Tier' ? app.char.mythic.tier : 1))} {addLabel} {empty}>
     {#snippet head()}
       <th class="text-center">{numberLabel}</th>
       <th>{nameLabel}</th>
-      <th>Notes</th>
     {/snippet}
     {#snippet row(e)}
       <td data-label={numberLabel} class="w-12"><NumInput bind:value={e.tier} aria-label={numberLabel} /></td>
-      <td data-label={nameLabel} class="w-2/5"><input class="w-full font-semibold" bind:value={e.name} aria-label={nameLabel} /></td>
-      <td data-label="Notes"><textarea rows="1" class="w-full" bind:value={e.notes} aria-label="Notes"></textarea></td>
+      <td data-label={nameLabel}><input class="w-full font-semibold" bind:value={e.name} aria-label={nameLabel} /></td>
+    {/snippet}
+    {#snippet detail(e)}
+      <textarea rows="1" class="w-full text-xs" bind:value={e.notes} placeholder="Notes" aria-label="Notes"></textarea>
     {/snippet}
   </DynamicTable>
 </Section>

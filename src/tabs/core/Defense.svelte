@@ -59,6 +59,7 @@
     onadd={() => c.armor.push(make.armor(c.armor.some((a) => a.kind === 'armor') ? 'shield' : 'armor'))}
     addLabel="Armor / shield"
     empty="No armor or shield."
+    detailPrints={(a) => !!a.notes.trim()}
   >
     {#snippet head()}
       <th title="Equipped">Eq</th>
@@ -105,6 +106,9 @@
       <td data-label="NP" class="text-center align-middle"><input type="checkbox" class="mx-auto block" bind:checked={a.nonProficient} aria-label="Not proficient" title="Not proficient: armor check penalty also applies to attack rolls" /></td>
       <td data-label="Wt" class="w-12"><NumInput bind:value={a.weight} aria-label="Weight" /></td>
       {#if editing}<td data-label="gp" class="w-14"><NumInput bind:value={a.price} aria-label="Value in gp" /></td>{/if}
+    {/snippet}
+    {#snippet detail(a)}
+      <textarea rows="1" class="w-full text-xs" bind:value={a.notes} placeholder="Notes (special materials, abilities…)" aria-label="{a.name || 'Armor'} notes"></textarea>
     {/snippet}
     {#snippet tools()}
       <DbPicker
