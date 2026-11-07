@@ -2,7 +2,7 @@
   import type { Total } from '../rules/bonuses';
   import { partsOf } from '../dice/roll';
   import { rollable } from '../dice/rollable';
-  import { breakdown, fmt } from './format';
+  import { breakdown, fmt, plusNotation } from './format';
   import Iterative from './Iterative.svelte';
 
   interface Props {
@@ -25,17 +25,18 @@
   const rollTitle = $derived((typeof roll === 'object' && roll.title) || label);
   const rollSubtitle = $derived(typeof roll === 'object' ? roll.subtitle : undefined);
   const extras = $derived(typeof roll === 'object' ? roll.extras : undefined);
+  const tipWithDice = $derived([tip, ...(extras ?? []).map((x) => `${plusNotation(x.notation)} ${x.label}`)].filter(Boolean).join('\n') || undefined);
   const parts = $derived(typeof value === 'number' ? [] : partsOf(value));
 </script>
 
-<div class="stat {cls}" title={tip}>
+<div class="stat {cls}" title={tipWithDice}>
   <div
     class="stat-value text-center {SIZES[size]}"
     class:whitespace-nowrap={!iterative}
-    use:rollable={{ title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras, disabled: !roll || iterative }}
+    use:rollable={{ title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras, tip: tipWithDice, disabled: !roll || iterative }}
   >
     {#if iterative}
-      <Iterative text={display!} onroll={roll ? { title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras } : undefined} />
+      <Iterative text={display!} onroll={roll ? { title: rollTitle, subtitle: rollSubtitle, bonus: n, parts, extras, tip: tipWithDice } : undefined} />
     {:else}{display ?? (signed ? fmt(n) : n)}{/if}
   </div>
   <div class="field-label">{label}</div>

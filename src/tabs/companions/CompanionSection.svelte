@@ -262,7 +262,7 @@
                 <td data-label="Fin" class="w-8 text-center align-middle"><input type="checkbox" bind:checked={a.finesse} aria-label="Weapon Finesse" /></td>
               {/if}
               <td data-label="Bonus" class="w-12 text-center align-middle font-bold tabular-nums" title={ad ? breakdown(ad.attack) : ''}>
-                {#if ad}<span use:rollable={{ title: `${a.name || 'Attack'} attack`, subtitle: who, bonus: ad.attack.total, parts: partsOf(ad.attack) }}>{fmt(ad.attack.total)}</span>{/if}
+                {#if ad}<span use:rollable={{ title: `${a.name || 'Attack'} attack`, subtitle: who, bonus: ad.attack.total, parts: partsOf(ad.attack), tip: breakdown(ad.attack) }}>{fmt(ad.attack.total)}</span>{/if}
               </td>
               <td data-label="Damage" class="w-28 align-middle">
                 <div class="flex items-center gap-0.5">

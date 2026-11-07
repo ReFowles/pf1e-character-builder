@@ -66,7 +66,7 @@
       Medium or heavy armor, or a medium or heavy load, reduces it (*) to {c.speeds.armored ? `the armored speed set in Edit (${c.speeds.armored} ft)` : `${d.speed.reduced} ft, worked out from base speed; set an armored speed in Edit to override`}.
       {#if d.speed.encumbered}Now slowed by: {d.speed.reason}.{/if}
     </p>
-    <p><strong>Resources</strong> can use a formula for their maximum, e.g. <code>max(1, @wis.mod)</code>.</p>
+    <p><strong>Resources</strong>: Used is what you've spent (− and + adjust it), Current is what's left (max − used). Refill all sets Used back to 0. The maximum can be a formula, e.g. <code>max(1, @wis.mod)</code>.</p>
   {/snippet}
   <div class="flex flex-wrap items-stretch gap-1.5">
     <Stat label="Initiative" value={d.init} size="md" roll />

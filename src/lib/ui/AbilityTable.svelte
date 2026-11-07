@@ -52,7 +52,7 @@
         <th class="bg-head text-center text-head-ink opacity-100 {size.th}" style="print-color-adjust: exact">{a.toUpperCase()}</th>
         <td class="font-bold tabular-nums {size.value}">{s.score}</td>
         <td class="font-bold tabular-nums {size.value}">
-          <span use:rollable={{ title: `${a.toUpperCase()} check`, subtitle: typeof roll === 'object' ? roll.subtitle : undefined, bonus: mod, parts: [{ source: `${a.toUpperCase()} modifier`, value: mod }], disabled: !roll }}>{fmt(s.mod)}</span>
+          <span use:rollable={{ title: `${a.toUpperCase()} check`, subtitle: typeof roll === 'object' ? roll.subtitle : undefined, bonus: mod, parts: [{ source: `${a.toUpperCase()} modifier`, value: mod }], tip: breakdown(s.breakdown), disabled: !roll }}>{fmt(s.mod)}</span>
         </td>
         <td class="px-1"><div class="write-box tabular-nums {size.box}">{s.hasTemp ? s.tempScore : ''}</div></td>
         <td class="px-1"><div class="write-box tabular-nums {size.box}">{s.hasTemp ? fmt(s.tempMod) : ''}</div></td>

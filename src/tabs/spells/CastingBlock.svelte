@@ -19,7 +19,7 @@
   import Section from '../../lib/ui/Section.svelte';
   import EditMode from '../../lib/ui/EditMode.svelte';
   import { removeSpellBlock, spellSectionId, spellSectionTitle } from '../../lib/spellBlocks';
-  import { fmt } from '../../lib/ui/format';
+  import { breakdown, fmt } from '../../lib/ui/format';
   import Select, { opts } from '../../lib/ui/Select.svelte';
   import { ABILITY_OPTIONS, classOptions } from '../../lib/ui/options';
 
@@ -364,14 +364,14 @@
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + {b.ability.toUpperCase()} modifier + misc + concentration bonuses">
-            <div class="stat-value" use:rollable={{ title: 'Concentration', subtitle: title, bonus: d?.concentration ?? 0, parts: d ? partsOf(d.concentrationBreakdown) : [] }}>{fmt(d?.concentration ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Concentration', subtitle: title, bonus: d?.concentration ?? 0, parts: d ? partsOf(d.concentrationBreakdown) : [], tip: d ? breakdown(d.concentrationBreakdown) : undefined }}>{fmt(d?.concentration ?? 0)}</div>
             <div class="field-label">Cnc</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.concentrationMisc} signed aria-label="Concentration misc" /></Field>
         </div>
         <div class="flex w-16 flex-col gap-0.5">
           <div class="stat" title="Caster level + misc + spell penetration bonuses, vs spell resistance">
-            <div class="stat-value" use:rollable={{ title: 'Caster level check vs SR', subtitle: title, bonus: d?.spellPen ?? 0, parts: d ? partsOf(d.spellPenBreakdown) : [] }}>{fmt(d?.spellPen ?? 0)}</div>
+            <div class="stat-value" use:rollable={{ title: 'Caster level check vs SR', subtitle: title, bonus: d?.spellPen ?? 0, parts: d ? partsOf(d.spellPenBreakdown) : [], tip: d ? breakdown(d.spellPenBreakdown) : undefined }}>{fmt(d?.spellPen ?? 0)}</div>
             <div class="field-label">Pen</div>
           </div>
           <Field label="Misc" class="text-center print:hidden"><NumInput class="h-6" bind:value={b.spellPenMisc} signed aria-label="Spell penetration misc" /></Field>

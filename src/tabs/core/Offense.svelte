@@ -50,6 +50,15 @@
   const KEYS = ['attack', 'attack.melee', 'attack.ranged', 'damage', 'damage.melee', 'damage.ranged', 'cmb'];
 
   const weaponName = (w: Weapon) => w.name || 'Weapon';
+  /** Damage hover: dice (and their size before a size change), bonus sources and extra dice. */
+  const damageTip = (w: Weapon, wd: WeaponDerived) =>
+    [
+      `${wd.damageDice || '—'}${wd.damageDice !== w.damage ? ` (${w.damage} before size change)` : ''}`,
+      breakdown(wd.damageBreakdown),
+      ...wd.extraDamage.map((x) => `${plusNotation(x.notation)} ${x.type || x.macro || 'extra'}${x.macro ? ` (${x.macro})` : ''}, not multiplied on a critical`),
+    ]
+      .filter(Boolean)
+      .join('\n');
   function rollDamage(w: Weapon, wd: WeaponDerived, crit = false) {
     const notation = damageNotation(wd.damageDice, wd.damageBonus);
     if (!notation) return app.notify(`Enter dice for ${weaponName(w)} (e.g. 1d8) to roll damage.`);
@@ -79,6 +88,7 @@
         ...c.weapons.filter((w) => d.weapons[w.id]).map((w) => ({ label: `${w.name || 'Weapon'} attack`, total: d.weapons[w.id].attackBreakdown })),
       ]}
     />
+    <p>Ranged weapons track ammunition: one row per kind (arrows, cold iron arrows…) with − to use one. Dashed chips are extra dice from active macros.</p>
     <p>Extra attacks come every 5 points of BAB above +5 (−5 each). Damage adds the damage ability modifier × its multiplier (½ off-hand, 1½ two-handed), enhancement and damage bonuses.</p>
   {/snippet}
   <div class="grid grid-cols-4 gap-2">
@@ -114,7 +124,7 @@
         {/if}
         <div class="field" title={wd ? breakdown(wd.attackBreakdown) : ''}>
           <div class="px-1 leading-7 font-bold tabular-nums">
-            <Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} onroll={wd ? { title: `${weaponName(w)} attack`, bonus: wd.attacks[0], parts: partsOf(wd.attackBreakdown), extras: wd.attackDice } : undefined} />
+            <Iterative text={wd?.attacks.map(fmt).join('/') ?? ''} onroll={wd ? { title: `${weaponName(w)} attack`, bonus: wd.attacks[0], parts: partsOf(wd.attackBreakdown), extras: wd.attackDice, tip: [breakdown(wd.attackBreakdown), ...wd.attackDice.map((x) => `${plusNotation(x.notation)} ${x.label}`)].join('\n') } : undefined} />
           </div>
           <span class="field-label">Attack</span>
         </div>
@@ -126,9 +136,9 @@
             </div>
           {:else}
             <!-- Dice (adjusted for size changes) with the modifier right after: 2d6+8. -->
-            <div class="flex items-center gap-0.5 px-1 leading-7 font-bold whitespace-nowrap tabular-nums" title={wd && wd.damageDice !== w.damage ? `${w.damage} before size change` : undefined}>
+            <div class="flex items-center gap-0.5 px-1 leading-7 font-bold whitespace-nowrap tabular-nums">
               {#if wd}
-                <span use:rollable={{ title: `${weaponName(w)} damage`, roll: () => rollDamage(w, wd) }}>{wd.damageDice || '—'}{wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}</span>
+                <span use:rollable={{ title: `${weaponName(w)} damage`, roll: () => rollDamage(w, wd), tip: damageTip(w, wd) }}>{wd.damageDice || '—'}{wd.damageBonus !== 0 ? fmt(wd.damageBonus) : ''}</span>
                 <button type="button" class="icon-btn h-5 px-1 text-[0.6rem] font-normal print:hidden" title="Roll critical damage (×{critMultiplier(w.crit)})" aria-label="Roll {weaponName(w)} critical damage" onclick={() => rollDamage(w, wd, true)}>crit</button>
               {/if}
             </div>

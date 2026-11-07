@@ -6,6 +6,7 @@
   import type { SkillEntry } from '../../lib/model/types';
   import { app } from '../../lib/state.svelte';
   import { isClassSkill } from '../../lib/rules/skills';
+  import type { SkillDerived } from '../../lib/rules/derive';
   import { skillKeys } from '../../lib/rules/keys';
   import Section from '../../lib/ui/Section.svelte';
   import NumInput from '../../lib/ui/NumInput.svelte';
@@ -64,6 +65,7 @@
     else e.classSkill = checked;
   }
 
+  const skillTip = (sd: SkillDerived) => [breakdown(sd.breakdown), ...sd.extraDice.map((x) => `${plusNotation(x.notation)} ${x.label}`)].join('\n');
   const siblings = (e: SkillEntry) => c.skills.filter((s) => s.skill === e.skill).length;
   const isLastOfSkill = (e: SkillEntry) => c.skills.findLast((s) => s.skill === e.skill) === e;
 </script>
@@ -91,7 +93,7 @@
       </td>
       <td class="w-full">
         <div class="flex items-center gap-1">
-          <span class="whitespace-nowrap max-sm:text-sm" use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice }}>
+          <span class="whitespace-nowrap max-sm:text-sm" use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice, tip: skillTip(sd) }}>
             {sd.def.name}{#if sd.def.trainedOnly}<sup title="Trained only" class="ml-0.5 font-bold text-accent">T</sup>{/if}{#if sd.def.acp}<sup title="Armor check penalty applies" class="ml-0.5">*</sup>{/if}
           </span>
           {#if sd.def.multi}
@@ -104,7 +106,7 @@
         </div>
       </td>
       <td class="text-center text-xs uppercase opacity-60">{sd.def.ability}</td>
-      <td class="text-center font-bold whitespace-nowrap tabular-nums" title={breakdown(sd.breakdown) + sd.extraDice.map((x) => `\n${plusNotation(x.notation)} ${x.label}`).join('')}><span use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice }}>{fmt(sd.total)}</span>{#each sd.extraDice as x, j (j)}<span class="ml-0.5 text-[0.6rem] font-normal opacity-70">{plusNotation(x.notation)}</span>{/each}</td>
+      <td class="text-center font-bold whitespace-nowrap tabular-nums" title={skillTip(sd)}><span use:rollable={{ title: sd.label, bonus: sd.total, parts: partsOf(sd.breakdown), extras: sd.extraDice, tip: skillTip(sd) }}>{fmt(sd.total)}</span>{#each sd.extraDice as x, j (j)}<span class="ml-0.5 text-[0.6rem] font-normal opacity-70">{plusNotation(x.notation)}</span>{/each}</td>
       <td class="w-9"><NumInput class="h-6" bind:value={e.ranks} aria-label="{sd.label} ranks" /></td>
       <td class={['w-9', { 'print:hidden': allMiscZero }]}><NumInput class="h-6" bind:value={e.misc} signed aria-label="{sd.label} misc" /></td>
       {#if editing}
@@ -150,6 +152,7 @@
   {/snippet}
   {#snippet info()}
     <p>Total = ranks + ability modifier + 3 for a class skill with at least one rank + size (Fly, Stealth) + armor check penalty ({app.d.acp}) where marked * + bonuses.</p>
+    <p>A small +1d6 beside a total is a die an active macro adds to that check (Inspiration); it's rolled with the check.</p>
     <p><span class="font-bold text-accent">T</span> skills need at least one rank. In Edit mode, drag ⋮⋮ (or use the arrows) to reorder favorites.</p>
     <BreakdownList
       items={c.skills

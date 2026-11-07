@@ -56,8 +56,8 @@
     {:else if d.naturalArmor.total}
       <span title={breakdown(d.naturalArmor)}><span class="field-label">Natural armor</span> {fmt(d.naturalArmor.total)}</span>
     {/if}
-    <span><span class="field-label">Max Dex</span> {d.maxDex ?? '—'}</span>
-    <span><span class="field-label">ACP</span> {d.acp}</span>
+    <span title="Highest Dex bonus to AC: the lowest of equipped armor, shield and your load's limit"><span class="field-label">Max Dex</span> {d.maxDex ?? '—'}</span>
+    <span title="Armor check penalty on Str- and Dex-based skills (*): equipped armor and shield together, or your load's penalty if worse"><span class="field-label">ACP</span> {d.acp}</span>
     <span title="Arcane spell failure: the sum of equipped armor and shield"><span class="field-label">Spell failure</span> {d.spellFailure}%</span>
     {#if editing}
       <label class="inline-flex items-center gap-1" title={concealTip}>
@@ -68,7 +68,7 @@
     {:else}
       <span title={concealTip}><span class="field-label">Concealed</span> {d.concealment.total}%</span>
     {/if}
-    <span class="ml-auto"><span class="field-label">Load</span> <span class="capitalize" class:text-accent={d.load !== 'light'}>{d.load}</span></span>
+    <span class="ml-auto" title="Carried weight against your carrying capacity (Equipment, Character tab). Medium and heavy loads cap Dex, add a check penalty and slow you."><span class="field-label">Load</span> <span class="capitalize" class:text-accent={d.load !== 'light'}>{d.load}</span></span>
   </div>
   {/snippet}</EditMode>
 

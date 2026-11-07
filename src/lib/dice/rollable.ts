@@ -18,6 +18,8 @@ export interface RollableOptions {
   disabled?: boolean;
   /** Dice rolled along with the d20 (Inspiration +1d6). */
   extras?: { label: string; notation: string }[];
+  /** Hover text, e.g. the bonus breakdown; "Click to roll" is added. Without it the hover just says "Roll <title>". */
+  tip?: string;
 }
 
 export const rollable: Action<HTMLElement, RollableOptions> = (node, opts) => {
@@ -29,12 +31,14 @@ export const rollable: Action<HTMLElement, RollableOptions> = (node, opts) => {
       node.setAttribute('role', 'button');
       node.setAttribute('tabindex', '0');
       node.setAttribute('aria-label', `Roll ${current.title}`);
-      node.title = `Roll ${current.title}`;
+      // The number's own hover would otherwise hide its parent's breakdown.
+      node.title = current.tip ? `${current.tip}\n\nClick to roll` : `Roll ${current.title}`;
     } else {
       node.removeAttribute('role');
       node.removeAttribute('tabindex');
       node.removeAttribute('aria-label');
-      node.removeAttribute('title');
+      if (current.tip) node.title = current.tip;
+      else node.removeAttribute('title');
     }
   };
   const fire = (e: Event) => {
