@@ -247,10 +247,10 @@
   .dyn-table.cards tbody.dyn-item > tr > td {
     @apply border-0 border-ink/20;
   }
-  .dyn-table.cards tbody.dyn-item > tr.has-detail > td {
+  .dyn-table.cards tbody.dyn-item > tr:first-child > td {
     @apply border-t pt-1.5;
   }
-  .dyn-table.cards tbody.dyn-item > tr.detail-row > td {
+  .dyn-table.cards tbody.dyn-item > tr:last-child > td {
     @apply border-b pb-1.5;
   }
   .dyn-table.cards tbody.dyn-item > tr > td:first-child,
@@ -263,16 +263,16 @@
   .dyn-table.cards tbody.dyn-item > tr > td:last-child {
     @apply border-r pr-1.5;
   }
-  .dyn-table.cards tr.has-detail > td:first-child {
+  .dyn-table.cards tbody.dyn-item > tr:first-child > td:first-child {
     @apply rounded-tl-sm;
   }
-  .dyn-table.cards tr.has-detail > td:last-child {
+  .dyn-table.cards tbody.dyn-item > tr:first-child > td:last-child {
     @apply rounded-tr-sm;
   }
-  .dyn-table.cards tr.detail-row > td:first-child {
+  .dyn-table.cards tbody.dyn-item > tr:last-child > td:first-child {
     @apply rounded-bl-sm;
   }
-  .dyn-table.cards tr.detail-row > td:last-child {
+  .dyn-table.cards tbody.dyn-item > tr:last-child > td:last-child {
     @apply rounded-br-sm;
   }
   .dyn-table.cards tr.card-gap > td {

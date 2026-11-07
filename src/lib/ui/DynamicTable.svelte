@@ -14,6 +14,8 @@
     detail?: Snippet<[T, number]>;
     /** Whether an item's detail line prints (e.g. only when it has text). Defaults to always. */
     detailPrints?: (item: T) => boolean;
+    /** Whether an item's detail line shows at all (e.g. only in edit mode or once it has text). Defaults to always. */
+    detailShows?: (item: T) => boolean;
     /** Box each item (row plus detail line) like a card. Needs `detail`. */
     cards?: boolean;
     onadd?: () => void;
@@ -33,6 +35,7 @@
     row,
     detail,
     detailPrints,
+    detailShows,
     cards = false,
     onadd,
     tools,
@@ -71,15 +74,18 @@
       <!-- One tbody per item keeps a row and its detail line together across page breaks. -->
       {#each items as item, i (item.id)}
         {#if cards && i}<tbody aria-hidden="true"><tr class="card-gap"><td colspan={cols + (section.editing ? 1 : 0)}></td></tr></tbody>{/if}
+        {@const shows = !detailShows || detailShows(item)}
         <tbody class="dyn-item">
-          <tr class="has-detail">
+          <tr class={{ 'has-detail': shows }}>
             {@render row(item, i)}
             {@render actions(item, i)}
           </tr>
-          <tr class={['detail-row', { 'print:hidden': detailPrints && !detailPrints(item) }]}>
-            <td colspan={cols}>{@render detail(item, i)}</td>
-            {#if section.editing}<td class="row-actions print:hidden"></td>{/if}
-          </tr>
+          {#if shows}
+            <tr class={['detail-row', { 'print:hidden': detailPrints && !detailPrints(item) }]}>
+              <td colspan={cols}>{@render detail(item, i)}</td>
+              {#if section.editing}<td class="row-actions print:hidden"></td>{/if}
+            </tr>
+          {/if}
         </tbody>
       {/each}
     {/if}

@@ -80,6 +80,7 @@
     addLabel="Armor / shield"
     empty="No armor or shield."
     detailPrints={(a) => !!a.notes.trim()}
+    detailShows={(a) => editing || !!a.notes.trim()}
     cards
   >
     {#snippet head()}

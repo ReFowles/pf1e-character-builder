@@ -198,7 +198,9 @@
           <span class="field-label">Extra damage</span>
         </div>
       {/if}
-      <textarea use:keepSize={`${w.id}:notes`} rows="1" class={['mt-1 w-full text-xs', { 'print:hidden': !w.notes.trim() }]} bind:value={w.notes} placeholder="Notes (special abilities, materials…)" aria-label="{weaponName(w)} notes"></textarea>
+      {#if editing || w.notes.trim()}
+        <textarea use:keepSize={`${w.id}:notes`} rows="1" class={['mt-1 w-full text-xs', { 'print:hidden': !w.notes.trim() }]} bind:value={w.notes} placeholder="Notes (special abilities, materials…)" aria-label="{weaponName(w)} notes"></textarea>
+      {/if}
       {#if w.kind === 'ranged' || w.ammo.length}
         <!-- One row per kind of ammunition; counts stay blank on paper for pencil. -->
         <div class={['mt-1 flex flex-wrap items-center gap-1', { 'print:hidden': !w.ammo.length }]}>
